@@ -327,12 +327,20 @@ async function call(fn, ...args) {
   throw new Error(out.error);
 }
 
+// 저장은 시트에만 쓰고 바로 끝난다. 캘린더·알림은 뒤에서 따로 (기다리지 않음)
+function syncCalendar() {
+  call('syncNow')
+    .then(ok => toast(ok ? '캘린더 반영됨' : '캘린더는 잠시 후 반영'))
+    .catch(e => toast('캘린더 반영 실패: ' + e.message));
+}
+
 async function run(fn, args, msg) {
   toast('저장 중…');
   try {
     const r = await call(fn, ...args);
     D = r.data; render();
-    toast(r.err ? '시트에 저장됨 · 캘린더는 10분 안에 반영' : msg);
+    toast(msg);
+    if (fn !== 'addPeriod') syncCalendar();
     return true;
   } catch (e) {
     toast('실패: ' + e.message); load();
