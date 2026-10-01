@@ -111,7 +111,13 @@ summary::after { content:'▾'; flex:none; margin-left:-4px; color:var(--mute); 
 summary span { flex:none; }
 /* 구분 · 이름을 한 줄에 나란히 */
 .pick { display:flex; gap:8px; align-items:flex-start; }
-.pick > details { flex:1; min-width:0; }
+.pick > details { position:relative; flex:1; min-width:0; }
+/* 펼친 목록은 아래 칸을 밀지 않고 위에 겹쳐 뜬다 */
+.pick > details[open] { z-index:25; }
+.pick > details .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:25; max-height:55vh; overflow-y:auto; overflow-x:hidden;
+  padding:4px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card); box-shadow:0 10px 30px rgba(20,40,160,.18); }
+.pick > details .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
+.pick > details .chip.on::after { position:absolute; right:10px; }
 .pick > details.has summary span { display:none; }                  /* 고르면 '구분'·'이름' 글자는 숨겨 값이 다 보이게 */
 .pick > details.has summary b { flex:1; text-align:left; }
 details[open] summary::after { content:'▴'; }
@@ -279,7 +285,7 @@ details .chip.on::after { content:'✓'; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-3';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-4';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // ── 확대 막기: 두 손가락 핀치, 빈 곳 더블탭 (웬들러와 같은 방식) ──
 (() => {
@@ -694,7 +700,11 @@ document.addEventListener('change', e => {
   }
 });
 
-$('#picker').addEventListener('click', e => { if (e.target.id === 'picker') closePicker(); });   // 바깥 누르면 닫힘
+$('#picker').addEventListener('click', e => { if (e.target.id === 'picker') closePicker(); });
+// 구분·이름 목록: 바깥을 누르면 닫힘
+document.addEventListener('click', e => {
+  document.querySelectorAll('.pick > details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+});   // 바깥 누르면 닫힘
 
 // ── 테마: 자동(◐) → 라이트(☀) → 다크(☾). 기기에 기억 ──
 const THEMES = ['system', 'light', 'dark'], THEME_ICON = { system: '◐', light: '☀', dark: '☾' };
