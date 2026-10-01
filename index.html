@@ -125,7 +125,8 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 #allRot .hd { display:flex; align-items:center; padding:0 16px 10px; }
 #allRot .hd b { flex:1; font-size:18px; font-weight:800; color:var(--deep); }
 #allRot .hd button { height:32px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); font-weight:600; }
-#allRot .scroll { overflow:auto; padding:0 16px; }
+#allRot .scroll { overflow:auto; }                                   /* 여백을 칸 안에 둬야 고정 열 왼쪽으로 내용이 비치지 않는다 */
+#allRot tr > :first-child { padding-left:16px; } #allRot tr > :last-child { padding-right:16px; }
 #allRot table { border-collapse:separate; border-spacing:0; font-size:14px; }
 #allRot th, #allRot td { padding:8px 10px; white-space:nowrap; text-align:center; border-bottom:1px solid var(--line); }
 #allRot thead th { position:sticky; top:0; z-index:1; background:var(--card); }
@@ -255,7 +256,8 @@ footer { margin-top:28px; }
 
 /* 업무 탭 */
 .role { display:flex; align-items:center; gap:8px; margin:6px 0; }
-.role span { flex:0 0 108px; font-size:14px; font-weight:500; color:var(--mute); }
+.role span { flex:0 0 108px; font-size:16px; font-weight:600; color:var(--mute); }
+.role details.dd summary b { text-align:center; font-size:17px; font-weight:700; }   /* 지정된 이름은 가운데 */
 .line { padding:3px 0; } .line b { display:inline-block; min-width:108px; font-weight:500; color:var(--mute); }
 .line small { color:var(--mute); }
 .empty { color:var(--mute); font-size:14px; }
@@ -391,7 +393,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-14';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-15';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -674,7 +676,7 @@ function render() {
         const opts = ['', ...D.people];
         if (v && !opts.includes(v)) opts.push(v);
         return `<div class="role"><span>${esc(r.name)}</span>${dd(`rot|${pi}|${ri}`,
-          opts.map(o => ({ v: o, t: o ? o + (D.people.includes(o) ? '' : ' (명단 외)') : '—' })), v)}</div>`;
+          opts.map(o => ({ v: o, t: o ? o + (D.people.includes(o) ? '' : ' (명단 외)') : '-' })), v)}</div>`;
       }).join('')}
       ${clashes(p).map(c => `
         <div class="clash"><div class="msg">⚠️ ${mdh(c.day)} <b>${esc(c.role)}</b> ${esc(c.v)} - ${esc(c.kind)}</div>
@@ -720,7 +722,7 @@ function openAllRot() {
   $('#allScroll').innerHTML = `<table><thead><tr><th>업무</th>${D.periods.map((p, k) =>
     `<th class="${cls(p)}"><button type="button" data-goper="${k}">${mdNum(p.start)}<br>~${mdNum(p.end)}</button></th>`).join('')}</tr></thead>
     <tbody>${D.roles.map((r, ri) => `<tr><th>${esc(r.name)}</th>${D.periods.map(p =>
-      `<td class="${cls(p)}">${esc(p.who[ri] || '—')}${nSub(p, r.name) ? '<i class="dot"></i>' : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      `<td class="${cls(p)}">${esc(p.who[ri] || '-')}${nSub(p, r.name) ? '<i class="dot"></i>' : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   $('#allRot').hidden = false;
   const now = $('#allScroll thead th.now');
   $('#allScroll').scrollLeft = now ? now.offsetLeft - 120 : $('#allScroll').scrollWidth;
@@ -739,7 +741,7 @@ const evHtml = (l, i, eds) => {
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
-  <div class="wevs">${evs.length ? arrange(evs).map(({ l, i, eds }) => evHtml(l, i, eds)).join('') : '<span class="empty">—</span>'}</div></div>`;
+  <div class="wevs">${evs.length ? arrange(evs).map(({ l, i, eds }) => evHtml(l, i, eds)).join('') : '<span class="empty">-</span>'}</div></div>`;
 const evOn = day => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => !isSub(l) && l.start <= day && day <= l.end);   // 백업은 업무 탭에서 관리
 const short = l => {                                                  // 달력 칸에 들어갈 짧은 이름 (여러 명이면 '박병석+5')
   const n = l.name.split(/,\s*/).filter(Boolean);
@@ -793,7 +795,7 @@ function moveCal(n) {
 let openSub = null;                                                    // 업무 탭에서 열어 둔 백업 근무 (D.leaves 번호)
 // 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
 const subPick = {};                                                    // 겹침 경고에서 고른 백업자 (백업 버튼 누르기 전)
-function dd(key, opts, value, empty = '—', sum = '', cls = '') {
+function dd(key, opts, value, empty = '-', sum = '', cls = '') {
   const cur = opts.find(o => o.v === value);
   return `<details class="dd${cls}" data-dd="${esc(key)}"><summary>${sum || `<b>${esc(cur ? cur.t : empty)}</b>`}</summary>
     <div class="chips">${opts.map(o => `<button type="button" class="chip${o.v === value ? ' on' : ''}" data-ddv="${esc(o.v)}">${esc(o.t)}</button>`).join('')}</div></details>`;
