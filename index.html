@@ -111,15 +111,21 @@ summary::after { content:'▾'; flex:none; margin-left:-4px; color:var(--mute); 
 summary span { flex:none; }
 /* 구분 · 이름을 한 줄에 나란히 */
 .pick { display:flex; gap:8px; align-items:flex-start; }
-.pick > details { position:relative; flex:1; min-width:0; }
+.pick details { position:relative; flex:1; min-width:0; }
+.pick > .col { flex:1; min-width:0; }
+.pick > .col details { margin-top:0; }
+.pick > .col summary b { flex:1; text-align:left; }
+#lFrom .chip.on::after, #lHours .chip.on::after { content:none; }      /* 좁은 목록은 ✓ 대신 바탕색 */
+#lFrom .chip.on, #lHours .chip.on { border-radius:8px; background:var(--soft); }
+#lHours .chip { font-size:15px; }
 /* 펼친 목록은 아래 칸을 밀지 않고 위에 겹쳐 뜬다 */
-.pick > details[open] { z-index:25; }
-.pick > details .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:25; max-height:55vh; overflow-y:auto; overflow-x:hidden;
+.pick details[open] { z-index:25; }
+.pick details .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:25; max-height:55vh; overflow-y:auto; overflow-x:hidden;
   padding:4px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card); box-shadow:0 10px 30px rgba(20,40,160,.18); }
-.pick > details .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
-.pick > details .chip.on::after { position:absolute; right:10px; }
-.pick > details.has summary span { display:none; }                  /* 고르면 '구분'·'이름' 글자는 숨겨 값이 다 보이게 */
-.pick > details.has summary b { flex:1; text-align:left; }
+.pick details .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
+.pick details .chip.on::after { position:absolute; right:10px; }
+.pick details.has summary span { display:none; }                  /* 고르면 '구분'·'이름' 글자는 숨겨 값이 다 보이게 */
+.pick details.has summary b { flex:1; text-align:left; }
 details[open] summary::after { content:'▴'; }
 details .chips { padding:0 12px 12px; }
 .chips { display:flex; flex-wrap:wrap; gap:6px; }
@@ -248,9 +254,12 @@ details .chip.on::after { content:'✓'; }
       <div><label>시작일</label><button type="button" class="datebtn" id="fStart" data-open="fStart"></button></div>
       <div id="wEnd"><label>종료일 (하루면 비움)</label><button type="button" class="datebtn" id="fEnd" data-open="fEnd"></button></div>
     </div>
-    <div id="wHour" hidden>
-      <label>시작 시각</label><input type="time" id="fFrom" value="09:00">
-      <label>소요 시간</label><select id="fHours"></select>
+    <div class="pick" id="wHour" hidden>
+      <div class="col"><label>시작 시각</label>
+        <details id="dFrom"><summary><b id="sFrom">09:00</b></summary><div class="chips" id="lFrom"></div></details></div>
+      <div class="col"><label>소요 시간</label>
+        <details id="dHours"><summary><b id="sHours">1시간</b></summary><div class="chips" id="lHours"></div></details></div>
+      <input type="hidden" id="fFrom" value="09:00"><input type="hidden" id="fHours" value="1">
     </div>
     <label id="lMemo">내용 (선택)</label><input id="fMemo">
     <label for="fPlace">장소 (선택)</label><input id="fPlace" placeholder="예: 본관 지하 2층 회의실">
@@ -285,7 +294,7 @@ details .chip.on::after { content:'✓'; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-4';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-5';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // ── 확대 막기: 두 손가락 핀치, 빈 곳 더블탭 (웬들러와 같은 방식) ──
 (() => {
@@ -541,14 +550,24 @@ function plusHours(t, h) {
 }
 
 $('#fKind').innerHTML = KINDS.map(k => `<button class="chip" data-k="${k}">${k}</button>`).join('');
-// 소요 시간 목록: '2시간 (~11:00)' 처럼 끝나는 시각을 같이 보여준다
-function fillHours() {
-  const v = $('#fHours').value || '1', from = $('#fFrom').value || '09:00';
-  $('#fHours').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(h => `<option value="${h}">${h}시간 (~${plusHours(from, h)})</option>`).join('');
-  $('#fHours').value = v;
+// 시작 시각(30분 간격)·소요 시간 목록. 소요 시간에는 끝나는 시각을 같이 보여준다
+const FROMS = [];
+for (let m = 7 * 60; m <= 20 * 60; m += 30) FROMS.push(`${pad(Math.floor(m / 60))}:${pad(m % 60)}`);
+function setTime(from, hours) {
+  $('#fFrom').value = from; $('#fHours').value = String(hours);
+  const list = FROMS.includes(from) ? FROMS : [...FROMS, from].sort();
+  $('#lFrom').innerHTML = list.map(t => `<button type="button" class="chip${t === from ? ' on' : ''}" data-from="${t}">${t}</button>`).join('');
+  $('#lHours').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(h =>
+    `<button type="button" class="chip${h === +hours ? ' on' : ''}" data-hrs="${h}">${h}시간 (~${plusHours(from, h)})</button>`).join('');
+  $('#sFrom').textContent = from;
+  $('#sHours').textContent = `${hours}시간 (~${plusHours(from, +hours)})`;
 }
-fillHours();
-$('#fFrom').addEventListener('input', fillHours);
+setTime('09:00', 1);
+// 시작 시각 목록을 열면 고른 시각이 보이게
+$('#dFrom').addEventListener('toggle', () => {
+  const on = $('#lFrom .on');
+  if ($('#dFrom').open && on) $('#lFrom').scrollTop = on.offsetTop - 80;
+});
 // ── 날짜 고르기 (기본 달력은 공휴일을 칠할 수 없어서 직접 그린다) ──
 const getD = id => $('#' + id).dataset.v || '';
 function setD(id, v) {
@@ -586,7 +605,7 @@ let editing = null;
 function resetForm() {
   editing = null; kind = ''; mode = 'day'; names.clear();
   setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = ''; $('#fPlace').value = '';
-  $('#fFrom').value = '09:00'; fillHours(); $('#fHours').value = '1';
+  setTime('09:00', 1);
   document.querySelectorAll('#fNames .chip.on').forEach(x => x.classList.remove('on'));
   $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#cancelEdit').hidden = true;
   applyKind(); applyNames();
@@ -598,9 +617,8 @@ function startEdit(l) {
   const t = l.time.match(/(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/);
   mode = t ? 'hour' : 'day';
   if (t) {
-    $('#fFrom').value = `${pad(+t[1])}:${t[2]}`; fillHours();
     const h = t[3] ? Math.round((t[3] * 60 + +t[4] - t[1] * 60 - +t[2]) / 60) : 1;
-    $('#fHours').value = String(Math.min(8, Math.max(1, h)));
+    setTime(`${pad(+t[1])}:${t[2]}`, Math.min(8, Math.max(1, h)));
   }
   setD('fStart', l.start); setD('fEnd', l.end !== l.start ? l.end : '');
   $('#fMemo').value = l.memo; $('#fPlace').value = l.place || '';
@@ -625,6 +643,10 @@ document.addEventListener('click', async e => {
     mode = ['회의', '진료'].includes(kind) ? 'hour' : 'day';         // 회의·진료는 보통 시간 단위
     if (kind) $('#dKind').open = false;                              // 고르면 접힌다
     applyKind();
+  } else if (b.dataset.from) {
+    setTime(b.dataset.from, $('#fHours').value); $('#dFrom').open = false;
+  } else if (b.dataset.hrs) {
+    setTime($('#fFrom').value, b.dataset.hrs); $('#dHours').open = false;
   } else if (b.dataset.a) {
     mode = b.dataset.a; applyKind();
   } else if (b.dataset.n) {
@@ -703,7 +725,7 @@ document.addEventListener('change', e => {
 $('#picker').addEventListener('click', e => { if (e.target.id === 'picker') closePicker(); });
 // 구분·이름 목록: 바깥을 누르면 닫힘
 document.addEventListener('click', e => {
-  document.querySelectorAll('.pick > details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+  document.querySelectorAll('.pick details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
 });   // 바깥 누르면 닫힘
 
 // ── 테마: 자동(◐) → 라이트(☀) → 다크(☾). 기기에 기억 ──
