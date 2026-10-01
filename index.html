@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dosimetrist Calendar</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dosimetrist">
+<meta name="theme-color" content="#e3eeff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16213a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 색은 SMC 디자인 시스템 가이드라인 3.0 (1.5 Color) 기준
+   Samsung Blue #1428a0 · SMC Blue #0a4bff (80% #2e70ff, 60% #508eff, 40% #8cbaff, 20% #bedaff)
+   SMC Black 90% #191919 · 60% #666666 · 포인트 SMC Orange #ff871e (20% #ffe7d2) · SMC Red #fa4b50 */
+:root {
+  --bg:#eef5ff; --bg-top:#e3eeff; --card:#ffffff; --fg:#191919; --mute:#666666; --line:#dbe8ff;
+  --acc:#2e70ff; --deep:#1428a0; --soft:#e8f1ff; --blue:#2e70ff; --sky:#00b4ff;
+  --red:#fa4b50; --warn:#fa4b50; --orange:#ff871e; --clash:#ffe7d2;
+  --bar:rgba(227,238,255,.88); --bar-fg:#1428a0; --shadow:0 6px 22px rgba(46,112,255,.10); --card-border:transparent;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#101318; --bg-top:#16213a; --card:#1a1e26; --fg:#ffffff; --mute:#a3a8b3; --line:#2a303b;
+    --acc:#508eff; --deep:#ffffff; --soft:#18233d; --blue:#8cbaff; --sky:#33c3ff;
+    --red:#fb6f73; --warn:#fb6f73; --orange:#ff9f4b; --clash:#33261a;
+    --bar:rgba(22,33,58,.88); --bar-fg:#ffffff; --shadow:none; --card-border:#2a303b;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#101318; --bg-top:#16213a; --card:#1a1e26; --fg:#ffffff; --mute:#a3a8b3; --line:#2a303b;
+  --acc:#508eff; --deep:#ffffff; --soft:#18233d; --blue:#8cbaff; --sky:#33c3ff;
+  --red:#fb6f73; --warn:#fb6f73; --orange:#ff9f4b; --clash:#33261a;
+  --bar:rgba(22,33,58,.88); --bar-fg:#ffffff; --shadow:none; --card-border:#2a303b;
+  color-scheme:dark;
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+[hidden] { display:none !important; }
+body { margin:0; padding:0 16px 90px; font:16px/1.45 "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
+button { font-family:inherit; cursor:pointer; }
+
+/* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
+.top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
+  margin:0 -16px 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+  background:var(--bar); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); color:var(--bar-fg); }
+.brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.icon-btn { width:36px; height:32px; padding:0; font-size:15px; line-height:1; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
+
+/* 카드 */
+.card { background:var(--card); border:1px solid var(--card-border); border-radius:16px; padding:14px; margin-bottom:12px; box-shadow:var(--shadow); }
+h3 { margin:0 0 10px; font-size:14px; font-weight:700; color:var(--mute); }
+label { display:block; margin:14px 0 6px; font-size:13px; font-weight:600; color:var(--mute); }
+input, select { width:100%; padding:11px 12px; font:inherit; font-size:16px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+input:focus, select:focus, .datebtn:focus { outline:2px solid var(--acc); outline-offset:-1px; }
+.two { display:flex; gap:8px; } .two > div { flex:1; min-width:0; }
+
+/* 탭: 알약 모양 */
+nav { display:flex; gap:4px; margin:6px 0 12px; padding:4px; border-radius:14px; background:var(--card); border:1px solid var(--card-border); box-shadow:var(--shadow); }
+nav button { flex:1; padding:10px; font-size:15px; font-weight:600; border:0; border-radius:10px; background:none; color:var(--mute); }
+nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,112,255,.3); }
+
+/* 맨 위 두 블록: 앱을 열면 가장 먼저 보이게 */
+.day { padding:16px 16px 12px; }
+.day h3 .ttl::before { content:''; display:inline-block; width:10px; height:10px; margin:0 8px 3px 0; border-radius:50%; background:var(--acc); vertical-align:middle; }
+.day h3 { display:flex; align-items:center; gap:6px; margin-bottom:8px; color:var(--fg); }
+.day h3 .t { flex:1; min-width:0; }
+.day h3 .ttl { display:block; font-size:22px; font-weight:800; letter-spacing:-.02em; }
+.day h3 .ttl { color:var(--deep); }                               /* 두 블록 제목·점 같은 색 */
+.day h3 .dt { display:block; margin-top:3px; font-size:14px; font-weight:500; color:var(--mute); }
+.day h3 button { min-width:34px; height:32px; padding:0 10px; font-size:17px; line-height:1; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
+.day h3 button:disabled { opacity:.3; }
+.day h3 .back { font-size:13px; font-weight:600; color:var(--acc); }
+.day .line { display:flex; align-items:baseline; gap:8px; padding:8px 0; font-size:18px; font-weight:700; border-top:1px solid var(--line); }
+.day .line:first-of-type { border-top:0; }
+.day .line b { flex:0 0 116px; min-width:0; font-size:15px; font-weight:500; color:var(--mute); }
+.day .line small { font-size:13px; font-weight:500; }
+.line small.red { color:var(--red); font-weight:700; }
+.day .empty { font-size:16px; }
+#dayView { touch-action:pan-y; }
+
+/* 일정 입력 */
+details { margin-top:12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+summary { display:flex; justify-content:space-between; gap:8px; padding:11px 12px; list-style:none; cursor:pointer; }
+summary::-webkit-details-marker { display:none; }
+summary span { color:var(--mute); font-size:14px; font-weight:600; }
+summary b { font-weight:600; text-align:right; } summary b::after { content:' ▾'; color:var(--mute); }
+details[open] summary b::after { content:' ▴'; }
+details .chips { padding:0 12px 12px; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; }
+.chip { padding:7px 12px; font-size:15px; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--fg); }
+.chip.on { background:var(--acc); border-color:var(--acc); color:#fff; font-weight:600; }
+/* 구분·이름 고르기: 세로 목록, 고른 줄은 파란 글씨 + ✓ */
+details .chips { flex-direction:column; flex-wrap:nowrap; gap:0; padding:0 6px 6px; }
+details .chip:focus { outline:none; }
+details .chip { display:flex; justify-content:space-between; align-items:center; width:100%; padding:12px 8px; font-size:16px; text-align:left;
+  border:0; border-top:1px solid var(--line); border-radius:0; background:none; color:var(--fg); }
+details .chip:first-child { border-top:0; }
+details .chip.on { background:none; border-color:var(--line); color:var(--acc); font-weight:700; }
+details .chip.on::after { content:'✓'; }
+#fNames { max-height:50vh; overflow-x:hidden; overflow-y:auto; }
+.seg { display:flex; gap:4px; margin-top:8px; padding:3px; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+.seg button { flex:1; padding:8px; font-size:15px; border:0; border-radius:8px; background:none; color:var(--mute); }
+.seg button.on { background:var(--card); color:var(--acc); font-weight:700; box-shadow:0 1px 4px rgba(20,40,160,.15); }
+.main { width:100%; margin-top:18px; padding:13px; font-size:16px; font-weight:700; border:0; border-radius:12px; background:var(--acc); color:#fff; box-shadow:0 4px 12px rgba(46,112,255,.25); }
+.main:disabled { opacity:.6; }
+.sub { width:100%; padding:11px; font-size:15px; font-weight:600; border:1.5px dashed var(--line); border-radius:12px; background:none; color:var(--acc); }
+.datebtn { width:100%; padding:11px 12px; font:inherit; font-size:16px; text-align:left; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+.datebtn.none { color:var(--mute); }
+
+/* 목록 */
+.item { display:flex; align-items:center; gap:8px; padding:10px 0; border-top:1px solid var(--line); }
+.item:first-of-type { border-top:0; }
+.item .t { flex:1; min-width:0; cursor:pointer; font-weight:600; }
+.item small { display:block; font-weight:400; color:var(--mute); }
+.item .t { display:flex; align-items:baseline; gap:12px; }        /* 다가오는 일정: 날짜 → 내용 */
+.item .when { flex:0 0 82px; font-weight:700; }
+.item .when small { display:block; font-size:inherit; font-weight:inherit; color:inherit; }
+.item .what { flex:1; min-width:0; }
+.item.editing { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
+[data-edit] { cursor:pointer; }
+#fTitle { scroll-margin-top:76px; }                               /* 상단 바에 가리지 않게 */
+.del { padding:6px 6px; font-size:14px; font-weight:600; border:0; border-radius:8px; background:none; color:var(--warn); }
+.del.armed { padding:6px 12px; background:var(--warn); color:#fff; }
+.red { color:var(--red); }
+.sat { color:var(--blue); }
+
+/* 업무 탭 */
+.role { display:flex; align-items:center; gap:8px; margin:6px 0; }
+.role span { flex:0 0 108px; font-size:14px; font-weight:500; color:var(--mute); }
+.line { padding:3px 0; } .line b { display:inline-block; min-width:108px; font-weight:500; color:var(--mute); }
+.line small { color:var(--mute); }
+.empty { color:var(--mute); font-size:14px; }
+.clash { margin-top:10px; padding:12px; border-radius:12px; background:var(--clash); border:1px solid color-mix(in srgb, var(--orange) 35%, transparent); }
+.clash .msg { font-size:14px; margin-bottom:8px; }
+.clash .two { align-items:center; } .clash .two > div:last-child { flex:0 0 auto; }
+.clash button { padding:11px 16px; font-size:15px; font-weight:700; border:0; border-radius:10px; background:var(--orange); color:#fff; }
+.subst { margin-top:10px; padding:12px; border-radius:12px; background:var(--soft); border:1px solid var(--line); }
+.subst .msg { font-size:14px; margin-bottom:8px; }
+.subst .two { align-items:center; } .subst .two > div:last-child { flex:0 0 auto; }
+
+#toast { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:#1428a0; color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px rgba(20,40,160,.3); }
+#toast.show { opacity:.97; }
+#gate { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:24px 16px;
+  background:linear-gradient(180deg, var(--bg-top), var(--bg)); overflow-y:auto; }
+#gate .gbox { width:100%; max-width:380px; margin:auto; padding:22px 18px; border-radius:20px; background:var(--card); box-shadow:var(--shadow); border:1px solid var(--card-border); }
+#gate .brand { margin-bottom:4px; text-align:center; color:var(--bar-fg); }
+#gate .gsub { margin-bottom:6px; text-align:center; font-size:13px; color:var(--mute); }
+#gCode { text-align:center; font-size:22px; letter-spacing:.3em; }
+#gCode::placeholder { font-size:16px; letter-spacing:0; }
+#gNames { display:flex; flex-direction:column; max-height:55vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; background:var(--bg); padding:0 6px; }
+#gNames button { display:flex; justify-content:space-between; padding:12px 8px; font-size:16px; text-align:left; border:0; border-top:1px solid var(--line); background:none; color:var(--fg); }
+#gNames button:first-child { border-top:0; }
+#gNames button.on { color:var(--acc); font-weight:700; } #gNames button.on::after { content:'✓'; }
+#gMsg { min-height:20px; margin-top:10px; text-align:center; font-size:14px; color:var(--red); }
+.top .btns { display:flex; gap:8px; }
+
+/* 날짜 고르기: 공휴일·일요일 빨강, 토요일 파랑 */
+#picker { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,60,.4); }
+#picker .sheet { width:100%; max-width:420px; padding:16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#picker .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+#picker .head b { font-size:17px; }
+#picker .head button, #picker .foot button { padding:7px 14px; font-size:15px; font-weight:600; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+#picker .grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; text-align:center; }
+#picker .grid .dow { padding:4px 0; font-size:13px; font-weight:600; color:var(--mute); }
+#picker .grid button { aspect-ratio:1; font-size:16px; border:0; border-radius:50%; background:none; color:var(--fg); }
+#picker .grid button.red { color:var(--red); } #picker .grid button.sat { color:var(--blue); }
+#picker .grid button.today { box-shadow:inset 0 0 0 1.5px var(--acc); }
+#picker .grid button.sel { background:var(--acc); color:#fff; font-weight:700; }
+#picker .hols { min-height:20px; margin:8px 0; font-size:13px; line-height:1.6; color:var(--red); }
+#picker .foot { display:flex; gap:8px; justify-content:flex-end; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">DOSIMETRIST CALENDAR</div>
+  <div class="btns">
+    <button type="button" id="me" class="icon-btn" aria-label="내 이름">👤</button>
+    <button type="button" id="theme" class="icon-btn" aria-label="테마"></button>
+  </div>
+</div>
+<div id="dayView">
+  <div id="todayWork" class="card day"><span class="empty">불러오는 중…</span></div>
+  <div id="todayLeave" class="card day"></div>
+</div>
+<nav>
+  <button data-tab="rot" class="on">업무</button>
+  <button data-tab="leave">일정</button>
+</nav>
+<div id="rot">
+  <div id="periods"></div>
+  <button class="sub" id="addPeriod">＋ 다음 기간 추가</button>
+</div>
+<div id="leave" hidden>
+  <div class="card">
+    <h3 id="fTitle">일정 추가</h3>
+    <details id="dKind"><summary><span>구분</span><b id="sKind">선택</b></summary><div class="chips" id="fKind"></div></details>
+    <div class="seg" id="wMode" hidden><button data-a="day" class="on">종일</button><button data-a="hour">시간 단위</button></div>
+    <details id="dNames"><summary><span>이름</span><b id="sNames">선택</b></summary><div class="chips" id="fNames"></div></details>
+    <div class="two">
+      <div><label>시작일</label><button type="button" class="datebtn" id="fStart" data-open="fStart"></button></div>
+      <div id="wEnd"><label>종료일 (하루면 비움)</label><button type="button" class="datebtn" id="fEnd" data-open="fEnd"></button></div>
+    </div>
+    <div class="two" id="wHour" hidden>
+      <div><label>시작 시각</label><input type="time" id="fFrom" value="09:00"></div>
+      <div><label>소요 시간</label><select id="fHours"></select></div>
+    </div>
+    <label id="lMemo">내용 (선택)</label><input id="fMemo">
+    <button class="main" id="save">저장</button>
+    <button class="sub" id="cancelEdit" style="margin-top:8px" hidden>수정 취소</button>
+  </div>
+  <div class="card"><h3>다가오는 일정</h3><div id="leaves"></div></div>
+</div>
+<div id="toast"></div>
+<div id="gate" hidden><div class="gbox">
+  <div class="brand">DOSIMETRIST CALENDAR</div>
+  <div class="gsub">선량설계파트 일정</div>
+  <div id="gStep1">
+    <label for="gCode">접근 코드</label>
+    <input id="gCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6자리 숫자">
+    <button type="button" class="main" id="gGo">확인</button>
+  </div>
+  <div id="gStep2" hidden>
+    <label>본인 이름을 골라 주세요</label>
+    <div id="gNames"></div>
+    <button type="button" class="sub" id="gRecode" style="margin-top:10px">접근 코드 다시 입력</button>
+  </div>
+  <div id="gMsg"></div>
+</div></div>
+<div id="picker" hidden><div class="sheet">
+  <div class="head"><button type="button" data-pm="-1">‹</button><b id="pTitle"></b><button type="button" data-pm="1">›</button></div>
+  <div class="grid" id="pGrid"></div>
+  <div class="hols" id="pHols"></div>
+  <div class="foot"><button type="button" id="pClear">지우기</button><button type="button" id="pToday">오늘</button><button type="button" id="pClose">닫기</button></div>
+</div></div>
+
+<script>
+const KINDS = ['연차', '진료', '교육', '훈련', '회의', '출장', '기타'];
+const ALL = '전체';                                                  // 파트원 모두 참석하는 일정
+const DOW = '일월화수목금토';
+let D, kind = '', mode = 'day', names = new Set();
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const md = s => { const d = new Date(s + 'T00:00'); return `${d.getMonth() + 1}/${d.getDate()}(${DOW[d.getDay()]})`; };
+const mdh = s => D.holidays[s] || new Date(s + 'T00:00').getDay() === 0 ? `<span class="red">${md(s)}</span>` : md(s);
+const span = (s, e) => mdh(s) + (e && e !== s ? ' ~ ' + mdh(e) : '');
+const mdNum = s => `${+s.slice(5, 7)}/${+s.slice(8)}`;           // '2026-11-01' → '11/1' (기간 머리글용, 요일·색 없음)
+function addDays(s, n) {
+  const d = new Date(s + 'T00:00'); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+const pad = n => String(n).padStart(2, '0');
+const fmtTime = t => esc(t).replace(/\s*-\s*/, ' ~ ');          // '10:00-12:00' → '10:00 ~ 12:00'
+const label = l => esc([l.name, l.memo].filter(Boolean).join(' · '));
+
+// ── 하루 대체 ──
+const AWAY = ['연차', '진료', '교육', '훈련', '출장', '오전반차', '오후반차'];   // 담당 업무와 겹치면 경고 (반차는 예전 기록용)
+const ALL_WEEK = ['당직', '온콜'];                                  // 주말·공휴일도 근무. 나머지 업무는 평일만 본다
+// 기본 백업: TOMO → 직전 기간 같은 업무 담당자, SGRT → 서버가 알려주는 담당(D.sgrtBackup). 당직·온콜은 직접 선택
+const backupFor = (role, p, ri) => role.startsWith('TOMO') ? p.prevWho[ri] : role.startsWith('SGRT') ? D.sgrtBackup : '';
+const SUB_RE = /^(.+) \((.+) 대신\)$/;
+
+function* days(a, b) {
+  for (let d = new Date(a + 'T00:00'); ; d.setDate(d.getDate() + 1)) {
+    const s = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    if (s > b) return;
+    yield [s, d.getDay()];
+  }
+}
+const away = (name, day) => D.leaves.find(l => AWAY.includes(l.kind) && l.start <= day && day <= l.end && l.name.split(/,\s*/).includes(name));
+const subs = () => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind === '대체' && SUB_RE.test(l.memo))
+  .map(({ l, i }) => { const [, role, orig] = l.memo.match(SUB_RE); return { i, day: l.start, role, orig, who: l.name }; });
+const subFor = (role, day) => subs().find(s => s.role === role && s.day === day);
+
+// 기간 p 안에서 담당자가 근태로 빠지는데 대체가 아직 없는 날
+function clashes(p) {
+  const out = [];
+  D.roles.forEach((r, ri) => {
+    const v = p.who[ri];
+    if (!v) return;
+    for (const [day, dow] of days(p.start > D.today ? p.start : D.today, p.end)) {
+      if (!ALL_WEEK.includes(r.name) && (dow === 0 || dow === 6 || D.holidays[day])) continue;
+      const l = away(v, day);
+      if (!l || subFor(r.name, day)) continue;
+      const rec = backupFor(r.name, p, ri);
+      out.push({ day, ri, role: r.name, v, kind: l.kind + (l.time ? ' ' + l.time.replace(/\s*-\s*/, ' ~ ') : ''), rec: rec && rec !== v && !away(rec, day) ? rec : '' });
+    }
+  });
+  return out.sort((a, b) => a.day < b.day ? -1 : 1);
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── 서버: Apps Script 웹 앱 (데이터만 주고받는다). 접근 코드·본인 이름은 이 폰에 기억 ──
+const API_URL = 'PASTE_APPS_SCRIPT_URL';   // 배포 → 웹 앱 URL (…/exec)
+let auth = {};
+try { auth = JSON.parse(localStorage.getItem('auth') || '{}'); } catch (e) {}
+const saveAuth = () => { try { localStorage.setItem('auth', JSON.stringify(auth)); } catch (e) {} };
+
+async function call(fn, ...args) {
+  let out;
+  try {
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args, code: auth.code, who: auth.me || '' }) });
+    out = await res.json();
+  } catch (e) {
+    throw new Error('인터넷 연결을 확인해 주세요');
+  }
+  if (out.ok) return out.data;
+  if (out.error === 'AUTH') {                                         // 코드가 바뀌었거나 틀림 → 입력 창
+    auth.code = ''; saveAuth();
+    showGate(1, '접근 코드가 맞지 않습니다');
+    throw new Error('접근 코드 확인 필요');
+  }
+  throw new Error(out.error);
+}
+
+async function run(fn, args, msg) {
+  toast('저장 중…');
+  try {
+    const r = await call(fn, ...args);
+    D = r.data; render();
+    toast(r.err ? '시트에 저장됨 · 캘린더는 10분 안에 반영' : msg);
+    return true;
+  } catch (e) {
+    toast('실패: ' + e.message); load();
+    return false;
+  }
+}
+
+async function load() {
+  try { D = await call('getData'); render(); }
+  catch (e) { $('#todayWork').innerHTML = `<span class="empty">불러오기 실패: ${esc(e.message)}</span>`; }
+}
+
+// 맨 위 두 카드: 옆으로 넘겨 다른 날 보기 (서버가 지난 30일치까지 보낸다)
+let dayOff = 0;
+const MIN_OFF = -30, MAX_OFF = 60;
+const DAY_WORD = { '-1': '어제', 0: '오늘', 1: '내일', 2: '모레' };
+function renderDay() {
+  const day = addDays(D.today, dayOff);
+  const word = DAY_WORD[dayOff] || '';
+  const hol = D.holidays[day];
+  const head = what => `<h3><span class="t"><span class="ttl">${word ? word + ' ' : ''}${what}</span><span class="dt">${mdh(day)}${hol ? ` <span class="red">${esc(hol)}</span>` : ''}</span></span>`
+    + (dayOff ? '<button class="back" data-day="0">오늘</button>' : '')
+    + `<button data-day="-1"${dayOff > MIN_OFF ? '' : ' disabled'}>‹</button><button data-day="1"${dayOff < MAX_OFF ? '' : ' disabled'}>›</button></h3>`;
+  const cur = D.periods.find(p => p.start <= day && day <= p.end);
+  $('#todayWork').innerHTML = head('업무') + (cur ? D.roles.map((r, i) => {
+    const s = subFor(r.name, day);
+    const out = !s && cur.who[i] && away(cur.who[i], day);
+    const v = s ? `${esc(s.who)} <small>(대체 · 원래 ${esc(s.orig)})</small>`
+      : esc(cur.who[i]) + (out ? ` <small class="red">(${esc(out.kind)} · 대체 없음)</small>` : '');
+    return s || cur.who[i] ? `<div class="line"><b>${esc(r.name)}</b>${v}</div>` : '';
+  }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
+  const list = D.leaves.filter(l => l.kind !== '대체' && l.start <= day && day <= l.end);
+  $('#todayLeave').innerHTML = head('일정') + (list.length
+    ? list.map(l => `<div class="line" data-edit="${D.leaves.indexOf(l)}"><b>[${esc(l.kind)}]</b>${label(l)}${l.time ? ` <small>${fmtTime(l.time)}</small>` : ''}</div>`).join('')
+    : '<span class="empty">없음</span>');
+}
+function moveDay(n) {
+  dayOff = n === 0 ? 0 : Math.min(MAX_OFF, Math.max(MIN_OFF, dayOff + n));
+  renderDay();
+}
+let touchX = null;
+$('#dayView').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+$('#dayView').addEventListener('touchend', e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  touchX = null;
+  if (Math.abs(dx) > 50) moveDay(dx < 0 ? 1 : -1);                 // 왼쪽으로 밀면 다음 날
+});
+
+function render() {
+  renderDay();
+  const cur = D.periods.find(p => p.start <= D.today && D.today <= p.end);
+
+  $('#fNames').innerHTML = [ALL, ...D.people].map(n => `<button class="chip${names.has(n) ? ' on' : ''}" data-n="${esc(n)}">${esc(n)}</button>`).join('');
+
+  const list = D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.end >= D.today);   // 대체는 업무 탭에서 관리
+  $('#leaves').innerHTML = list.length ? list.map(({ l, i }) => `
+    <div class="item${editing && editing.row === l.row ? ' editing' : ''}"><div class="t" data-edit="${i}">
+      <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}</span>
+      <span class="what">[${esc(l.kind)}] ${label(l)}${l.time ? `<small>${fmtTime(l.time)}</small>` : ''}</span></div>
+      <button class="del" data-i="${i}">삭제</button></div>`).join('') : '<span class="empty">없음</span>';
+
+  $('#periods').innerHTML = D.periods.map((p, pi) => p.end < D.today ? '' : `
+    <div class="card"><h3>${mdNum(p.start)} ~ ${mdNum(p.end)}${p === cur ? ' · 지금' : ''}</h3>
+      ${D.roles.map((r, ri) => {
+        const v = p.who[ri];
+        const opts = ['', ...D.people];
+        if (v && !opts.includes(v)) opts.push(v);
+        return `<div class="role"><span>${esc(r.name)}</span><select data-p="${pi}" data-r="${ri}">${opts.map(o =>
+          `<option value="${esc(o)}"${o === v ? ' selected' : ''}>${o ? esc(o) + (D.people.includes(o) ? '' : ' (명단 외)') : '—'}</option>`).join('')}</select></div>`;
+      }).join('')}
+      ${clashes(p).map(c => `
+        <div class="clash"><div class="msg">⚠️ ${mdh(c.day)} <b>${esc(c.role)}</b> ${esc(c.v)} — ${esc(c.kind)}</div>
+          <div class="two"><div><select id="sub-${pi}-${c.ri}-${c.day}"><option value="">대체자 선택</option>${D.people.filter(n => n !== c.v).map(n =>
+            `<option value="${esc(n)}"${n === c.rec ? ' selected' : ''}>${esc(n)}${n === c.rec ? ' (백업)' : ''}</option>`).join('')}</select></div>
+          <div><button data-sub="${pi}|${c.ri}|${c.day}">대체</button></div></div></div>`).join('')}
+      ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
+        const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
+        return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> ${esc(s.orig)} 대신</div>
+          <div class="two"><div><select data-subi="${s.i}">${opts.filter(n => n !== s.orig).map(n =>
+            `<option value="${esc(n)}"${n === s.who ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+          <div><button class="del" data-i="${s.i}">삭제</button></div></div></div>`;
+      }).join('')}
+    </div>`).join('') || '<div class="card empty">남은 기간이 없습니다. 아래 버튼으로 추가하세요.</div>';
+}
+
+// ── 일정 입력 폼: 구분에 따라 칸이 바뀐다 ──
+const hourly = () => kind && mode === 'hour';
+function applyKind() {
+  $('#sKind').textContent = kind ? `${kind} · ${hourly() ? '시간 단위' : '종일'}` : '선택';
+  document.querySelectorAll('#fKind .chip').forEach(x => x.classList.toggle('on', x.dataset.k === kind));
+  document.querySelectorAll('#wMode button').forEach(x => x.classList.toggle('on', x.dataset.a === mode));
+  $('#wMode').hidden = !kind;
+  $('#wEnd').hidden = hourly();                                      // 시간 단위는 하루짜리
+  $('#wHour').hidden = !hourly();
+  $('#lMemo').textContent = kind === '기타' ? '무엇인가요? (필수)' : '내용 (선택)';
+  $('#fMemo').placeholder = kind === '기타' ? '예: 건강검진' : '예: 학회';
+}
+function applyNames() {
+  $('#sNames').textContent = names.size ? [...names].join(', ') : '선택';
+}
+function plusHours(t, h) {
+  const [hh, mm] = t.split(':').map(Number);
+  return `${pad(hh + h)}:${pad(mm)}`;
+}
+
+$('#fKind').innerHTML = KINDS.map(k => `<button class="chip" data-k="${k}">${k}</button>`).join('');
+// 소요 시간 목록: '2시간 (~11:00)' 처럼 끝나는 시각을 같이 보여준다
+function fillHours() {
+  const v = $('#fHours').value || '1', from = $('#fFrom').value || '09:00';
+  $('#fHours').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(h => `<option value="${h}">${h}시간 (~${plusHours(from, h)})</option>`).join('');
+  $('#fHours').value = v;
+}
+fillHours();
+$('#fFrom').addEventListener('input', fillHours);
+// ── 날짜 고르기 (기본 달력은 공휴일을 칠할 수 없어서 직접 그린다) ──
+const getD = id => $('#' + id).dataset.v || '';
+function setD(id, v) {
+  const b = $('#' + id);
+  b.dataset.v = v;
+  b.classList.toggle('none', !v);
+  b.innerHTML = v ? mdh(v) : '선택 안 함';
+}
+let pick = {};
+function openPicker(id) {
+  const v = getD(id) || getD('fStart') || D.today;
+  pick = { id, y: +v.slice(0, 4), m: +v.slice(5, 7) - 1 };
+  $('#pClear').hidden = id === 'fStart';
+  drawPicker(); $('#picker').hidden = false;
+}
+function drawPicker() {
+  const { y, m, id } = pick, ym = `${y}-${pad(m + 1)}`, sel = getD(id);
+  const first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
+  $('#pTitle').textContent = `${y}년 ${m + 1}월`;
+  let html = [...DOW].map((w, i) => `<span class="dow${i === 0 ? ' red' : i === 6 ? ' sat' : ''}">${w}</span>`).join('') + '<span></span>'.repeat(first);
+  for (let d = 1; d <= n; d++) {
+    const v = `${ym}-${pad(d)}`, dow = (first + d - 1) % 7;
+    const cls = [D.holidays[v] || dow === 0 ? 'red' : dow === 6 ? 'sat' : '', v === D.today ? 'today' : '', v === sel ? 'sel' : ''].join(' ');
+    html += `<button type="button" class="${cls}" data-pick="${v}">${d}</button>`;
+  }
+  $('#pGrid').innerHTML = html;
+  $('#pHols').innerHTML = Object.keys(D.holidays).filter(k => k.startsWith(ym)).sort()
+    .map(k => `<div>${+k.slice(8)}일 ${esc(D.holidays[k])}</div>`).join('');
+}
+function closePicker() { $('#picker').hidden = true; }
+applyKind();
+
+// ── 일정 수정: 누른 일정을 폼에 채우고, 저장하면 그 줄을 고친다 ──
+let editing = null;
+function resetForm() {
+  editing = null; kind = ''; mode = 'day'; names.clear();
+  setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = '';
+  $('#fFrom').value = '09:00'; fillHours(); $('#fHours').value = '1';
+  document.querySelectorAll('#fNames .chip.on').forEach(x => x.classList.remove('on'));
+  $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#cancelEdit').hidden = true;
+  applyKind(); applyNames();
+  document.querySelectorAll('.item.editing').forEach(x => x.classList.remove('editing'));
+}
+function startEdit(l) {
+  editing = l; kind = l.kind;
+  names = new Set(l.name.split(/,\s*/).filter(Boolean));
+  const t = l.time.match(/(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/);
+  mode = t ? 'hour' : 'day';
+  if (t) {
+    $('#fFrom').value = `${pad(+t[1])}:${t[2]}`; fillHours();
+    const h = t[3] ? Math.round((t[3] * 60 + +t[4] - t[1] * 60 - +t[2]) / 60) : 1;
+    $('#fHours').value = String(Math.min(8, Math.max(1, h)));
+  }
+  setD('fStart', l.start); setD('fEnd', l.end !== l.start ? l.end : '');
+  $('#fMemo').value = l.memo;
+  document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
+  $('#fTitle').textContent = '일정 수정'; $('#save').textContent = '수정 저장'; $('#cancelEdit').hidden = false;
+  applyKind(); applyNames(); render();
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.tab === 'leave'));
+  $('#leave').hidden = false; $('#rot').hidden = true;
+  $('#fTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.addEventListener('click', async e => {
+  const ed = e.target.closest('[data-edit]');
+  if (ed) return startEdit(D.leaves[ed.dataset.edit]);
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.tab) {
+    document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+    $('#leave').hidden = b.dataset.tab !== 'leave'; $('#rot').hidden = b.dataset.tab !== 'rot';
+  } else if (b.dataset.k) {
+    kind = kind === b.dataset.k ? '' : b.dataset.k;
+    mode = ['회의', '진료'].includes(kind) ? 'hour' : 'day';         // 회의·진료는 보통 시간 단위
+    if (kind) $('#dKind').open = false;                              // 고르면 접힌다
+    applyKind();
+  } else if (b.dataset.a) {
+    mode = b.dataset.a; applyKind();
+  } else if (b.dataset.n) {
+    const n = b.dataset.n;
+    if (names.has(n)) names.delete(n);
+    else { if (n === ALL) names.clear(); else names.delete(ALL); names.add(n); }   // '전체' 와 개별 이름은 같이 못 고름
+    document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
+    applyNames();
+  } else if (b.dataset.i) {
+    if (!b.classList.contains('armed')) {                            // confirm() 은 구글 앱 화면 안에서 막혀 있어 두 번 누르기 (두 번째는 빨간 버튼)
+      b.classList.add('armed'); b.textContent = '삭제';
+      return setTimeout(() => { b.classList.remove('armed'); b.textContent = '삭제'; }, 3000);
+    }
+    const l = D.leaves[b.dataset.i];
+    run('deleteLeave', [l.row, l.sig], '삭제됨');
+  } else if (b.dataset.sub) {
+    const [pi, ri, day] = b.dataset.sub.split('|');
+    const who = document.getElementById(`sub-${pi}-${ri}-${day}`).value;
+    const role = D.roles[ri].name, orig = D.periods[pi].who[ri];
+    if (!who) return toast('대체자를 골라 주세요');
+    run('addLeave', [{ start: day, end: '', names: [who], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${who}`);
+  } else if (b.id === 'save') {
+    const f = {
+      start: getD('fStart'), kind, names: [...names], memo: $('#fMemo').value.trim(),
+      end: $('#wEnd').hidden ? '' : getD('fEnd'),
+      time: hourly() ? `${$('#fFrom').value}-${plusHours($('#fFrom').value, +$('#fHours').value)}` : '',
+    };
+    if (!kind) return toast('구분을 골라 주세요');
+    if (kind === '기타' && !f.memo) return toast('무엇인지 적어 주세요');
+    if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전체")을 넣어 주세요');
+    b.disabled = true;
+    const ok = editing ? await run('updateLeave', [editing.row, editing.sig, f], '수정됨') : await run('addLeave', [f], '저장됨');
+    if (ok) resetForm();
+    b.disabled = false;
+  } else if (b.id === 'cancelEdit') {
+    resetForm();
+  } else if (b.dataset.open) {
+    openPicker(b.dataset.open);
+  } else if (b.dataset.pm) {
+    pick.m += +b.dataset.pm;
+    if (pick.m < 0) { pick.m = 11; pick.y--; } else if (pick.m > 11) { pick.m = 0; pick.y++; }
+    drawPicker();
+  } else if (b.dataset.pick) {
+    setD(pick.id, b.dataset.pick);
+    if (pick.id === 'fStart' && getD('fEnd') && getD('fEnd') < b.dataset.pick) setD('fEnd', '');   // 종료일이 시작일보다 앞이면 비움
+    closePicker();
+  } else if (b.id === 'pClear') {
+    setD(pick.id, ''); closePicker();
+  } else if (b.id === 'pToday') {
+    setD(pick.id, D.today); closePicker();
+  } else if (b.id === 'pClose') {
+    closePicker();
+  } else if (b.id === 'theme') {
+    setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]);
+  } else if (b.dataset.day !== undefined) {
+    moveDay(+b.dataset.day);
+  } else if (b.id === 'addPeriod') {
+    b.disabled = true;                                               // 연타해도 한 번만
+    await run('addPeriod', [], '기간 추가됨');
+    b.disabled = false;
+  }
+});
+
+document.addEventListener('change', e => {
+  const s = e.target;
+  if (s.dataset.subi !== undefined) {                                 // 대체자 바꾸기
+    const l = D.leaves[s.dataset.subi];
+    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [s.value], kind: '대체', time: '', memo: l.memo }],
+      `${md(l.start)} 대체 → ${s.value}`);
+  } else if (s.dataset.p !== undefined) {                             // 기간 담당자 바꾸기
+    const p = D.periods[s.dataset.p], r = D.roles[s.dataset.r];
+    run('setRotation', [r.row, p.col, s.value, p.who[s.dataset.r]], `${r.name} → ${s.value || '비움'}`);
+  }
+});
+
+$('#picker').addEventListener('click', e => { if (e.target.id === 'picker') closePicker(); });   // 바깥 누르면 닫힘
+
+// ── 테마: 자동(◐) → 라이트(☀) → 다크(☾). 기기에 기억 ──
+const THEMES = ['system', 'light', 'dark'], THEME_ICON = { system: '◐', light: '☀', dark: '☾' };
+let theme = 'system';
+try { theme = THEMES.includes(localStorage.getItem('theme')) ? localStorage.getItem('theme') : 'system'; } catch (e) {}
+function setTheme(t) {
+  theme = t;
+  if (t === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', t);
+  $('#theme').textContent = THEME_ICON[t];
+  try { localStorage.setItem('theme', t); } catch (e) {}
+}
+setTheme(theme);
+
+// ── 첫 화면: 접근 코드 → 본인 이름 (한 번만) ──
+function showGate(step, msg) {
+  $('#gate').hidden = false;
+  $('#gStep1').hidden = step !== 1; $('#gStep2').hidden = step !== 2;
+  $('#gMsg').textContent = msg || '';
+  if (step === 1) { $('#gCode').value = ''; setTimeout(() => $('#gCode').focus(), 50); }
+  if (step === 2) $('#gNames').innerHTML = D.people.map(n =>
+    `<button type="button" class="${n === auth.me ? 'on' : ''}" data-me="${esc(n)}">${esc(n)}</button>`).join('');
+}
+async function submitCode() {
+  const code = $('#gCode').value.trim();
+  if (!/^\d{6}$/.test(code)) { $('#gMsg').textContent = '6자리 숫자를 넣어 주세요'; return; }
+  auth.code = code; $('#gMsg').textContent = '확인 중…';
+  try {
+    D = await call('getData');
+    saveAuth(); render(); initForm();
+    if (auth.me) $('#gate').hidden = true; else showGate(2);
+  } catch (e) {
+    if (auth.code) $('#gMsg').textContent = e.message;               // 코드가 틀린 경우는 call() 이 이미 안내
+  }
+}
+$('#gGo').addEventListener('click', submitCode);
+$('#gCode').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode(); });
+$('#gate').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.me) { auth.me = b.dataset.me; saveAuth(); $('#gate').hidden = true; toast(`${auth.me} 님으로 설정됨`); }
+  else if (b.id === 'gRecode') showGate(1);
+});
+$('#me').addEventListener('click', () => { if (D) showGate(2); });
+
+function initForm() {
+  if (!getD('fStart')) setD('fStart', D.today);
+  setD('fEnd', getD('fEnd'));
+}
+async function start() {
+  if (!auth.code) return showGate(1);
+  await load();
+  if (D) { initForm(); if (!auth.me) showGate(2); }
+}
+// 다른 앱에 갔다 돌아오면 최신 내용으로 (수정 중일 땐 건드리지 않음)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && auth.code && D && !editing && $('#picker').hidden) load();
+});
+start();
+</script>
+</body>
+</html>
