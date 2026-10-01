@@ -59,6 +59,7 @@ button { font-family:inherit; cursor:pointer; }
 h3 { margin:0 0 10px; font-size:14px; font-weight:700; color:var(--mute); }
 label { display:block; margin:14px 0 6px; font-size:13px; font-weight:600; color:var(--mute); }
 input, select { width:100%; padding:11px 12px; font:inherit; font-size:16px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+input[type=time] { display:block; min-width:0; -webkit-appearance:none; appearance:none; min-height:44px; text-align:left; }
 input:focus, select:focus, .datebtn:focus { outline:2px solid var(--acc); outline-offset:-1px; }
 .two { display:flex; gap:8px; } .two > div { flex:1; min-width:0; }
 
@@ -84,6 +85,14 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .day .line small { font-size:13px; font-weight:500; }
 .line small.red { color:var(--red); font-weight:700; }
 .day .empty { font-size:16px; }
+/* 오늘/내일 일정: 이름이 많아도 읽히게 */
+.ev { padding:10px 0; border-top:1px solid var(--line); cursor:pointer; }
+.ev:first-of-type { border-top:0; padding-top:4px; }
+.ev-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.ev .kind { padding:3px 10px; font-size:14px; font-weight:700; border-radius:999px; background:var(--soft); color:var(--acc); }
+.ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
+.ev-names { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:7px; font-size:18px; font-weight:700; }
+.ev-sub { margin-top:4px; font-size:14px; color:var(--mute); }
 #dayView { touch-action:pan-y; }
 
 /* 일정 입력 */
@@ -210,11 +219,12 @@ details .chip.on::after { content:'✓'; }
       <div><label>시작일</label><button type="button" class="datebtn" id="fStart" data-open="fStart"></button></div>
       <div id="wEnd"><label>종료일 (하루면 비움)</label><button type="button" class="datebtn" id="fEnd" data-open="fEnd"></button></div>
     </div>
-    <div class="two" id="wHour" hidden>
-      <div><label>시작 시각</label><input type="time" id="fFrom" value="09:00"></div>
-      <div><label>소요 시간</label><select id="fHours"></select></div>
+    <div id="wHour" hidden>
+      <label>시작 시각</label><input type="time" id="fFrom" value="09:00">
+      <label>소요 시간</label><select id="fHours"></select>
     </div>
     <label id="lMemo">내용 (선택)</label><input id="fMemo">
+    <label for="fPlace">장소 (선택)</label><input id="fPlace" placeholder="예: 본관 지하 2층 회의실">
     <button class="main" id="save">저장</button>
     <button class="sub" id="cancelEdit" style="margin-top:8px" hidden>수정 취소</button>
   </div>
@@ -385,7 +395,15 @@ function renderDay() {
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
   const list = D.leaves.filter(l => l.kind !== '대체' && l.start <= day && day <= l.end);
   $('#todayLeave').innerHTML = head('일정') + (list.length
-    ? list.map(l => `<div class="line" data-edit="${D.leaves.indexOf(l)}"><b>[${esc(l.kind)}]</b>${label(l)}${l.time ? ` <small>${fmtTime(l.time)}</small>` : ''}</div>`).join('')
+    ? list.map(l => {
+      const who = l.name.split(/,\s*/).filter(Boolean);
+      const when = l.time ? fmtTime(l.time) : l.start !== l.end ? `${md(l.start)} ~ ${md(l.end)}` : '종일';
+      const sub = [l.memo && esc(l.memo), l.place && '📍 ' + esc(l.place)].filter(Boolean).join(' · ');
+      return `<div class="ev" data-edit="${D.leaves.indexOf(l)}">
+        <div class="ev-top"><span class="kind">${esc(l.kind)}</span><span class="tm">${when}</span></div>
+        ${who.length ? `<div class="ev-names">${who.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : ''}
+        ${sub ? `<div class="ev-sub">${sub}</div>` : ''}</div>`;
+    }).join('')
     : '<span class="empty">없음</span>');
 }
 function moveDay(n) {
@@ -411,7 +429,7 @@ function render() {
   $('#leaves').innerHTML = list.length ? list.map(({ l, i }) => `
     <div class="item${editing && editing.row === l.row ? ' editing' : ''}"><div class="t" data-edit="${i}">
       <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}</span>
-      <span class="what">[${esc(l.kind)}] ${label(l)}${l.time ? `<small>${fmtTime(l.time)}</small>` : ''}</span></div>
+      <span class="what">[${esc(l.kind)}] ${label(l)}${l.time ? `<small>${fmtTime(l.time)}</small>` : ''}${l.place ? `<small>📍 ${esc(l.place)}</small>` : ''}</span></div>
       <button class="del" data-i="${i}">삭제</button></div>`).join('') : '<span class="empty">없음</span>';
 
   $('#periods').innerHTML = D.periods.map((p, pi) => p.end < D.today ? '' : `
@@ -503,7 +521,7 @@ applyKind();
 let editing = null;
 function resetForm() {
   editing = null; kind = ''; mode = 'day'; names.clear();
-  setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = '';
+  setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = ''; $('#fPlace').value = '';
   $('#fFrom').value = '09:00'; fillHours(); $('#fHours').value = '1';
   document.querySelectorAll('#fNames .chip.on').forEach(x => x.classList.remove('on'));
   $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#cancelEdit').hidden = true;
@@ -521,7 +539,7 @@ function startEdit(l) {
     $('#fHours').value = String(Math.min(8, Math.max(1, h)));
   }
   setD('fStart', l.start); setD('fEnd', l.end !== l.start ? l.end : '');
-  $('#fMemo').value = l.memo;
+  $('#fMemo').value = l.memo; $('#fPlace').value = l.place || '';
   document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
   $('#fTitle').textContent = '일정 수정'; $('#save').textContent = '수정 저장'; $('#cancelEdit').hidden = false;
   applyKind(); applyNames(); render();
@@ -566,7 +584,7 @@ document.addEventListener('click', async e => {
     run('addLeave', [{ start: day, end: '', names: [who], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${who}`);
   } else if (b.id === 'save') {
     const f = {
-      start: getD('fStart'), kind, names: [...names], memo: $('#fMemo').value.trim(),
+      start: getD('fStart'), kind, names: [...names], memo: $('#fMemo').value.trim(), place: $('#fPlace').value.trim(),
       end: $('#wEnd').hidden ? '' : getD('fEnd'),
       time: hourly() ? `${$('#fFrom').value}-${plusHours($('#fFrom').value, +$('#fHours').value)}` : '',
     };
