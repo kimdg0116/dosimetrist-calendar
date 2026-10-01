@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Dosimetrist">
 <meta name="theme-color" content="#e3eeff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#16213a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#142039" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="favicon.png">
@@ -22,24 +22,24 @@
 :root {
   --bg:#eef5ff; --bg-top:#e3eeff; --card:#ffffff; --fg:#191919; --mute:#666666; --line:#dbe8ff;
   --acc:#2e70ff; --deep:#1428a0; --soft:#e8f1ff; --blue:#2e70ff; --sky:#00b4ff;
-  --red:#fa4b50; --warn:#fa4b50; --orange:#ff871e; --clash:#ffe7d2;
+  --red:#fa4b50; --warn:#fa4b50; --orange:#ff871e; --clash:#ffe7d2; --toast:#1428a0;
   --bar:rgba(227,238,255,.88); --bar-fg:#1428a0; --shadow:0 6px 22px rgba(46,112,255,.10); --card-border:transparent;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:#101318; --bg-top:#16213a; --card:#1a1e26; --fg:#ffffff; --mute:#a3a8b3; --line:#2a303b;
-    --acc:#508eff; --deep:#ffffff; --soft:#18233d; --blue:#8cbaff; --sky:#33c3ff;
-    --red:#fb6f73; --warn:#fb6f73; --orange:#ff9f4b; --clash:#33261a;
-    --bar:rgba(22,33,58,.88); --bar-fg:#ffffff; --shadow:none; --card-border:#2a303b;
+    --bg:#0f1420; --bg-top:#142039; --card:#1a2233; --fg:#e9eef8; --mute:#9ba8bf; --line:#2b3750;
+    --acc:#508eff; --deep:#8cbaff; --soft:#1d2c4d; --blue:#8cbaff; --sky:#33c3ff;
+    --red:#fb6f73; --warn:#fb6f73; --orange:#ff9f4b; --clash:#33261a; --toast:#0a4bff;
+    --bar:rgba(20,32,57,.88); --bar-fg:#e9eef8; --shadow:0 6px 22px rgba(0,0,0,.35); --card-border:#232e45;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg:#101318; --bg-top:#16213a; --card:#1a1e26; --fg:#ffffff; --mute:#a3a8b3; --line:#2a303b;
-  --acc:#508eff; --deep:#ffffff; --soft:#18233d; --blue:#8cbaff; --sky:#33c3ff;
-  --red:#fb6f73; --warn:#fb6f73; --orange:#ff9f4b; --clash:#33261a;
-  --bar:rgba(22,33,58,.88); --bar-fg:#ffffff; --shadow:none; --card-border:#2a303b;
+  --bg:#0f1420; --bg-top:#142039; --card:#1a2233; --fg:#e9eef8; --mute:#9ba8bf; --line:#2b3750;
+  --acc:#508eff; --deep:#8cbaff; --soft:#1d2c4d; --blue:#8cbaff; --sky:#33c3ff;
+  --red:#fb6f73; --warn:#fb6f73; --orange:#ff9f4b; --clash:#33261a; --toast:#0a4bff;
+  --bar:rgba(20,32,57,.88); --bar-fg:#e9eef8; --shadow:0 6px 22px rgba(0,0,0,.35); --card-border:#232e45;
   color-scheme:dark;
 }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
@@ -70,8 +70,8 @@ nav button { flex:1; padding:10px; font-size:15px; font-weight:600; border:0; bo
 nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,112,255,.3); }
 
 /* 맨 위 두 블록: 앱을 열면 가장 먼저 보이게 */
-.day { padding:16px 16px 12px; border-left:5px solid #1428a0; }
-.day h3 .ttl::before { content:''; display:inline-block; width:10px; height:10px; margin:0 8px 3px 0; border-radius:50%; background:#1428a0; vertical-align:middle; }
+.day { padding:16px 16px 12px; border-left:5px solid var(--deep); }
+.day h3 .ttl::before { content:''; display:inline-block; width:10px; height:10px; margin:0 8px 3px 0; border-radius:50%; background:var(--deep); vertical-align:middle; }
 .day h3 { display:flex; align-items:center; gap:6px; margin-bottom:8px; color:var(--fg); }
 .day h3 .t { flex:1; min-width:0; }
 .day h3 .ttl { display:block; font-size:22px; font-weight:800; letter-spacing:-.02em; }
@@ -242,7 +242,7 @@ footer { margin-top:28px; }
 .subst.closed .orig { color:var(--mute); }
 .subst.closed .msg::after { content:'›'; float:right; color:var(--mute); }
 
-#toast { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:#1428a0; color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px rgba(20,40,160,.3); }
+#toast { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:var(--toast); color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px rgba(20,40,160,.3); }
 #toast.show { opacity:.97; }
 #gate { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:24px 16px;
   background:linear-gradient(180deg, var(--bg-top), var(--bg)); overflow-y:auto; }
@@ -356,7 +356,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-9';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-10';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
