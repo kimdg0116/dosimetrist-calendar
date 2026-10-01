@@ -136,7 +136,9 @@ details .chip.on::after { content:'✓'; }
 .item .t { flex:1; min-width:0; cursor:pointer; font-weight:600; }
 .item small { display:block; font-weight:400; color:var(--mute); }
 .item .t { display:flex; align-items:baseline; gap:12px; }        /* 다가오는 일정: 날짜 → 내용 */
-.item .when { flex:0 0 82px; font-weight:700; }
+.item .when { flex:0 0 100px; font-weight:700; }
+.item .when i { display:block; margin-top:3px; font-style:normal; font-size:13px; font-weight:500; color:var(--mute); }   /* 날짜 밑: 시간·장소 */
+.item .when .w-tm { color:var(--fg); font-weight:600; }
 .item .when small { display:block; font-size:inherit; font-weight:inherit; color:inherit; }
 .item .what { flex:1; min-width:0; }
 .item .what .names { margin-top:5px; font-size:16px; }
@@ -268,7 +270,7 @@ details .chip.on::after { content:'✓'; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-1';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-2';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // ── 확대 막기: 두 손가락 핀치, 빈 곳 더블탭 (웬들러와 같은 방식) ──
 (() => {
@@ -471,10 +473,9 @@ function render() {
   const list = D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.end >= D.today);   // 대체는 업무 탭에서 관리
   $('#leaves').innerHTML = list.length ? list.map(({ l, i }) => `
     <div class="item${editing && editing.row === l.row ? ' editing' : ''}"><div class="t" data-edit="${i}">
-      <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}</span>
+      <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}${l.time ? `<i class="w-tm">${fmtTime(l.time)}</i>` : ''}${l.place ? `<i class="w-pl">📍 ${esc(l.place)}</i>` : ''}</span>
       <span class="what"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-        ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}
-        ${l.time || l.place ? `<small>${[l.time && fmtTime(l.time), l.place && '📍 ' + esc(l.place)].filter(Boolean).join(' · ')}</small>` : ''}</span></div>
+        ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}</span></div>
       <button class="del" data-i="${i}">삭제</button></div>`).join('') : '<span class="empty">없음</span>';
 
   $('#periods').innerHTML = D.periods.map((p, pi) => p.end < D.today ? '' : `
