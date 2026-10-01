@@ -111,21 +111,25 @@ summary::after { content:'▾'; flex:none; margin-left:-4px; color:var(--mute); 
 summary span { flex:none; }
 /* 구분 · 이름을 한 줄에 나란히 */
 .pick { display:flex; gap:8px; align-items:flex-start; }
-.pick details { position:relative; flex:1; min-width:0; }
+:is(.pick details, details.dd) { position:relative; flex:1; min-width:0; }
 .pick > .col { flex:1; min-width:0; }
+details.dd { flex:1; margin-top:0; background:var(--bg); }
+details.dd summary b { flex:1; text-align:left; }
+#tFrom { flex:1; min-width:0; padding:0; font:inherit; font-weight:600; border:0; background:none; color:var(--fg); }
+#tFrom:focus { outline:none; }
 .pick > .col details { margin-top:0; }
 .pick > .col summary b { flex:1; text-align:left; }
 #lFrom .chip.on::after, #lHours .chip.on::after { content:none; }      /* 좁은 목록은 ✓ 대신 바탕색 */
 #lFrom .chip.on, #lHours .chip.on { border-radius:8px; background:var(--soft); }
 #lHours .chip { font-size:15px; }
 /* 펼친 목록은 아래 칸을 밀지 않고 위에 겹쳐 뜬다 */
-.pick details[open] { z-index:25; }
-.pick details .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:25; max-height:55vh; overflow-y:auto; overflow-x:hidden;
+:is(.pick details, details.dd)[open] { z-index:25; }
+:is(.pick details, details.dd) .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:25; max-height:55vh; overflow-y:auto; overflow-x:hidden;
   padding:4px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card); box-shadow:0 10px 30px rgba(20,40,160,.18); }
-.pick details .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
-.pick details .chip.on::after { position:absolute; right:10px; }
-.pick details.has summary span { display:none; }                  /* 고르면 '구분'·'이름' 글자는 숨겨 값이 다 보이게 */
-.pick details.has summary b { flex:1; text-align:left; }
+:is(.pick details, details.dd) .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
+:is(.pick details, details.dd) .chip.on::after { position:absolute; right:10px; }
+:is(.pick details, details.dd).has summary span { display:none; }                  /* 고르면 '구분'·'이름' 글자는 숨겨 값이 다 보이게 */
+:is(.pick details, details.dd).has summary b { flex:1; text-align:left; }
 details[open] summary::after { content:'▴'; }
 details .chips { padding:0 12px 12px; }
 .chips { display:flex; flex-wrap:wrap; gap:6px; }
@@ -256,7 +260,7 @@ details .chip.on::after { content:'✓'; }
     </div>
     <div class="pick" id="wHour" hidden>
       <div class="col"><label>시작 시각</label>
-        <details id="dFrom"><summary><b id="sFrom">09:00</b></summary><div class="chips" id="lFrom"></div></details></div>
+        <details id="dFrom"><summary><input id="tFrom" inputmode="numeric" maxlength="5" value="09:00" aria-label="시작 시각"></summary><div class="chips" id="lFrom"></div></details></div>
       <div class="col"><label>소요 시간</label>
         <details id="dHours"><summary><b id="sHours">1시간</b></summary><div class="chips" id="lHours"></div></details></div>
       <input type="hidden" id="fFrom" value="09:00"><input type="hidden" id="fHours" value="1">
@@ -294,7 +298,7 @@ details .chip.on::after { content:'✓'; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-5';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-6';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // ── 확대 막기: 두 손가락 핀치, 빈 곳 더블탭 (웬들러와 같은 방식) ──
 (() => {
@@ -508,22 +512,42 @@ function render() {
         const v = p.who[ri];
         const opts = ['', ...D.people];
         if (v && !opts.includes(v)) opts.push(v);
-        return `<div class="role"><span>${esc(r.name)}</span><select data-p="${pi}" data-r="${ri}">${opts.map(o =>
-          `<option value="${esc(o)}"${o === v ? ' selected' : ''}>${o ? esc(o) + (D.people.includes(o) ? '' : ' (명단 외)') : '—'}</option>`).join('')}</select></div>`;
+        return `<div class="role"><span>${esc(r.name)}</span>${dd(`rot|${pi}|${ri}`,
+          opts.map(o => ({ v: o, t: o ? o + (D.people.includes(o) ? '' : ' (명단 외)') : '—' })), v)}</div>`;
       }).join('')}
       ${clashes(p).map(c => `
         <div class="clash"><div class="msg">⚠️ ${mdh(c.day)} <b>${esc(c.role)}</b> ${esc(c.v)} — ${esc(c.kind)}</div>
-          <div class="two"><div><select id="sub-${pi}-${c.ri}-${c.day}"><option value="">대체자 선택</option>${D.people.filter(n => n !== c.v).map(n =>
-            `<option value="${esc(n)}"${n === c.rec ? ' selected' : ''}>${esc(n)}${n === c.rec ? ' (백업)' : ''}</option>`).join('')}</select></div>
+          <div class="two"><div>${dd(`sub|${pi}|${c.ri}|${c.day}`,
+            D.people.filter(n => n !== c.v).map(n => ({ v: n, t: n + (n === c.rec ? ' (백업)' : '') })),
+            subPick[`${pi}|${c.ri}|${c.day}`] ?? c.rec, '대체자 선택')}</div>
           <div><button data-sub="${pi}|${c.ri}|${c.day}">대체</button></div></div></div>`).join('')}
       ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
         const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
         return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> ${esc(s.orig)} 대신</div>
-          <div class="two"><div><select data-subi="${s.i}">${opts.filter(n => n !== s.orig).map(n =>
-            `<option value="${esc(n)}"${n === s.who ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+          <div class="two"><div>${dd(`subi|${s.i}`, opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n })), s.who)}</div>
           <div><button class="del" data-i="${s.i}">삭제</button></div></div></div>`;
       }).join('')}
     </div>`).join('') || '<div class="card empty">남은 기간이 없습니다. 아래 버튼으로 추가하세요.</div>';
+}
+
+// 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
+const subPick = {};                                                    // 겹침 경고에서 고른 대체자 (대체 버튼 누르기 전)
+function dd(key, opts, value, empty = '—') {
+  const cur = opts.find(o => o.v === value);
+  return `<details class="dd" data-dd="${esc(key)}"><summary><b>${esc(cur ? cur.t : empty)}</b></summary>
+    <div class="chips">${opts.map(o => `<button type="button" class="chip${o.v === value ? ' on' : ''}" data-ddv="${esc(o.v)}">${esc(o.t)}</button>`).join('')}</div></details>`;
+}
+function onDd(key, v) {
+  const [type, ...a] = key.split('|');
+  if (type === 'rot') {                                                // 기간 담당자 바꾸기
+    const p = D.periods[a[0]], r = D.roles[a[1]];
+    run('setRotation', [r.row, p.col, v, p.who[a[1]]], `${r.name} → ${v || '비움'}`);
+  } else if (type === 'sub') {                                         // 대체자 고르기 (저장은 대체 버튼)
+    subPick[a.join('|')] = v; render();
+  } else if (type === 'subi') {                                        // 이미 정한 대체자 바꾸기
+    const l = D.leaves[a[0]];
+    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '대체', time: '', memo: l.memo }], `${md(l.start)} 대체 → ${v}`);
+  }
 }
 
 // ── 일정 입력 폼: 구분에 따라 칸이 바뀐다 ──
@@ -559,15 +583,27 @@ function setTime(from, hours) {
   $('#lFrom').innerHTML = list.map(t => `<button type="button" class="chip${t === from ? ' on' : ''}" data-from="${t}">${t}</button>`).join('');
   $('#lHours').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(h =>
     `<button type="button" class="chip${h === +hours ? ' on' : ''}" data-hrs="${h}">${h}시간 (~${plusHours(from, h)})</button>`).join('');
-  $('#sFrom').textContent = from;
+  $('#tFrom').value = from;
   $('#sHours').textContent = `${hours}시간 (~${plusHours(from, +hours)})`;
 }
 setTime('09:00', 1);
-// 시작 시각 목록을 열면 고른 시각이 보이게
-$('#dFrom').addEventListener('toggle', () => {
-  const on = $('#lFrom .on');
-  if ($('#dFrom').open && on) $('#lFrom').scrollTop = on.offsetTop - 80;
-});
+// 직접 입력: 칸을 눌러도 목록이 열리지 않게 하고, 입력이 끝나면 '13:30' 꼴로 맞춘다 (930·0930·9:30 모두 됨)
+function parseHM(v) {
+  const d = String(v).replace(/[^0-9]/g, '');
+  const [h, m] = d.length <= 2 ? [+d, 0] : [+d.slice(0, -2), +d.slice(-2)];
+  return d && h <= 23 && m <= 59 ? `${pad(h)}:${pad(m)}` : null;
+}
+$('#tFrom').addEventListener('click', e => e.preventDefault());
+const commitFrom = () => {
+  const t = parseHM($('#tFrom').value);
+  if (t) setTime(t, $('#fHours').value); else { toast('시각은 13:30 이나 1330 처럼 넣어 주세요'); $('#tFrom').value = $('#fFrom').value; }
+};
+$('#tFrom').addEventListener('change', commitFrom);
+$('#tFrom').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tFrom').blur(); } });
+document.addEventListener('toggle', e => {                          // 어느 목록이든 열면 고른 항목이 보이게
+  const d = e.target, list = d.querySelector && d.querySelector(':scope > .chips'), on = list && list.querySelector('.on');
+  if (d.open && on) list.scrollTop = on.offsetTop - 80;
+}, true);
 // ── 날짜 고르기 (기본 달력은 공휴일을 칠할 수 없어서 직접 그린다) ──
 const getD = id => $('#' + id).dataset.v || '';
 function setD(id, v) {
@@ -643,6 +679,9 @@ document.addEventListener('click', async e => {
     mode = ['회의', '진료'].includes(kind) ? 'hour' : 'day';         // 회의·진료는 보통 시간 단위
     if (kind) $('#dKind').open = false;                              // 고르면 접힌다
     applyKind();
+  } else if (b.dataset.ddv !== undefined) {
+    const d = b.closest('details'); d.open = false;
+    onDd(d.dataset.dd, b.dataset.ddv);
   } else if (b.dataset.from) {
     setTime(b.dataset.from, $('#fHours').value); $('#dFrom').open = false;
   } else if (b.dataset.hrs) {
@@ -664,7 +703,8 @@ document.addEventListener('click', async e => {
     run('deleteLeave', [l.row, l.sig], '삭제됨');
   } else if (b.dataset.sub) {
     const [pi, ri, day] = b.dataset.sub.split('|');
-    const who = document.getElementById(`sub-${pi}-${ri}-${day}`).value;
+    const c = clashes(D.periods[pi]).find(x => x.ri === +ri && x.day === day);
+    const who = subPick[`${pi}|${ri}|${day}`] ?? (c ? c.rec : '');
     const role = D.roles[ri].name, orig = D.periods[pi].who[ri];
     if (!who) return toast('대체자를 골라 주세요');
     run('addLeave', [{ start: day, end: '', names: [who], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${who}`);
@@ -710,22 +750,11 @@ document.addEventListener('click', async e => {
   }
 });
 
-document.addEventListener('change', e => {
-  const s = e.target;
-  if (s.dataset.subi !== undefined) {                                 // 대체자 바꾸기
-    const l = D.leaves[s.dataset.subi];
-    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [s.value], kind: '대체', time: '', memo: l.memo }],
-      `${md(l.start)} 대체 → ${s.value}`);
-  } else if (s.dataset.p !== undefined) {                             // 기간 담당자 바꾸기
-    const p = D.periods[s.dataset.p], r = D.roles[s.dataset.r];
-    run('setRotation', [r.row, p.col, s.value, p.who[s.dataset.r]], `${r.name} → ${s.value || '비움'}`);
-  }
-});
 
 $('#picker').addEventListener('click', e => { if (e.target.id === 'picker') closePicker(); });
 // 구분·이름 목록: 바깥을 누르면 닫힘
 document.addEventListener('click', e => {
-  document.querySelectorAll('.pick details[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+  document.querySelectorAll(':is(.pick details, details.dd)[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
 });   // 바깥 누르면 닫힘
 
 // ── 테마: 자동(◐) → 라이트(☀) → 다크(☾). 기기에 기억 ──
