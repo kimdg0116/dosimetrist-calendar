@@ -160,7 +160,9 @@ details .chip.on::after { content:'✓'; }
 #gNames button:first-child { border-top:0; }
 #gNames button.on { color:var(--acc); font-weight:700; } #gNames button.on::after { content:'✓'; }
 #gMsg { min-height:20px; margin-top:10px; text-align:center; font-size:14px; color:var(--red); }
-.top .btns { display:flex; gap:8px; }
+.top .btns { display:flex; align-items:center; gap:8px; }
+.me-tag { padding:5px 10px; font-size:13px; font-weight:600; border-radius:999px; background:var(--card); color:var(--acc); border:1px solid var(--line); white-space:nowrap; }
+#gWarn { margin:10px 0 0; font-size:13px; text-align:center; color:var(--mute); }
 
 /* 날짜 고르기: 공휴일·일요일 빨강, 토요일 파랑 */
 #picker { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,60,.4); }
@@ -182,7 +184,7 @@ details .chip.on::after { content:'✓'; }
 <div class="top">
   <div class="brand">DOSIMETRIST CALENDAR</div>
   <div class="btns">
-    <button type="button" id="me" class="icon-btn" aria-label="내 이름">👤</button>
+    <span id="meName" class="me-tag" hidden></span>
     <button type="button" id="theme" class="icon-btn" aria-label="테마"></button>
   </div>
 </div>
@@ -230,7 +232,8 @@ details .chip.on::after { content:'✓'; }
   <div id="gStep2" hidden>
     <label>본인 이름을 골라 주세요</label>
     <div id="gNames"></div>
-    <button type="button" class="sub" id="gRecode" style="margin-top:10px">접근 코드 다시 입력</button>
+    <p id="gWarn">한 번 정하면 바꿀 수 없습니다</p>
+    <button type="button" class="main" id="gMeOk" disabled>이름을 골라 주세요</button>
   </div>
   <div id="gMsg"></div>
 </div></div>
@@ -338,7 +341,7 @@ async function run(fn, args, msg) {
   toast('저장 중…');
   try {
     const r = await call(fn, ...args);
-    D = r.data; render();
+    setData(r.data);
     toast(msg);
     if (fn !== 'addPeriod') syncCalendar();
     return true;
@@ -348,10 +351,18 @@ async function run(fn, args, msg) {
   }
 }
 
-async function load() {
-  try { D = await call('getData'); render(); }
-  catch (e) { $('#todayWork').innerHTML = `<span class="empty">불러오기 실패: ${esc(e.message)}</span>`; }
+function setData(d) {
+  D = d; render();
+  try { localStorage.setItem('data', JSON.stringify(d)); } catch (e) {}
 }
+async function load() {
+  try { setData(await call('getData')); }
+  catch (e) {
+    if (D) toast('최신 내용을 못 불러왔습니다: ' + e.message);       // 저장본은 그대로 보여준다
+    else $('#todayWork').innerHTML = `<span class="empty">불러오기 실패: ${esc(e.message)}</span>`;
+  }
+}
+const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 
 // 맨 위 두 카드: 옆으로 넘겨 다른 날 보기 (서버가 지난 30일치까지 보낸다)
 let dayOff = 0;
@@ -623,21 +634,26 @@ function setTheme(t) {
 setTheme(theme);
 
 // ── 첫 화면: 접근 코드 → 본인 이름 (한 번만) ──
+let pickMe = '';
+function showMe() { $('#meName').hidden = !auth.me; $('#meName').textContent = auth.me || ''; }
 function showGate(step, msg) {
   $('#gate').hidden = false;
   $('#gStep1').hidden = step !== 1; $('#gStep2').hidden = step !== 2;
   $('#gMsg').textContent = msg || '';
   if (step === 1) { $('#gCode').value = ''; setTimeout(() => $('#gCode').focus(), 50); }
-  if (step === 2) $('#gNames').innerHTML = D.people.map(n =>
-    `<button type="button" class="${n === auth.me ? 'on' : ''}" data-me="${esc(n)}">${esc(n)}</button>`).join('');
+  if (step === 2) {
+    pickMe = '';
+    $('#gNames').innerHTML = D.people.map(n => `<button type="button" data-me="${esc(n)}">${esc(n)}</button>`).join('');
+    $('#gMeOk').disabled = true; $('#gMeOk').textContent = '이름을 골라 주세요';
+  }
 }
 async function submitCode() {
   const code = $('#gCode').value.trim();
   if (!/^\d{6}$/.test(code)) { $('#gMsg').textContent = '6자리 숫자를 넣어 주세요'; return; }
   auth.code = code; $('#gMsg').textContent = '확인 중…';
   try {
-    D = await call('getData');
-    saveAuth(); render(); initForm();
+    setData(await call('getData'));
+    saveAuth(); initForm();
     if (auth.me) $('#gate').hidden = true; else showGate(2);
   } catch (e) {
     if (auth.code) $('#gMsg').textContent = e.message;               // 코드가 틀린 경우는 call() 이 이미 안내
@@ -648,17 +664,25 @@ $('#gCode').addEventListener('keydown', e => { if (e.key === 'Enter') submitCode
 $('#gate').addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
-  if (b.dataset.me) { auth.me = b.dataset.me; saveAuth(); $('#gate').hidden = true; toast(`${auth.me} 님으로 설정됨`); }
-  else if (b.id === 'gRecode') showGate(1);
+  if (b.dataset.me) {
+    pickMe = b.dataset.me;
+    document.querySelectorAll('#gNames button').forEach(x => x.classList.toggle('on', x === b));
+    $('#gMeOk').disabled = false; $('#gMeOk').textContent = `${pickMe} 님으로 시작`;
+  } else if (b.id === 'gMeOk' && pickMe) {
+    auth.me = pickMe; saveAuth(); showMe(); $('#gate').hidden = true;
+  }
 });
-$('#me').addEventListener('click', () => { if (D) showGate(2); });
 
 function initForm() {
   if (!getD('fStart')) setD('fStart', D.today);
   setD('fEnd', getD('fEnd'));
 }
 async function start() {
+  showMe();
   if (!auth.code) return showGate(1);
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('data') || 'null'); } catch (e) {}
+  if (saved) { D = saved; D.today = localToday(); render(); initForm(); }   // 저장본으로 바로 그리기
   await load();
   if (D) { initForm(); if (!auth.me) showGate(2); }
 }
