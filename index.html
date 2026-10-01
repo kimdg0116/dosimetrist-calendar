@@ -106,8 +106,15 @@ details { margin-top:12px; border:1px solid var(--line); border-radius:10px; bac
 summary { display:flex; justify-content:space-between; gap:8px; padding:11px 12px; list-style:none; cursor:pointer; }
 summary::-webkit-details-marker { display:none; }
 summary span { color:var(--mute); font-size:14px; font-weight:600; }
-summary b { font-weight:600; text-align:right; } summary b::after { content:' ▾'; color:var(--mute); }
-details[open] summary b::after { content:' ▴'; }
+summary b { min-width:0; font-weight:600; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+summary::after { content:'▾'; flex:none; margin-left:-4px; color:var(--mute); }
+summary span { flex:none; }
+/* 구분 · 이름을 한 줄에 나란히 */
+.pick { display:flex; gap:8px; align-items:flex-start; }
+.pick > details { flex:1; min-width:0; }
+.pick > details.has summary span { display:none; }                  /* 고르면 '구분'·'이름' 글자는 숨겨 값이 다 보이게 */
+.pick > details.has summary b { flex:1; text-align:left; }
+details[open] summary::after { content:'▴'; }
 details .chips { padding:0 12px 12px; }
 .chips { display:flex; flex-wrap:wrap; gap:6px; }
 .chip { padding:7px 12px; font-size:15px; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--fg); }
@@ -226,9 +233,11 @@ details .chip.on::after { content:'✓'; }
 <div id="leave" hidden>
   <div class="card">
     <h3 id="fTitle">일정 추가</h3>
-    <details id="dKind"><summary><span>구분</span><b id="sKind">선택</b></summary><div class="chips" id="fKind"></div></details>
+    <div class="pick">
+      <details id="dKind"><summary><span>구분</span><b id="sKind">선택</b></summary><div class="chips" id="fKind"></div></details>
+      <details id="dNames"><summary><span>이름</span><b id="sNames">선택</b></summary><div class="chips" id="fNames"></div></details>
+    </div>
     <div class="seg" id="wMode" hidden><button data-a="day" class="on">종일</button><button data-a="hour">시간 단위</button></div>
-    <details id="dNames"><summary><span>이름</span><b id="sNames">선택</b></summary><div class="chips" id="fNames"></div></details>
     <div class="two">
       <div><label>시작일</label><button type="button" class="datebtn" id="fStart" data-open="fStart"></button></div>
       <div id="wEnd"><label>종료일 (하루면 비움)</label><button type="button" class="datebtn" id="fEnd" data-open="fEnd"></button></div>
@@ -270,7 +279,7 @@ details .chip.on::after { content:'✓'; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-2';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-3';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // ── 확대 막기: 두 손가락 핀치, 빈 곳 더블탭 (웬들러와 같은 방식) ──
 (() => {
@@ -505,7 +514,8 @@ function render() {
 // ── 일정 입력 폼: 구분에 따라 칸이 바뀐다 ──
 const hourly = () => kind && mode === 'hour';
 function applyKind() {
-  $('#sKind').textContent = kind ? `${kind} · ${hourly() ? '시간 단위' : '종일'}` : '선택';
+  $('#sKind').textContent = kind || '선택';
+  $('#dKind').classList.toggle('has', !!kind);                          // 종일/시간 단위는 바로 아래 버튼에 보인다
   document.querySelectorAll('#fKind .chip').forEach(x => x.classList.toggle('on', x.dataset.k === kind));
   document.querySelectorAll('#wMode button').forEach(x => x.classList.toggle('on', x.dataset.a === mode));
   $('#wMode').hidden = !kind;
@@ -515,7 +525,9 @@ function applyKind() {
   $('#fMemo').placeholder = kind === '기타' ? '예: 건강검진' : '예: 학회';
 }
 function applyNames() {
-  $('#sNames').textContent = names.size ? [...names].join(', ') : '선택';
+  const n = [...names];
+  $('#sNames').textContent = !n.length ? '선택' : n.length === 1 ? n[0] : `${n[0]} 외 ${n.length - 1}명`;
+  $('#dNames').classList.toggle('has', n.length > 0);
 }
 function plusHours(t, h) {
   const [hh, mm] = t.split(':').map(Number);
