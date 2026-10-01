@@ -177,12 +177,16 @@ details .chip.on::after { content:'✓'; }
 .wrow:first-of-type { border-top:0; }
 .wrow.today { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
 .wrow.today .kind { background:var(--card); }
+.wrow.today .ev2.editing { background:var(--card); }
 .wd { flex:0 0 64px; font-weight:700; }
 .wd small { display:block; font-size:12px; font-weight:500; }
 .wevs { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
-.wev { cursor:pointer; }
-.wev .names { margin-top:4px; font-size:16px; }
-.wev small { display:block; margin-top:3px; font-size:13px; color:var(--mute); }
+.ev2 { cursor:pointer; }
+.ev2 .names { margin-top:4px; font-size:16px; }
+.ev2 .names.some { font-size:15px; } .ev2 .names.many { font-size:14px; gap:2px 8px; }
+.ev2 small { display:block; margin-top:3px; font-size:13px; color:var(--mute); }
+.ev2.editing { margin:-4px -6px; padding:4px 6px; border-radius:8px; background:var(--soft); }
+.wd { flex:0 0 70px; }
 .mgrid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:2px; }
 .mdow { padding:2px 0 6px; text-align:center; font-size:12px; font-weight:600; color:var(--mute); }
 .mc { display:flex; flex-direction:column; align-items:stretch; gap:2px; min-height:62px; padding:4px 2px; border:0; border-radius:8px; background:none; color:var(--fg); text-align:center; overflow:hidden; }
@@ -192,8 +196,7 @@ details .chip.on::after { content:'✓'; }
 .mc i.more { background:none; color:var(--mute); }
 .mc.today .dn { color:var(--acc); text-decoration:underline; text-underline-offset:3px; }
 .mc.sel { background:var(--soft); box-shadow:inset 0 0 0 1.5px var(--acc); }
-.msel { margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
-.msel h3 { color:var(--fg); }
+.msel { margin-top:12px; padding-top:2px; border-top:1px solid var(--line); }
 .item .what .names { margin-top:5px; font-size:16px; }
 .item .what .names.some { font-size:15px; } .item .what .names.many { font-size:14px; gap:2px 8px; }
 .item .what small { margin-top:4px; }
@@ -207,6 +210,8 @@ footer { margin-top:28px; }
 #fTitle { scroll-margin-top:76px; }                               /* 상단 바에 가리지 않게 */
 .del { padding:6px 6px; font-size:14px; font-weight:600; border:0; border-radius:8px; background:none; color:var(--warn); }
 .del.armed { padding:6px 12px; background:var(--warn); color:#fff; }
+.sub.del-sub { color:var(--warn); border-color:color-mix(in srgb, var(--warn) 40%, transparent); }
+.sub.del-sub.armed { background:var(--warn); color:#fff; border-style:solid; }
 .red { color:var(--red); }
 .sat { color:var(--blue); }
 
@@ -300,7 +305,10 @@ footer { margin-top:28px; }
     <label id="lMemo">내용 (선택)</label><input id="fMemo">
     <label for="fPlace">장소 (선택)</label><input id="fPlace" placeholder="예: 본관 지하 2층 회의실">
     <button class="main" id="save">저장</button>
-    <button class="sub" id="cancelEdit" style="margin-top:8px" hidden>수정 취소</button>
+    <div class="two" id="editBtns" style="margin-top:8px" hidden>
+      <div><button class="sub" id="cancelEdit">수정 취소</button></div>
+      <div><button class="sub del-sub" id="delEdit">삭제</button></div>
+    </div>
   </div>
   <div class="card">
     <div class="lhead"><h3>다가오는 일정</h3>
@@ -334,7 +342,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-8';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-9';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -565,12 +573,16 @@ function render() {
 // ── 다가오는 일정: 목록 / 주 / 월 ──
 let calView = 'list', calAnchor = '', calSel = '';
 try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
-const itemHtml = (l, i) => `
-    <div class="item${editing && editing.row === l.row ? ' editing' : ''}"><div class="t" data-edit="${i}">
-      <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}${l.time ? `<i class="w-tm">${fmtTime(l.time)}</i>` : ''}${l.place ? `<i class="w-pl">📍 ${esc(l.place)}</i>` : ''}</span>
-      <span class="what"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-        ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}</span></div>
-      <button class="del" data-i="${i}">삭제</button></div>`;
+// 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
+const evHtml = (l, i) => {
+  const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time), l.place && '📍 ' + esc(l.place)].filter(Boolean);
+  return `<div class="ev2${editing && editing.row === l.row ? ' editing' : ''}" data-edit="${i}">
+    <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
+    ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>`;
+};
+// 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
+const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
+  <div class="wevs">${evs.length ? evs.map(({ l, i }) => evHtml(l, i)).join('') : '<span class="empty">—</span>'}</div></div>`;
 const evOn = day => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.start <= day && day <= l.end);   // 대체는 업무 탭에서 관리
 const short = l => {                                                  // 달력 칸에 들어갈 짧은 이름 (여러 명이면 '박병석+5')
   const n = l.name.split(/,\s*/).filter(Boolean);
@@ -582,8 +594,14 @@ function renderLeaves() {
   document.querySelectorAll('#vSeg button').forEach(b => b.classList.toggle('on', b.dataset.cv === calView));
   if (!calAnchor) calAnchor = calSel = D.today;
   if (calView === 'list') {
-    const list = D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.end >= D.today);
-    $('#leaves').innerHTML = list.length ? list.map(({ l, i }) => itemHtml(l, i)).join('') : '<span class="empty">없음</span>';
+    // 오늘부터, 일정 있는 날만 날짜별로 묶는다 (여러 날 일정은 시작일에 한 번, 이미 시작했으면 오늘에)
+    const by = {};
+    D.leaves.forEach((l, i) => {
+      if (l.kind === '대체' || l.end < D.today) return;
+      (by[l.start < D.today ? D.today : l.start] ||= []).push({ l, i });
+    });
+    const days = Object.keys(by).sort();
+    $('#leaves').innerHTML = days.length ? days.map(v => dayRow(v, by[v])).join('') : '<span class="empty">없음</span>';
     return;
   }
   const a = new Date(calAnchor + 'T00:00');
@@ -591,13 +609,7 @@ function renderLeaves() {
     const sun = addDays(calAnchor, -a.getDay());
     const days = [0, 1, 2, 3, 4, 5, 6].map(n => addDays(sun, n));
     $('#leaves').innerHTML = `<div class="cnav"><button data-cn="-1">‹</button><b>${mdNum(days[0])} ~ ${mdNum(days[6])}</b><button data-cn="1">›</button></div>`
-      + days.map(v => {
-        const evs = evOn(v);
-        return `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
-          <div class="wevs">${evs.length ? evs.map(({ l, i }) => `<div class="wev" data-edit="${i}"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-            ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}${l.time || l.place ? `<small>${[l.time && fmtTime(l.time), l.place && '📍 ' + esc(l.place)].filter(Boolean).join(' · ')}</small>` : ''}</div>`).join('')
-            : '<span class="empty">—</span>'}</div></div>`;
-      }).join('');
+      + days.map(v => dayRow(v, evOn(v))).join('');
     return;
   }
   // 월: 칸마다 짧은 이름 2개까지, 날짜를 누르면 아래에 그날 일정
@@ -612,8 +624,7 @@ function renderLeaves() {
   const selEvs = sel ? evOn(sel) : [];
   $('#leaves').innerHTML = `<div class="cnav"><button data-cn="-1">‹</button><b>${y}년 ${m + 1}월</b><button data-cn="1">›</button></div>
     <div class="mgrid">${cells}</div>`
-    + (sel ? `<div class="msel"><h3>${mdh(sel)}${D.holidays[sel] ? ` <span class="red">${esc(D.holidays[sel])}</span>` : ''}</h3>
-      ${selEvs.length ? selEvs.map(({ l, i }) => itemHtml(l, i)).join('') : '<span class="empty">일정 없음</span>'}</div>` : '');
+    + (sel ? `<div class="msel">${dayRow(sel, selEvs)}</div>` : '');
 }
 function moveCal(n) {
   const a = new Date(calAnchor + 'T00:00');
@@ -735,7 +746,7 @@ function resetForm() {
   setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = ''; $('#fPlace').value = '';
   setTime('09:00', 1);
   document.querySelectorAll('#fNames .chip.on').forEach(x => x.classList.remove('on'));
-  $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#cancelEdit').hidden = true;
+  $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#editBtns').hidden = true;
   applyKind(); applyNames();
   document.querySelectorAll('.item.editing').forEach(x => x.classList.remove('editing'));
 }
@@ -751,7 +762,7 @@ function startEdit(l) {
   setD('fStart', l.start); setD('fEnd', l.end !== l.start ? l.end : '');
   $('#fMemo').value = l.memo; $('#fPlace').value = l.place || '';
   document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
-  $('#fTitle').textContent = '일정 수정'; $('#save').textContent = '수정 저장'; $('#cancelEdit').hidden = false;
+  $('#fTitle').textContent = '일정 수정'; $('#save').textContent = '수정 저장'; $('#editBtns').hidden = false;
   applyKind(); applyNames(); render();
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.tab === 'leave'));
   $('#leave').hidden = false; $('#rot').hidden = true;
@@ -821,6 +832,13 @@ document.addEventListener('click', async e => {
     const ok = editing ? await run('updateLeave', [editing.row, editing.sig, f], '수정됨') : await run('addLeave', [f], '저장됨');
     if (ok) resetForm();
     b.disabled = false;
+  } else if (b.id === 'delEdit') {
+    if (!b.classList.contains('armed')) {                            // 두 번 누르기
+      b.classList.add('armed'); b.textContent = '한 번 더 누르면 삭제';
+      return setTimeout(() => { b.classList.remove('armed'); b.textContent = '삭제'; }, 3000);
+    }
+    b.classList.remove('armed'); b.textContent = '삭제';
+    if (await run('deleteLeave', [editing.row, editing.sig], '삭제됨')) resetForm();
   } else if (b.id === 'cancelEdit') {
     resetForm();
   } else if (b.dataset.open) {
