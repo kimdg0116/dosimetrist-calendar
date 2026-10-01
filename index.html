@@ -80,6 +80,14 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .day h3 button { min-width:34px; height:32px; padding:0 10px; font-size:17px; line-height:1; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
 .day h3 button:disabled { opacity:.3; }
 .day h3 .back { font-size:13px; font-weight:600; color:var(--acc); }
+.day h3 .cal svg { display:block; width:17px; height:17px; }
+/* 업무 줄을 누르면 그날만 대신 설 사람 목록 */
+.day details.line-dd { margin:0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; }
+.day details.line-dd:first-of-type { border-top:0; }
+.day .line-dd summary { justify-content:flex-start; align-items:baseline; gap:8px; padding:8px 0; font-size:18px; font-weight:700; }
+.day .line-dd summary > b { flex:0 0 116px; font-size:15px; font-weight:500; color:var(--mute); text-align:left; }
+.day .line-dd summary > span { flex:1; min-width:0; color:var(--fg); font-size:18px; font-weight:700; }
+.day .line-dd summary small { font-size:13px; font-weight:500; color:var(--mute); }
 .day .line { display:flex; align-items:baseline; gap:8px; padding:8px 0; font-size:18px; font-weight:700; border-top:1px solid var(--line); }
 .day .line:first-of-type { border-top:0; }
 .day .line b { flex:0 0 116px; min-width:0; font-size:15px; font-weight:500; color:var(--mute); }
@@ -339,6 +347,7 @@ footer { margin-top:28px; }
   </div>
   <div id="gMsg"></div>
 </div></div>
+<span id="dayPick" hidden></span>
 <div id="picker" hidden><div class="sheet">
   <div class="head"><button type="button" data-pm="-1">‹</button><b id="pTitle"></b><button type="button" data-pm="1">›</button></div>
   <div class="grid" id="pGrid"></div>
@@ -347,7 +356,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-1';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-2';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -524,6 +533,7 @@ function renderDay() {
   const hol = D.holidays[day];
   const head = what => `<h3><span class="t"><span class="ttl">${word ? word + ' ' : ''}${what}</span><span class="dt">${mdh(day)}${hol ? ` <span class="red">${esc(hol)}</span>` : ''}</span></span>`
     + (dayOff ? '<button class="back" data-day="0">오늘</button>' : '')
+    + '<button class="cal" data-daycal="1" aria-label="날짜 고르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>'
     + `<button data-day="-1"${dayOff > MIN_OFF ? '' : ' disabled'}>‹</button><button data-day="1"${dayOff < MAX_OFF ? '' : ' disabled'}>›</button></h3>`;
   const cur = D.periods.find(p => p.start <= day && day <= p.end);
   $('#todayWork').innerHTML = head('업무') + (cur ? D.roles.map((r, i) => {
@@ -531,7 +541,12 @@ function renderDay() {
     const out = !s && cur.who[i] && away(cur.who[i], day);
     const v = s ? `${esc(s.who)} <small>(← ${esc(s.orig)})</small>`
       : esc(cur.who[i]) + (out ? ` <small class="red">(${esc(out.kind)} · 대체 없음)</small>` : '');
-    return s || cur.who[i] ? `<div class="line"><b>${esc(r.name)}</b>${v}</div>` : '';
+    if (!cur.who[i]) return s ? `<div class="line"><b>${esc(r.name)}</b>${v}</div>` : '';
+    const orig = cur.who[i], opts = D.people.includes(orig) ? D.people : [orig, ...D.people];
+    return dd(`day|${i}|${day}`, opts.map(n => {                     // 누르면 그날만 대신 설 사람 고르기
+      const a = away(n, day);
+      return { v: n, t: n + (n === orig ? ' (원래 담당)' : a ? ` (${a.kind})` : '') };
+    }), s ? s.who : orig, '', `<b>${esc(r.name)}</b><span>${v}</span>`, ' line-dd');
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
   const list = D.leaves.filter(l => l.kind !== '대체' && l.start <= day && day <= l.end);
   $('#todayLeave').innerHTML = head('일정') + (list.length
@@ -544,6 +559,12 @@ function renderDay() {
         ${l.place ? `<div class="ev-sub">📍 ${esc(l.place)}</div>` : ''}</div>`;
     }).join('')
     : '<span class="empty">없음</span>');
+}
+// 달력에서 고른 날로 바로 (서버가 주는 범위 안에서만)
+function goDay(v) {
+  const n = Math.round((new Date(v + 'T00:00') - new Date(D.today + 'T00:00')) / 864e5);
+  if (n < MIN_OFF || n > MAX_OFF) return toast('지난 30일 ~ 앞으로 60일까지만 볼 수 있어요');
+  dayOff = n; renderDay();
 }
 function moveDay(n) {
   dayOff = n === 0 ? 0 : Math.min(MAX_OFF, Math.max(MIN_OFF, dayOff + n));
@@ -661,9 +682,9 @@ function moveCal(n) {
 let openSub = null;                                                    // 업무 탭에서 열어 둔 대체 근무 (D.leaves 번호)
 // 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
 const subPick = {};                                                    // 겹침 경고에서 고른 대체자 (대체 버튼 누르기 전)
-function dd(key, opts, value, empty = '—') {
+function dd(key, opts, value, empty = '—', sum = '', cls = '') {
   const cur = opts.find(o => o.v === value);
-  return `<details class="dd" data-dd="${esc(key)}"><summary><b>${esc(cur ? cur.t : empty)}</b></summary>
+  return `<details class="dd${cls}" data-dd="${esc(key)}"><summary>${sum || `<b>${esc(cur ? cur.t : empty)}</b>`}</summary>
     <div class="chips">${opts.map(o => `<button type="button" class="chip${o.v === value ? ' on' : ''}" data-ddv="${esc(o.v)}">${esc(o.t)}</button>`).join('')}</div></details>`;
 }
 function onDd(key, v) {
@@ -673,6 +694,13 @@ function onDd(key, v) {
     run('setRotation', [r.row, p.col, v, p.who[a[1]]], `${r.name} → ${v || '비움'}`);
   } else if (type === 'sub') {                                         // 대체자 고르기 (저장은 대체 버튼)
     subPick[a.join('|')] = v; render();
+  } else if (type === 'day') {                                         // 맨 위 업무 줄: 그날만 바꾸기 (원래 담당을 고르면 되돌림)
+    const [ri, day] = a, role = D.roles[ri].name, orig = D.periods.find(p => p.start <= day && day <= p.end).who[ri];
+    const s = subFor(role, day), l = s && D.leaves[s.i];
+    if (v === (s ? s.who : orig)) return;
+    if (v === orig) run('deleteLeave', [l.row, l.sig], `${md(day)} ${role} → ${orig} (되돌림)`);
+    else if (l) run('updateLeave', [l.row, l.sig, { start: day, end: '', names: [v], kind: '대체', time: '', memo: l.memo }], `${md(day)} ${role} → ${v}`);
+    else run('addLeave', [{ start: day, end: '', names: [v], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${v}`);
   } else if (type === 'subi') {                                        // 이미 정한 대체자 바꾸기
     const l = D.leaves[a[0]];
     openSub = null;
@@ -737,6 +765,7 @@ document.addEventListener('toggle', e => {                          // 어느 �
 // ── 날짜 고르기 (기본 달력은 공휴일을 칠할 수 없어서 직접 그린다) ──
 const getD = id => $('#' + id).dataset.v || '';
 function setD(id, v) {
+  if (id === 'dayPick') return goDay(v);
   const b = $('#' + id);
   b.dataset.v = v;
   b.classList.toggle('none', !v);
@@ -746,7 +775,7 @@ let pick = {};
 function openPicker(id) {
   const v = getD(id) || getD('fStart') || D.today;
   pick = { id, y: +v.slice(0, 4), m: +v.slice(5, 7) - 1 };
-  $('#pClear').hidden = id === 'fStart';
+  $('#pClear').hidden = id === 'fStart' || id === 'dayPick';
   drawPicker(); $('#picker').hidden = false;
 }
 function drawPicker() {
@@ -891,6 +920,8 @@ document.addEventListener('click', async e => {
     closePicker();
   } else if (b.id === 'theme') {
     setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]);
+  } else if (b.dataset.daycal) {
+    $('#dayPick').dataset.v = addDays(D.today, dayOff); openPicker('dayPick');
   } else if (b.dataset.day !== undefined) {
     moveDay(+b.dataset.day);
   } else if (b.id === 'addPeriod') {
