@@ -164,6 +164,36 @@ details .chip.on::after { content:'✓'; }
 .item .when .w-tm { color:var(--fg); font-weight:600; }
 .item .when small { display:block; font-size:inherit; font-weight:inherit; color:inherit; }
 .item .what { flex:1; min-width:0; }
+/* 다가오는 일정: 목록 / 주 / 월 */
+.lhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.lhead h3 { margin:0; }
+.vseg { display:flex; gap:2px; padding:3px; border-radius:10px; background:var(--bg); border:1px solid var(--line); }
+.vseg button { padding:5px 12px; font-size:14px; border:0; border-radius:7px; background:none; color:var(--mute); }
+.vseg button.on { background:var(--card); color:var(--acc); font-weight:700; box-shadow:0 1px 4px rgba(20,40,160,.15); }
+.cnav { display:flex; align-items:center; justify-content:space-between; margin:4px 0 10px; }
+.cnav b { font-size:16px; }
+.cnav button { min-width:36px; height:32px; font-size:17px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+.wrow { display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--line); }
+.wrow:first-of-type { border-top:0; }
+.wrow.today { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
+.wrow.today .kind { background:var(--card); }
+.wd { flex:0 0 64px; font-weight:700; }
+.wd small { display:block; font-size:12px; font-weight:500; }
+.wevs { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.wev { cursor:pointer; }
+.wev .names { margin-top:4px; font-size:16px; }
+.wev small { display:block; margin-top:3px; font-size:13px; color:var(--mute); }
+.mgrid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:2px; }
+.mdow { padding:2px 0 6px; text-align:center; font-size:12px; font-weight:600; color:var(--mute); }
+.mc { display:flex; flex-direction:column; align-items:stretch; gap:2px; min-height:62px; padding:4px 2px; border:0; border-radius:8px; background:none; color:var(--fg); text-align:center; overflow:hidden; }
+.mc .dn { font-size:13px; font-weight:600; }
+.mc i { display:block; padding:1px 2px; font-style:normal; font-size:10px; font-weight:600; line-height:1.35; border-radius:4px; background:var(--soft); color:var(--acc);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mc i.more { background:none; color:var(--mute); }
+.mc.today .dn { color:var(--acc); text-decoration:underline; text-underline-offset:3px; }
+.mc.sel { background:var(--soft); box-shadow:inset 0 0 0 1.5px var(--acc); }
+.msel { margin-top:12px; padding-top:10px; border-top:1px solid var(--line); }
+.msel h3 { color:var(--fg); }
 .item .what .names { margin-top:5px; font-size:16px; }
 .item .what .names.some { font-size:15px; } .item .what .names.many { font-size:14px; gap:2px 8px; }
 .item .what small { margin-top:4px; }
@@ -272,7 +302,10 @@ footer { margin-top:28px; }
     <button class="main" id="save">저장</button>
     <button class="sub" id="cancelEdit" style="margin-top:8px" hidden>수정 취소</button>
   </div>
-  <div class="card"><h3>다가오는 일정</h3><div id="leaves"></div></div>
+  <div class="card">
+    <div class="lhead"><h3>다가오는 일정</h3>
+      <div class="vseg" id="vSeg"><button data-cv="list">목록</button><button data-cv="week">주</button><button data-cv="month">월</button></div></div>
+    <div id="leaves"></div></div>
 </div>
 <footer><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
@@ -301,7 +334,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-7';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-8';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -503,13 +536,7 @@ function render() {
 
   $('#fNames').innerHTML = [ALL, ...D.people].map(n => `<button class="chip${names.has(n) ? ' on' : ''}" data-n="${esc(n)}">${esc(n)}</button>`).join('');
 
-  const list = D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.end >= D.today);   // 대체는 업무 탭에서 관리
-  $('#leaves').innerHTML = list.length ? list.map(({ l, i }) => `
-    <div class="item${editing && editing.row === l.row ? ' editing' : ''}"><div class="t" data-edit="${i}">
-      <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}${l.time ? `<i class="w-tm">${fmtTime(l.time)}</i>` : ''}${l.place ? `<i class="w-pl">📍 ${esc(l.place)}</i>` : ''}</span>
-      <span class="what"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-        ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}</span></div>
-      <button class="del" data-i="${i}">삭제</button></div>`).join('') : '<span class="empty">없음</span>';
+  renderLeaves();
 
   $('#periods').innerHTML = D.periods.map((p, pi) => p.end < D.today ? '' : `
     <div class="card"><h3>${mdNum(p.start)} ~ ${mdNum(p.end)}${p === cur ? ' · 지금' : ''}</h3>
@@ -533,6 +560,66 @@ function render() {
           <div><button class="del" data-i="${s.i}">삭제</button></div></div></div>`;
       }).join('')}
     </div>`).join('') || '<div class="card empty">남은 기간이 없습니다. 아래 버튼으로 추가하세요.</div>';
+}
+
+// ── 다가오는 일정: 목록 / 주 / 월 ──
+let calView = 'list', calAnchor = '', calSel = '';
+try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
+const itemHtml = (l, i) => `
+    <div class="item${editing && editing.row === l.row ? ' editing' : ''}"><div class="t" data-edit="${i}">
+      <span class="when">${mdh(l.start)}${l.end !== l.start ? `<small>~ ${mdh(l.end)}</small>` : ''}${l.time ? `<i class="w-tm">${fmtTime(l.time)}</i>` : ''}${l.place ? `<i class="w-pl">📍 ${esc(l.place)}</i>` : ''}</span>
+      <span class="what"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
+        ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}</span></div>
+      <button class="del" data-i="${i}">삭제</button></div>`;
+const evOn = day => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.start <= day && day <= l.end);   // 대체는 업무 탭에서 관리
+const short = l => {                                                  // 달력 칸에 들어갈 짧은 이름 (여러 명이면 '박병석+5')
+  const n = l.name.split(/,\s*/).filter(Boolean);
+  return n.length > 1 ? `${n[0]}+${n.length - 1}` : n[0] || l.memo || l.kind;
+};
+const dayCls = v => D.holidays[v] || new Date(v + 'T00:00').getDay() === 0 ? 'red' : new Date(v + 'T00:00').getDay() === 6 ? 'sat' : '';
+
+function renderLeaves() {
+  document.querySelectorAll('#vSeg button').forEach(b => b.classList.toggle('on', b.dataset.cv === calView));
+  if (!calAnchor) calAnchor = calSel = D.today;
+  if (calView === 'list') {
+    const list = D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.end >= D.today);
+    $('#leaves').innerHTML = list.length ? list.map(({ l, i }) => itemHtml(l, i)).join('') : '<span class="empty">없음</span>';
+    return;
+  }
+  const a = new Date(calAnchor + 'T00:00');
+  if (calView === 'week') {                                            // 일요일부터 7일
+    const sun = addDays(calAnchor, -a.getDay());
+    const days = [0, 1, 2, 3, 4, 5, 6].map(n => addDays(sun, n));
+    $('#leaves').innerHTML = `<div class="cnav"><button data-cn="-1">‹</button><b>${mdNum(days[0])} ~ ${mdNum(days[6])}</b><button data-cn="1">›</button></div>`
+      + days.map(v => {
+        const evs = evOn(v);
+        return `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
+          <div class="wevs">${evs.length ? evs.map(({ l, i }) => `<div class="wev" data-edit="${i}"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
+            ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}${l.time || l.place ? `<small>${[l.time && fmtTime(l.time), l.place && '📍 ' + esc(l.place)].filter(Boolean).join(' · ')}</small>` : ''}</div>`).join('')
+            : '<span class="empty">—</span>'}</div></div>`;
+      }).join('');
+    return;
+  }
+  // 월: 칸마다 짧은 이름 2개까지, 날짜를 누르면 아래에 그날 일정
+  const y = a.getFullYear(), m = a.getMonth(), first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
+  let cells = [...DOW].map((w, k) => `<span class="mdow${k === 0 ? ' red' : k === 6 ? ' sat' : ''}">${w}</span>`).join('') + '<span></span>'.repeat(first);
+  for (let d = 1; d <= n; d++) {
+    const v = `${y}-${pad(m + 1)}-${pad(d)}`, evs = evOn(v);
+    cells += `<button type="button" class="mc${v === D.today ? ' today' : ''}${v === calSel ? ' sel' : ''}" data-cd="${v}">
+      <span class="dn ${dayCls(v)}">${d}</span>${evs.slice(0, 2).map(({ l }) => `<i>${esc(short(l))}</i>`).join('')}${evs.length > 2 ? `<i class="more">+${evs.length - 2}</i>` : ''}</button>`;
+  }
+  const sel = calSel.slice(0, 7) === `${y}-${pad(m + 1)}` ? calSel : '';
+  const selEvs = sel ? evOn(sel) : [];
+  $('#leaves').innerHTML = `<div class="cnav"><button data-cn="-1">‹</button><b>${y}년 ${m + 1}월</b><button data-cn="1">›</button></div>
+    <div class="mgrid">${cells}</div>`
+    + (sel ? `<div class="msel"><h3>${mdh(sel)}${D.holidays[sel] ? ` <span class="red">${esc(D.holidays[sel])}</span>` : ''}</h3>
+      ${selEvs.length ? selEvs.map(({ l, i }) => itemHtml(l, i)).join('') : '<span class="empty">일정 없음</span>'}</div>` : '');
+}
+function moveCal(n) {
+  const a = new Date(calAnchor + 'T00:00');
+  if (calView === 'week') calAnchor = addDays(calAnchor, 7 * n);
+  else { const d = new Date(a.getFullYear(), a.getMonth() + n, 1); calAnchor = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`; }
+  renderLeaves();
 }
 
 // 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
@@ -684,6 +771,14 @@ document.addEventListener('click', async e => {
     mode = ['회의', '진료'].includes(kind) ? 'hour' : 'day';         // 회의·진료는 보통 시간 단위
     if (kind) $('#dKind').open = false;                              // 고르면 접힌다
     applyKind();
+  } else if (b.dataset.cv) {
+    calView = b.dataset.cv; calAnchor = calSel = D.today;
+    try { localStorage.setItem('calView', calView); } catch (e) {}
+    renderLeaves();
+  } else if (b.dataset.cn) {
+    moveCal(+b.dataset.cn);
+  } else if (b.dataset.cd) {
+    calSel = b.dataset.cd; renderLeaves();
   } else if (b.dataset.ddv !== undefined) {
     const d = b.closest('details'); d.open = false;
     onDd(d.dataset.dd, b.dataset.ddv);
