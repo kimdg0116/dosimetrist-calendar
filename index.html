@@ -227,7 +227,12 @@ footer { margin-top:28px; }
 .clash button[data-sub] { padding:11px 16px; font-size:15px; font-weight:700; border:0; border-radius:10px; background:var(--orange); color:#fff; }
 .subst { margin-top:10px; padding:12px; border-radius:12px; background:var(--soft); border:1px solid var(--line); }
 .subst .msg { font-size:14px; margin-bottom:8px; }
-.subst .two { align-items:center; } .subst .two > div:last-child { flex:0 0 auto; }
+.subst .two { align-items:center; }
+.subst.closed { cursor:pointer; padding:10px 12px; }
+.subst.closed .msg { margin:0; }
+.subst.closed .who { color:var(--acc); }
+.subst.closed .orig { color:var(--mute); }
+.subst.closed .msg::after { content:'›'; float:right; color:var(--mute); }
 
 #toast { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:#1428a0; color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px rgba(20,40,160,.3); }
 #toast.show { opacity:.97; }
@@ -342,7 +347,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-9';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-10';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -562,10 +567,13 @@ function render() {
             subPick[`${pi}|${c.ri}|${c.day}`] ?? c.rec, '대체자 선택')}</div>
           <div><button data-sub="${pi}|${c.ri}|${c.day}">대체</button></div></div></div>`).join('')}
       ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
+        // 평소엔 한 줄, 누르면 대체자 바꾸기·삭제가 열린다 (일정 탭과 같은 방식)
+        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${esc(s.orig)} 대신</span></div></div>`;
         const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
         return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> ${esc(s.orig)} 대신</div>
-          <div class="two"><div>${dd(`subi|${s.i}`, opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n })), s.who)}</div>
-          <div><button class="del" data-i="${s.i}">삭제</button></div></div></div>`;
+          ${dd(`subi|${s.i}`, opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n })), s.who)}
+          <div class="two" style="margin-top:8px"><div><button class="sub" data-subclose="1">닫기</button></div>
+          <div><button class="sub del-sub" data-i="${s.i}">삭제</button></div></div></div>`;
       }).join('')}
     </div>`).join('') || '<div class="card empty">남은 기간이 없습니다. 아래 버튼으로 추가하세요.</div>';
 }
@@ -633,6 +641,7 @@ function moveCal(n) {
   renderLeaves();
 }
 
+let openSub = null;                                                    // 업무 탭에서 열어 둔 대체 근무 (D.leaves 번호)
 // 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
 const subPick = {};                                                    // 겹침 경고에서 고른 대체자 (대체 버튼 누르기 전)
 function dd(key, opts, value, empty = '—') {
@@ -649,6 +658,7 @@ function onDd(key, v) {
     subPick[a.join('|')] = v; render();
   } else if (type === 'subi') {                                        // 이미 정한 대체자 바꾸기
     const l = D.leaves[a[0]];
+    openSub = null;
     run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '대체', time: '', memo: l.memo }], `${md(l.start)} 대체 → ${v}`);
   }
 }
@@ -770,6 +780,8 @@ function startEdit(l) {
 }
 
 document.addEventListener('click', async e => {
+  const so = e.target.closest('[data-subopen]');
+  if (so) { openSub = +so.dataset.subopen; render(); return; }
   const ed = e.target.closest('[data-edit]');
   if (ed) return startEdit(D.leaves[ed.dataset.edit]);
   const b = e.target.closest('button');
@@ -806,12 +818,15 @@ document.addEventListener('click', async e => {
     document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
     applyNames();
   } else if (b.dataset.i) {
-    if (!b.classList.contains('armed')) {                            // confirm() 은 구글 앱 화면 안에서 막혀 있어 두 번 누르기 (두 번째는 빨간 버튼)
-      b.classList.add('armed'); b.textContent = '삭제';
+    if (!b.classList.contains('armed')) {                            // confirm() 은 구글 앱 화면 안에서 막혀 있어 두 번 누르기
+      b.classList.add('armed'); b.textContent = '한 번 더 누르면 삭제';
       return setTimeout(() => { b.classList.remove('armed'); b.textContent = '삭제'; }, 3000);
     }
     const l = D.leaves[b.dataset.i];
+    openSub = null;
     run('deleteLeave', [l.row, l.sig], '삭제됨');
+  } else if (b.dataset.subclose) {
+    openSub = null; render();
   } else if (b.dataset.sub) {
     const [pi, ri, day] = b.dataset.sub.split('|');
     const c = clashes(D.periods[pi]).find(x => x.ri === +ri && x.day === day);
