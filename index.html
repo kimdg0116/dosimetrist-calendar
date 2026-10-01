@@ -356,7 +356,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-2';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-3';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -539,8 +539,8 @@ function renderDay() {
   $('#todayWork').innerHTML = head('업무') + (cur ? D.roles.map((r, i) => {
     const s = subFor(r.name, day);
     const out = !s && cur.who[i] && away(cur.who[i], day);
-    const v = s ? `${esc(s.who)} <small>(← ${esc(s.orig)})</small>`
-      : esc(cur.who[i]) + (out ? ` <small class="red">(${esc(out.kind)} · 대체 없음)</small>` : '');
+    const v = s && s.who !== s.orig ? `${esc(s.who)} <small>(← ${esc(s.orig)})</small>`
+      : esc(cur.who[i]) + (out && !s ? ` <small class="red">(${esc(out.kind)} · 대체 없음)</small>` : '');
     if (!cur.who[i]) return s ? `<div class="line"><b>${esc(r.name)}</b>${v}</div>` : '';
     const orig = cur.who[i], opts = D.people.includes(orig) ? D.people : [orig, ...D.people];
     return dd(`day|${i}|${day}`, opts.map(n => {                     // 누르면 그날만 대신 설 사람 고르기
@@ -601,15 +601,15 @@ function render() {
       ${clashes(p).map(c => `
         <div class="clash"><div class="msg">⚠️ ${mdh(c.day)} <b>${esc(c.role)}</b> ${esc(c.v)} - ${esc(c.kind)}</div>
           <div class="two"><div>${dd(`sub|${pi}|${c.ri}|${c.day}`,
-            D.people.filter(n => n !== c.v).map(n => ({ v: n, t: n + (n === c.rec ? ' (백업)' : '') })),
+            [{ v: c.v, t: '대체 불필요' }, ...D.people.filter(n => n !== c.v).map(n => ({ v: n, t: n + (n === c.rec ? ' (백업)' : '') }))],
             subPick[`${pi}|${c.ri}|${c.day}`] ?? c.rec, '대체자 선택')}</div>
           <div><button data-sub="${pi}|${c.ri}|${c.day}">대체</button></div></div></div>`).join('')}
       ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
         // 평소엔 한 줄, 누르면 대체자 바꾸기·삭제가 열린다 (일정 탭과 같은 방식)
-        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">(← ${esc(s.orig)})</span></div></div>`;
+        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${s.who === s.orig ? '(대체 불필요)' : `(← ${esc(s.orig)})`}</span></div></div>`;
         const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
         return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <span class="orig">(← ${esc(s.orig)})</span></div>
-          ${dd(`subi|${s.i}`, opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n })), s.who)}
+          ${dd(`subi|${s.i}`, [{ v: s.orig, t: '대체 불필요' }, ...opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n }))], s.who)}
           <div class="two" style="margin-top:8px"><div><button class="sub" data-subclose="1">닫기</button></div>
           <div><button class="sub del-sub" data-i="${s.i}">삭제</button></div></div></div>`;
       }).join('')}
@@ -698,13 +698,14 @@ function onDd(key, v) {
     const [ri, day] = a, role = D.roles[ri].name, orig = D.periods.find(p => p.start <= day && day <= p.end).who[ri];
     const s = subFor(role, day), l = s && D.leaves[s.i];
     if (v === (s ? s.who : orig)) return;
-    if (v === orig) run('deleteLeave', [l.row, l.sig], `${md(day)} ${role} → ${orig} (되돌림)`);
+    if (v === orig && !away(orig, day)) run('deleteLeave', [l.row, l.sig], `${md(day)} ${role} → ${orig} (되돌림)`);
     else if (l) run('updateLeave', [l.row, l.sig, { start: day, end: '', names: [v], kind: '대체', time: '', memo: l.memo }], `${md(day)} ${role} → ${v}`);
     else run('addLeave', [{ start: day, end: '', names: [v], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${v}`);
   } else if (type === 'subi') {                                        // 이미 정한 대체자 바꾸기
     const l = D.leaves[a[0]];
     openSub = null;
-    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '대체', time: '', memo: l.memo }], `${md(l.start)} 대체 → ${v}`);
+    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '대체', time: '', memo: l.memo }],
+      `${md(l.start)} ${v === l.memo.match(SUB_RE)[2] ? '대체 불필요' : '대체 → ' + v}`);
   }
 }
 
@@ -879,7 +880,8 @@ document.addEventListener('click', async e => {
     const who = subPick[`${pi}|${ri}|${day}`] ?? (c ? c.rec : '');
     const role = D.roles[ri].name, orig = D.periods[pi].who[ri];
     if (!who) return toast('대체자를 골라 주세요');
-    run('addLeave', [{ start: day, end: '', names: [who], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${who}`);
+    run('addLeave', [{ start: day, end: '', names: [who], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }],
+      `${md(day)} ${role} → ${who === orig ? '대체 불필요' : who}`);           // 이름 = 원래 담당이면 '대체 불필요' (시트에만 기록)
   } else if (b.id === 'save') {
     const f = {
       start: getD('fStart'), kind, names: [...names], memo: $('#fMemo').value.trim(), place: $('#fPlace').value.trim(),
