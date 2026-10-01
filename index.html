@@ -305,7 +305,7 @@ function toast(msg) {
 }
 
 // ── 서버: Apps Script 웹 앱 (데이터만 주고받는다). 접근 코드·본인 이름은 이 폰에 기억 ──
-const API_URL = 'PASTE_APPS_SCRIPT_URL';   // 배포 → 웹 앱 URL (…/exec)
+const API_URL = 'https://script.google.com/macros/s/AKfycbx9edCqkSdDH_WXUhUyHx-V5TVKAMWQ2X8ZDNhDXV04eTYVotygX5CTqWVT8no5b4jK/exec';   // 배포 → 웹 앱 URL (…/exec)
 let auth = {};
 try { auth = JSON.parse(localStorage.getItem('auth') || '{}'); } catch (e) {}
 const saveAuth = () => { try { localStorage.setItem('auth', JSON.stringify(auth)); } catch (e) {} };
