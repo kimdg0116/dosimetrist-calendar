@@ -356,7 +356,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-11';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-12';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -407,8 +407,29 @@ function addDays(s, n) {
 const pad = n => String(n).padStart(2, '0');
 const fmtTime = t => esc(t).replace(/\s*-\s*/, ' ~ ');          // '10:00-12:00' → '10:00 ~ 12:00'
 // 이름 목록: 4~6명은 조금, 7명 이상은 더 작게
-const namesHtml = (who, cls) => who.length
-  ? `<div class="names ${cls}${who.length >= 7 ? ' many' : who.length >= 4 ? ' some' : ''}">${who.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '';
+const namesHtml = (who, cls, eds) => who.length
+  ? `<div class="names ${cls}${who.length >= 7 ? ' many' : who.length >= 4 ? ' some' : ''}">${who.map((n, k) => `<span${eds ? ` data-edit="${eds[k]}"` : ''}>${esc(n)}</span>`).join('')}</div>` : '';
+
+// 하루치 일정 정리: 연차를 맨 위로 (종일 → 시간 순), 나머지는 등록 순서 그대로.
+// 기간이 같은 종일 연차는 한 줄에 이름을 모은다 (시트에는 사람마다 따로 남고, 이름을 누르면 그 사람 것만 수정)
+function arrange(evs) {
+  const rank = l => l.kind === '연차' ? (l.time ? 1 : 0) : 2;
+  const out = [], grp = {};
+  [...evs].sort((a, b) => rank(a.l) - rank(b.l) || (rank(a.l) === 1 ? a.l.time.localeCompare(b.l.time) : 0)).forEach(e => {
+    const l = e.l;
+    if (l.kind !== '연차' || l.time || l.memo || l.place) return out.push(e);
+    const k = l.start + '|' + l.end;
+    if (!grp[k]) out.push(grp[k] = { rows: [] });
+    grp[k].rows.push(e);
+  });
+  return out.map(g => {
+    if (!g.rows) return g;
+    if (g.rows.length === 1) return g.rows[0];
+    const who = [], eds = [];
+    g.rows.forEach(({ l, i }) => l.name.split(/,\s*/).filter(Boolean).forEach(n => { who.push(n); eds.push(i); }));
+    return { l: { ...g.rows[0].l, name: who.join(', ') }, i: null, eds };
+  });
+}
 const label = l => esc([l.name, l.memo].filter(Boolean).join(' · '));
 
 // ── 하루 백업 ──
@@ -559,14 +580,14 @@ function renderDay() {
       return { v: n, t: n + (n === orig ? ' (원래 담당)' : a ? ` (${a.kind})` : '') };
     }), s ? s.who : orig, '', `<b>${esc(r.name)}</b><span>${v}</span>`, ' line-dd');
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
-  const list = D.leaves.filter(l => !isSub(l) && l.start <= day && day <= l.end);
+  const list = arrange(evOn(day));
   $('#todayLeave').innerHTML = head('일정') + (list.length
-    ? list.map(l => {
+    ? list.map(({ l, i, eds }) => {
       const who = l.name.split(/,\s*/).filter(Boolean);
       const when = l.time ? fmtTime(l.time) : l.start !== l.end ? `${md(l.start)} ~ ${md(l.end)}` : '종일';
-      return `<div class="ev" data-edit="${D.leaves.indexOf(l)}">
+      return `<div class="ev"${i !== null ? ` data-edit="${i}"` : ''}>
         <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span><span class="tm">${when}</span></div>
-        ${namesHtml(who, 'ev-names')}
+        ${namesHtml(who, 'ev-names', eds)}
         ${l.place ? `<div class="ev-sub">📍 ${esc(l.place)}</div>` : ''}</div>`;
     }).join('')
     : '<span class="empty">없음</span>');
@@ -631,15 +652,15 @@ function render() {
 let calView = 'list', calAnchor = '', calSel = '';
 try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
-const evHtml = (l, i) => {
+const evHtml = (l, i, eds) => {
   const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time), l.place && '📍 ' + esc(l.place)].filter(Boolean);
-  return `<div class="ev2${editing && editing.row === l.row ? ' editing' : ''}" data-edit="${i}">
+  return `<div class="ev2${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-    ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '')}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>`;
+    ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
-  <div class="wevs">${evs.length ? evs.map(({ l, i }) => evHtml(l, i)).join('') : '<span class="empty">—</span>'}</div></div>`;
+  <div class="wevs">${evs.length ? arrange(evs).map(({ l, i, eds }) => evHtml(l, i, eds)).join('') : '<span class="empty">—</span>'}</div></div>`;
 const evOn = day => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => !isSub(l) && l.start <= day && day <= l.end);   // 백업은 업무 탭에서 관리
 const short = l => {                                                  // 달력 칸에 들어갈 짧은 이름 (여러 명이면 '박병석+5')
   const n = l.name.split(/,\s*/).filter(Boolean);
@@ -673,7 +694,7 @@ function renderLeaves() {
   const y = a.getFullYear(), m = a.getMonth(), first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
   let cells = [...DOW].map((w, k) => `<span class="mdow${k === 0 ? ' red' : k === 6 ? ' sat' : ''}">${w}</span>`).join('') + '<span></span>'.repeat(first);
   for (let d = 1; d <= n; d++) {
-    const v = `${y}-${pad(m + 1)}-${pad(d)}`, evs = evOn(v);
+    const v = `${y}-${pad(m + 1)}-${pad(d)}`, evs = arrange(evOn(v));
     cells += `<button type="button" class="mc${v === D.today ? ' today' : ''}${v === calSel ? ' sel' : ''}" data-cd="${v}">
       <span class="dn ${dayCls(v)}">${d}</span>${evs.slice(0, 2).map(({ l }) => `<i>${esc(short(l))}</i>`).join('')}${evs.length > 2 ? `<i class="more">+${evs.length - 2}</i>` : ''}</button>`;
   }
