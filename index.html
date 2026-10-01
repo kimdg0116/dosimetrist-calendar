@@ -123,8 +123,8 @@ details.dd summary b { flex:1; text-align:left; }
 #lFrom .chip.on, #lHours .chip.on { border-radius:8px; background:var(--soft); }
 #lHours .chip { font-size:15px; }
 /* 펼친 목록은 아래 칸을 밀지 않고 위에 겹쳐 뜬다 */
-:is(.pick details, details.dd)[open] { z-index:25; }
-:is(.pick details, details.dd) .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:25; max-height:55vh; overflow-y:auto; overflow-x:hidden;
+:is(.pick details, details.dd)[open] { z-index:15; }
+:is(.pick details, details.dd) .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:15; max-height:55vh; overflow-y:auto; overflow-x:hidden;
   padding:4px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card); box-shadow:0 10px 30px rgba(20,40,160,.18); }
 :is(.pick details, details.dd) .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
 :is(.pick details, details.dd) .chip.on::after { position:absolute; right:10px; }
@@ -168,6 +168,8 @@ details .chip.on::after { content:'✓'; }
 .item .what .names.some { font-size:15px; } .item .what .names.many { font-size:14px; gap:2px 8px; }
 .item .what small { margin-top:4px; }
 /* 업데이트 안내 (웬들러와 같은 방식) */
+footer { margin-top:28px; }
+.ver { margin:0; text-align:right; font-family:Oswald, sans-serif; font-size:11px; letter-spacing:.06em; color:var(--mute); font-variant-numeric:tabular-nums; }
 .upd { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); z-index:35; padding:13px; font-size:15px; font-weight:700;
   border:0; border-radius:12px; background:var(--acc); color:#fff; box-shadow:0 6px 20px rgba(46,112,255,.35); }
 .item.editing { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
@@ -187,7 +189,7 @@ details .chip.on::after { content:'✓'; }
 .clash { margin-top:10px; padding:12px; border-radius:12px; background:var(--clash); border:1px solid color-mix(in srgb, var(--orange) 35%, transparent); }
 .clash .msg { font-size:14px; margin-bottom:8px; }
 .clash .two { align-items:center; } .clash .two > div:last-child { flex:0 0 auto; }
-.clash button { padding:11px 16px; font-size:15px; font-weight:700; border:0; border-radius:10px; background:var(--orange); color:#fff; }
+.clash button[data-sub] { padding:11px 16px; font-size:15px; font-weight:700; border:0; border-radius:10px; background:var(--orange); color:#fff; }
 .subst { margin-top:10px; padding:12px; border-radius:12px; background:var(--soft); border:1px solid var(--line); }
 .subst .msg { font-size:14px; margin-bottom:8px; }
 .subst .two { align-items:center; } .subst .two > div:last-child { flex:0 0 auto; }
@@ -272,6 +274,7 @@ details .chip.on::after { content:'✓'; }
   </div>
   <div class="card"><h3>다가오는 일정</h3><div id="leaves"></div></div>
 </div>
+<footer><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
 <button type="button" id="upd" class="upd" hidden>새 버전이 있습니다 · 눌러서 새로고침</button>
 <div id="gate" hidden><div class="gbox">
@@ -298,7 +301,9 @@ details .chip.on::after { content:'✓'; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-6';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.01-7';                                  // 올릴 때마다 version.json 과 같이 올린다
+
+document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
 // ── 확대 막기: 두 손가락 핀치, 빈 곳 더블탭 (웬들러와 같은 방식) ──
 (() => {
