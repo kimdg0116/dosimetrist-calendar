@@ -356,7 +356,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-4';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-5';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -408,7 +408,7 @@ const namesHtml = (who, cls) => who.length
   ? `<div class="names ${cls}${who.length >= 7 ? ' many' : who.length >= 4 ? ' some' : ''}">${who.map(n => `<span>${esc(n)}</span>`).join('')}</div>` : '';
 const label = l => esc([l.name, l.memo].filter(Boolean).join(' · '));
 
-// ── 하루 대체 ──
+// ── 하루 백업 ──
 const AWAY = ['연차', '진료', '교육', '훈련', '출장', '오전반차', '오후반차'];   // 담당 업무와 겹치면 경고 (반차는 예전 기록용)
 const ALL_WEEK = ['당직', '온콜'];                                  // 주말·공휴일도 근무. 나머지 업무는 평일만 본다
 // 기본 백업: TOMO → 직전 기간 같은 업무 담당자, SGRT → 서버가 알려주는 담당(D.sgrtBackup). 당직·온콜은 직접 선택
@@ -423,11 +423,12 @@ function* days(a, b) {
   }
 }
 const away = (name, day) => D.leaves.find(l => AWAY.includes(l.kind) && l.start <= day && day <= l.end && l.name.split(/,\s*/).includes(name));
-const subs = () => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind === '대체' && SUB_RE.test(l.memo))
+const isSub = l => l.kind === '백업' || l.kind === '대체';          // '대체' 는 2026-10-02 이전 이름 (서버가 '백업'으로 바꿔 둔다)
+const subs = () => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => isSub(l) && SUB_RE.test(l.memo))
   .map(({ l, i }) => { const [, role, orig] = l.memo.match(SUB_RE); return { i, day: l.start, role, orig, who: l.name }; });
 const subFor = (role, day) => subs().find(s => s.role === role && s.day === day);
 
-// 기간 p 안에서 담당자가 근태로 빠지는데 대체가 아직 없는 날
+// 기간 p 안에서 담당자가 근태로 빠지는데 백업이 아직 없는 날
 function clashes(p) {
   const out = [];
   D.roles.forEach((r, ri) => {
@@ -540,7 +541,7 @@ function renderDay() {
     const s = subFor(r.name, day);
     const out = !s && cur.who[i] && away(cur.who[i], day);
     const v = s && s.who !== s.orig ? `${esc(s.who)} <small>(← ${esc(s.orig)})</small>`
-      : esc(cur.who[i]) + (out && !s ? ` <small class="red">(${esc(out.kind)} · 대체 없음)</small>` : '');
+      : esc(cur.who[i]) + (out && !s ? ` <small class="red">(${esc(out.kind)} · 백업 없음)</small>` : '');
     if (!cur.who[i]) return s ? `<div class="line"><b>${esc(r.name)}</b>${v}</div>` : '';
     const orig = cur.who[i], opts = D.people.includes(orig) ? D.people : [orig, ...D.people];
     return dd(`day|${i}|${day}`, opts.map(n => {                     // 누르면 그날만 대신 설 사람 고르기
@@ -548,7 +549,7 @@ function renderDay() {
       return { v: n, t: n + (n === orig ? ' (원래 담당)' : a ? ` (${a.kind})` : '') };
     }), s ? s.who : orig, '', `<b>${esc(r.name)}</b><span>${v}</span>`, ' line-dd');
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
-  const list = D.leaves.filter(l => l.kind !== '대체' && l.start <= day && day <= l.end);
+  const list = D.leaves.filter(l => !isSub(l) && l.start <= day && day <= l.end);
   $('#todayLeave').innerHTML = head('일정') + (list.length
     ? list.map(l => {
       const who = l.name.split(/,\s*/).filter(Boolean);
@@ -605,7 +606,7 @@ function render() {
             subPick[`${pi}|${c.ri}|${c.day}`] ?? c.rec, '백업 지정')}</div>
           <div><button data-sub="${pi}|${c.ri}|${c.day}">확인</button></div></div></div>`).join('')}
       ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
-        // 평소엔 한 줄, 누르면 대체자 바꾸기·삭제가 열린다 (일정 탭과 같은 방식)
+        // 평소엔 한 줄, 누르면 백업자 바꾸기·삭제가 열린다 (일정 탭과 같은 방식)
         if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${s.who === s.orig ? '(백업 불필요)' : `(← ${esc(s.orig)})`}</span></div></div>`;
         const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
         return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <span class="orig">(← ${esc(s.orig)})</span></div>
@@ -629,7 +630,7 @@ const evHtml = (l, i) => {
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
   <div class="wevs">${evs.length ? evs.map(({ l, i }) => evHtml(l, i)).join('') : '<span class="empty">—</span>'}</div></div>`;
-const evOn = day => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => l.kind !== '대체' && l.start <= day && day <= l.end);   // 대체는 업무 탭에서 관리
+const evOn = day => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => !isSub(l) && l.start <= day && day <= l.end);   // 백업은 업무 탭에서 관리
 const short = l => {                                                  // 달력 칸에 들어갈 짧은 이름 (여러 명이면 '박병석+5')
   const n = l.name.split(/,\s*/).filter(Boolean);
   return n.length > 1 ? `${n[0]}+${n.length - 1}` : n[0] || l.memo || l.kind;
@@ -643,7 +644,7 @@ function renderLeaves() {
     // 오늘부터, 일정 있는 날만 날짜별로 묶는다 (여러 날 일정은 시작일에 한 번, 이미 시작했으면 오늘에)
     const by = {};
     D.leaves.forEach((l, i) => {
-      if (l.kind === '대체' || l.end < D.today) return;
+      if (isSub(l) || l.end < D.today) return;
       (by[l.start < D.today ? D.today : l.start] ||= []).push({ l, i });
     });
     const days = Object.keys(by).sort();
@@ -679,9 +680,9 @@ function moveCal(n) {
   renderLeaves();
 }
 
-let openSub = null;                                                    // 업무 탭에서 열어 둔 대체 근무 (D.leaves 번호)
+let openSub = null;                                                    // 업무 탭에서 열어 둔 백업 근무 (D.leaves 번호)
 // 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
-const subPick = {};                                                    // 겹침 경고에서 고른 대체자 (대체 버튼 누르기 전)
+const subPick = {};                                                    // 겹침 경고에서 고른 백업자 (백업 버튼 누르기 전)
 function dd(key, opts, value, empty = '—', sum = '', cls = '') {
   const cur = opts.find(o => o.v === value);
   return `<details class="dd${cls}" data-dd="${esc(key)}"><summary>${sum || `<b>${esc(cur ? cur.t : empty)}</b>`}</summary>
@@ -692,20 +693,20 @@ function onDd(key, v) {
   if (type === 'rot') {                                                // 기간 담당자 바꾸기
     const p = D.periods[a[0]], r = D.roles[a[1]];
     run('setRotation', [r.row, p.col, v, p.who[a[1]]], `${r.name} → ${v || '비움'}`);
-  } else if (type === 'sub') {                                         // 대체자 고르기 (저장은 대체 버튼)
+  } else if (type === 'sub') {                                         // 백업자 고르기 (저장은 백업 버튼)
     subPick[a.join('|')] = v; render();
   } else if (type === 'day') {                                         // 맨 위 업무 줄: 그날만 바꾸기 (원래 담당을 고르면 되돌림)
     const [ri, day] = a, role = D.roles[ri].name, orig = D.periods.find(p => p.start <= day && day <= p.end).who[ri];
     const s = subFor(role, day), l = s && D.leaves[s.i];
     if (v === (s ? s.who : orig)) return;
     if (v === orig && !away(orig, day)) run('deleteLeave', [l.row, l.sig], `${md(day)} ${role} → ${orig} (되돌림)`);
-    else if (l) run('updateLeave', [l.row, l.sig, { start: day, end: '', names: [v], kind: '대체', time: '', memo: l.memo }], `${md(day)} ${role} → ${v}`);
-    else run('addLeave', [{ start: day, end: '', names: [v], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${v}`);
-  } else if (type === 'subi') {                                        // 이미 정한 대체자 바꾸기
+    else if (l) run('updateLeave', [l.row, l.sig, { start: day, end: '', names: [v], kind: '백업', time: '', memo: l.memo }], `${md(day)} ${role} → ${v}`);
+    else run('addLeave', [{ start: day, end: '', names: [v], kind: '백업', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} → ${v}`);
+  } else if (type === 'subi') {                                        // 이미 정한 백업자 바꾸기
     const l = D.leaves[a[0]];
     openSub = null;
-    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '대체', time: '', memo: l.memo }],
-      `${md(l.start)} ${v === l.memo.match(SUB_RE)[2] ? '백업 불필요' : '대체 → ' + v}`);
+    run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '백업', time: '', memo: l.memo }],
+      `${md(l.start)} ${v === l.memo.match(SUB_RE)[2] ? '백업 불필요' : '백업 → ' + v}`);
   }
 }
 
@@ -880,7 +881,7 @@ document.addEventListener('click', async e => {
     const who = subPick[`${pi}|${ri}|${day}`] ?? (c ? c.rec : '');
     const role = D.roles[ri].name, orig = D.periods[pi].who[ri];
     if (!who) return toast('백업을 골라 주세요');
-    run('addLeave', [{ start: day, end: '', names: [who], kind: '대체', time: '', memo: `${role} (${orig} 대신)` }],
+    run('addLeave', [{ start: day, end: '', names: [who], kind: '백업', time: '', memo: `${role} (${orig} 대신)` }],
       `${md(day)} ${role} → ${who === orig ? '백업 불필요' : who}`);           // 이름 = 원래 담당이면 '백업 불필요' (시트에만 기록)
   } else if (b.id === 'save') {
     const f = {
