@@ -347,7 +347,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.01-11';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-1';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 document.getElementById('ver').textContent = 'v' + APP_VERSION;
 
@@ -466,19 +466,34 @@ async function call(fn, ...args) {
 }
 
 // 저장은 시트에만 쓰고 바로 끝난다. 캘린더·알림은 뒤에서 따로 (기다리지 않음)
-function syncCalendar() {
-  call('syncNow')
-    .then(ok => toast(ok ? '캘린더 반영됨' : '캘린더는 잠시 후 반영'))
-    .catch(e => toast('캘린더 반영 실패: ' + e.message));
+// 실패해도 10분 트리거가 다시 맞추므로 오류 창은 띄우지 않는다 (앱을 내리면 iOS 가 요청을 끊어 'Load failed' 가 나곤 했다)
+function syncCalendar(fn) {
+  call('syncNow', fn === 'setRotation' ? '순번' : '근태')
+    .then(ok => { if (ok) toast('캘린더 반영됨'); })
+    .catch(() => {});
+}
+
+// 서버 답을 기다리지 않고 화면에 먼저 그린다. 실패하면 load() 가 서버 내용으로 되돌린다
+function preview(fn, args) {
+  const L = D.leaves, f = args[args.length - 1];
+  const at = row => L.findIndex(l => l.row === row);
+  const item = () => ({ row: 0, sig: '', start: f.start, end: f.end || f.start, name: f.names.join(', '),
+    kind: f.kind, time: f.time || '', memo: f.memo || '', place: f.place || '' });
+  if (fn === 'deleteLeave' && at(args[0]) >= 0) L.splice(at(args[0]), 1);
+  else if (fn === 'updateLeave' && at(args[0]) >= 0) L.splice(at(args[0]), 1, item());
+  else if (fn === 'addLeave') { const i = L.findIndex(l => l.start > f.start); L.splice(i < 0 ? L.length : i, 0, item()); }
+  else return;
+  render();
 }
 
 async function run(fn, args, msg) {
   toast('저장 중…');
+  try { preview(fn, args); } catch (e) {}
   try {
     const r = await call(fn, ...args);
     setData(r.data);
     toast(msg);
-    if (fn !== 'addPeriod') syncCalendar();
+    if (fn !== 'addPeriod') syncCalendar(fn);
     return true;
   } catch (e) {
     toast('실패: ' + e.message); load();
@@ -534,13 +549,15 @@ function moveDay(n) {
   dayOff = n === 0 ? 0 : Math.min(MAX_OFF, Math.max(MIN_OFF, dayOff + n));
   renderDay();
 }
-let touchX = null;
-$('#dayView').addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+// 세로 스크롤 중 손가락이 옆으로 조금 휘는 건 넘기기가 아니다 → 가로로 확실히 밀었을 때만
+let touch = null;
+$('#dayView').addEventListener('touchstart', e => { touch = e.touches.length === 1 ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
+$('#dayView').addEventListener('touchcancel', () => { touch = null; });
 $('#dayView').addEventListener('touchend', e => {
-  if (touchX === null) return;
-  const dx = e.changedTouches[0].clientX - touchX;
-  touchX = null;
-  if (Math.abs(dx) > 50) moveDay(dx < 0 ? 1 : -1);                 // 왼쪽으로 밀면 다음 날
+  if (!touch) return;
+  const dx = e.changedTouches[0].clientX - touch[0], dy = e.changedTouches[0].clientY - touch[1];
+  touch = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) moveDay(dx < 0 ? 1 : -1);   // 왼쪽으로 밀면 다음 날
 });
 
 function render() {
