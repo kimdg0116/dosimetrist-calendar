@@ -19,6 +19,8 @@
    Samsung Blue #1428a0 · SMC Blue #0a4bff (80% #2e70ff, 60% #508eff, 40% #8cbaff, 20% #bedaff)
    SMC Black 90% #191919 · 60% #666666 · 포인트 SMC Orange #ff871e (20% #ffe7d2) · SMC Red #fa4b50 */
 :root {
+  --font-body:OswaldLatin, Paperlogy, "SUIT Variable", "Apple SD Gothic Neo", sans-serif;   /* 영문 Oswald, 한글·숫자 페이퍼로지 */
+  --font-name:"SUIT Variable", "Apple SD Gothic Neo", sans-serif;                      /* 사람 이름 */
   --bg:#eef5ff; --bg-top:#e3eeff; --card:#ffffff; --fg:#191919; --mute:#666666; --line:#dbe8ff;
   --acc:#2e70ff; --deep:#1428a0; --soft:#e8f1ff; --blue:#2e70ff; --sky:#00b4ff;
   --red:#fa4b50; --warn:#fa4b50; --orange:#ff871e; --clash:#ffe7d2; --toast:#1428a0; --orange-ink:#b04f00;
@@ -44,8 +46,8 @@
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
 html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 안드로이드 글자 자동 키움 끄기 */
 [hidden] { display:none !important; }
-/* 글꼴: 본문 SUIT · 제목과 업무명 페이퍼로지 · 날짜·시간 숫자 Oswald. 모두 직접 불러와서 아이폰·갤럭시가 같게 보인다 (기기 글꼴 설정 무시) */
-body { margin:0; padding:0 16px 90px; font:16px/1.45 "SUIT Variable", "Apple SD Gothic Neo", sans-serif; background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
+/* 글꼴: 사람 이름 SUIT · 영문 글자 Oswald · 그 밖의 한글과 직접 쓴 숫자(내용·장소) 페이퍼로지 · 날짜·시간 숫자 Oswald. 모두 직접 불러와서 아이폰·갤럭시가 같게 보인다 */
+body { margin:0; padding:0 16px 90px; font:16px/1.45 var(--font-body); background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
 button { font-family:inherit; cursor:pointer; }
 
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
@@ -307,18 +309,26 @@ footer { margin-top:28px; }
 #picker .hols { min-height:20px; margin:8px 0; font-size:13px; line-height:1.6; color:var(--red); }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
-.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, "SUIT Variable", "Apple SD Gothic Neo", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, Paperlogy, "Apple SD Gothic Neo", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
 .day h3 .dt, .ev .tm { font-size:18px; font-weight:600; color:var(--fg); }              /* 맨 위 블록: 크게 */
 #pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
 @font-face { font-family:"SUIT Variable"; src:url(https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2) format("woff2-variations"); font-weight:100 900; font-display:swap; }
+@font-face { font-family:OswaldLatin; src:url(https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2) format("woff2-variations"); font-weight:200 700; font-display:swap; unicode-range:U+0041-005A, U+0061-007A; }   /* 영문 글자만 (숫자 제외) */
+@font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2) format("woff2"); font-weight:400; font-display:swap; }
+@font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2) format("woff2"); font-weight:500; font-display:swap; }
 @font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2) format("woff2"); font-weight:600; font-display:swap; }
 @font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format("woff2"); font-weight:700; font-display:swap; }
 /* 제목: 페이퍼로지 */
-.day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-family:Paperlogy, "SUIT Variable", sans-serif; font-weight:700; letter-spacing:-.01em; }
+.day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-family:var(--font-body); font-weight:700; letter-spacing:-.01em; }
 #fTitle, .lhead h3 { font-size:17px; color:var(--deep); }
-nav button { font-family:Paperlogy, "SUIT Variable", sans-serif; font-weight:600; }
+nav button { font-family:var(--font-body); font-weight:600; }
+/* 사람 이름만 SUIT */
+.names, .line-dd summary > span, .role details.dd summary b, .clash details.dd summary b, .subst .who, .subst .orig,
+details.dd .chip, #fNames .chip, #sNames, #allRot td, .mc i, #meName, #gNames button { font-family:var(--font-name); }
+.line-dd summary > span small { font-family:var(--font-body); }        /* (연차 · 백업 없음) 같은 설명 */
+.ev2 small .pl { font-family:var(--font-body); }                       /* 장소는 직접 쓴 글이라 날짜·시간과 다른 글꼴 */
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-family:Oswald, Paperlogy, "Apple SD Gothic Neo", sans-serif; font-weight:600; letter-spacing:.04em; }
 .day .line-dd summary > b, .role span { font-size:17px; }
 </style>
@@ -408,7 +418,7 @@ nav button { font-family:Paperlogy, "SUIT Variable", sans-serif; font-weight:600
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-19';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-20';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -749,7 +759,7 @@ let calView = 'list', calAnchor = '', calSel = '';
 try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
 const evHtml = (l, i, eds) => {
-  const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time), l.place && '📍 ' + esc(l.place)].filter(Boolean);
+  const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time), l.place && `<span class="pl">📍 ${esc(l.place)}</span>`].filter(Boolean);
   return `<div class="ev2${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
     ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>`;
