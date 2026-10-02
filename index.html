@@ -346,6 +346,11 @@ nav button { font-weight:700; }
 #askM small { display:block; font-size:15px; font-weight:600; color:var(--mute); }
 #ask .main { margin-top:0; }
 #askNo { width:100%; padding:13px; font-size:16px; font-weight:700; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--fg); }
+/* 일정 추가: 평소엔 접어 두고 제목 줄을 누르면 펼친다 (수정할 땐 자동으로 펼침) */
+.fhead { display:flex; align-items:center; justify-content:space-between; width:100%; padding:0; border:0; background:none; text-align:left; color:inherit; }
+.fhead .plus { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--soft); color:var(--acc); font-size:19px; font-weight:700; transition:transform .2s; }
+.fhead.open .plus { transform:rotate(45deg); }
+#fBody { margin-top:14px; }
 </style>
 </head>
 <body>
@@ -379,7 +384,8 @@ nav button { font-weight:700; }
 </div></div>
 <div id="leave" hidden>
   <div class="card">
-    <h3 id="fTitle">일정 추가</h3>
+    <button type="button" class="fhead" id="fToggle"><span id="fTitle">일정 추가</span><span class="plus" aria-hidden="true">＋</span></button>
+    <div id="fBody" hidden>
     <div class="pick">
       <details id="dKind"><summary><span>구분</span><b id="sKind">선택</b></summary><div class="chips" id="fKind"></div></details>
       <details id="dNames"><summary><span>이름</span><b id="sNames">선택</b></summary><div class="chips" id="fNames"></div></details>
@@ -402,6 +408,7 @@ nav button { font-weight:700; }
     <div class="two" id="editBtns" style="margin-top:8px" hidden>
       <div><button class="sub" id="cancelEdit">수정 취소</button></div>
       <div><button class="sub del-sub" id="delEdit">삭제</button></div>
+    </div>
     </div>
   </div>
   <div class="card">
@@ -437,7 +444,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-36';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-37';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1026,8 +1033,10 @@ applyKind();
 
 // ── 일정 수정: 누른 일정을 폼에 채우고, 저장하면 그 줄을 고친다 ──
 let editing = null;
+function openForm(on) { $('#fBody').hidden = !on; $('#fToggle').classList.toggle('open', on); }
 function resetForm() {
   editing = null; kind = ''; mode = 'day'; names.clear();
+  openForm(false);
   setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = ''; $('#fPlace').value = '';
   setTime('09:00', 1);
   document.querySelectorAll('#fNames .chip.on').forEach(x => x.classList.remove('on'));
@@ -1039,6 +1048,7 @@ function resetForm() {
 function refill(f, ed) {
   startEdit({ ...(ed || {}), name: f.names.join(', '), kind: f.kind, time: f.time, start: f.start, end: f.end || f.start, memo: f.memo, place: f.place });
   if (!ed) { editing = null; $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#editBtns').hidden = true; }
+  openForm(true);
 }
 function startEdit(l) {
   editing = l; kind = l.kind;
@@ -1053,6 +1063,7 @@ function startEdit(l) {
   $('#fMemo').value = l.memo; $('#fPlace').value = l.place || '';
   document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
   $('#fTitle').textContent = '일정 수정'; $('#save').textContent = '수정 저장'; $('#editBtns').hidden = false;
+  openForm(true);
   applyKind(); applyNames(); render();
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.tab === 'leave'));
   $('#leave').hidden = false; $('#rot').hidden = true;
@@ -1063,7 +1074,11 @@ document.addEventListener('click', async e => {
   const so = e.target.closest('[data-subopen]');
   if (so) { openSub = +so.dataset.subopen; render(); return; }
   const ed = e.target.closest('[data-edit]');
-  if (ed) return startEdit(D.leaves[ed.dataset.edit]);
+  if (ed) {                                                          // 수정 중인 일정을 한 번 더 누르면 수정 취소
+    const l = D.leaves[ed.dataset.edit];
+    if (editing && editing.row === l.row && leafKey(editing) === leafKey(l)) return resetForm();
+    return startEdit(l);
+  }
   const b = e.target.closest('button');
   if (!b) return;
   if (b.dataset.tab) {
@@ -1142,6 +1157,8 @@ document.addEventListener('click', async e => {
     if (!await run('deleteLeave', [ed.row, ed.sig], '삭제됨')) startEdit(ed);
   } else if (b.id === 'cancelEdit') {
     resetForm();
+  } else if (b.id === 'fToggle') {                                     // 제목 줄: 펼치기/접기 (수정 중이면 수정 취소)
+    if (editing) resetForm(); else openForm($('#fBody').hidden);
   } else if (b.dataset.open) {
     openPicker(b.dataset.open);
   } else if (b.dataset.pm) {
