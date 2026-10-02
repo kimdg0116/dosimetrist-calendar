@@ -1,6 +1,8 @@
 // DOSIMETRIST_WIDGET — Dosimetrist Calendar 아이폰 위젯 (Scriptable 앱)
 // 폰에 붙여넣는 건 짧은 설치 코드(widget-setup.html)뿐이고, 그 코드가 이 파일을 받아 실행한다 → 여기만 고치면 모든 폰 위젯이 바뀐다
 // 위젯 매개변수: A(기본) = 오늘 업무 + 오늘 일정 / B = 오늘·내일 일정(참석 인원) + 당직·온콜
+//   뒤에 '라이트' 또는 '다크'를 붙이면 그 색으로 고정 (예: 'A 라이트'). 없으면 폰 설정을 따른다
+//   (iOS 18 홈 화면 '사용자화'가 다크로 고정돼 있으면 폰이 라이트여도 위젯은 다크로 그려진다)
 // 접근 코드는 처음 한 번 Scriptable 에서 실행할 때 입력 → 그 폰의 키체인에만 저장 (코드·서버 어디에도 안 남김)
 
 const API = 'https://script.google.com/macros/s/AKfycbx9edCqkSdDH_WXUhUyHx-V5TVKAMWQ2X8ZDNhDXV04eTYVotygX5CTqWVT8no5b4jK/exec';
@@ -8,7 +10,10 @@ const APP = 'https://kimdg0116.github.io/dosimetrist-calendar/';
 const KEY = 'dosimetrist-code';
 const DUTY = ['당직', '온콜'];                                         // B 에 보일 업무
 
-const dyn = (l, d) => Color.dynamic(new Color(l), new Color(d));     // 라이트 / 다크 (앱과 같은 색)
+const PARAM = String((typeof args !== 'undefined' && args.widgetParameter) || '');
+const THEME = /라이트|light/i.test(PARAM) ? 'light' : /다크|dark/i.test(PARAM) ? 'dark' : '';
+const dyn = (l, d) => THEME === 'light' ? new Color(l) : THEME === 'dark' ? new Color(d)
+  : Color.dynamic(new Color(l), new Color(d));                       // 라이트 / 다크 (앱과 같은 색)
 const C = {
   bg: dyn('#ffffff', '#1a2233'), fg: dyn('#191919', '#e9eef8'), mute: dyn('#666666', '#9ba8bf'),
   deep: dyn('#1428a0', '#8cbaff'), pill: dyn('#e8f1ff', '#1d2c4d'), pillFg: dyn('#2e70ff', '#8cbaff'),
@@ -149,7 +154,7 @@ async function askCode() {
 
 module.exports = async () => {
   let code = Keychain.contains(KEY) ? Keychain.get(KEY) : '';
-  let mode = String(args.widgetParameter || 'A').trim().toUpperCase() === 'B' ? 'B' : 'A';
+  let mode = /^\s*B/i.test(PARAM) ? 'B' : 'A';
   if (config.runsInApp) {                                            // 앱에서 직접 실행: 코드 입력 · 미리보기
     if (!code) code = await askCode();
     else {
