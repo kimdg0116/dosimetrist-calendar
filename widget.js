@@ -67,11 +67,11 @@ function buildA(w, d) {
   t.roles.forEach(r => {
     const s = left.addStack(); s.layoutHorizontally(); s.centerAlignContent();
     const l = s.addStack(); l.size = new Size(76, 0);
-    text(l, r.role, F.role, C.mute);
+    text(l, r.role, F.role, C.mute); l.addSpacer();                  // 왼쪽 정렬
     text(s, r.who || '-', F.who, C.fg);
   });
-  const right = row.addStack(); right.layoutVertically(); right.spacing = 5;
-  events(right, t.events, 5, false);
+  const right = row.addStack(); right.layoutVertically(); right.spacing = 4;
+  events(right, t.events, 6, true);                                  // 내용이 있는 일정은 아래 줄에 참석 인원
   right.addSpacer();
   w.addSpacer();
 }
@@ -93,7 +93,7 @@ function buildB(w, d) {
     t.roles.filter(r => DUTY.includes(r.role)).forEach(r => {
       const s = col.addStack(); s.layoutHorizontally(); s.centerAlignContent();
       const l = s.addStack(); l.size = new Size(34, 0);
-      text(l, r.role, F.role, C.mute);
+      text(l, r.role, F.role, C.mute); l.addSpacer();
       text(s, r.who || '-', F.who, C.fg);
     });
   });
