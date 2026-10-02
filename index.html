@@ -326,9 +326,9 @@ footer { margin-top:28px; }
 nav button { font-family:var(--font-body); font-weight:600; }
 /* 사람 이름만 SUIT */
 .names, .line-dd summary > span, .role details.dd summary b, .clash details.dd summary b, .subst .who, .subst .orig,
-details.dd .chip, #fNames .chip, #sNames, #allRot td, .mc i, #meName, #gNames button { font-family:var(--font-name); }
+details.dd .chip, #fNames .chip, #dNames.has #sNames, #allRot td, .mc i, #meName, #gNames button { font-family:var(--font-name); }
 .line-dd summary > span small { font-family:var(--font-body); }        /* (연차 · 백업 없음) 같은 설명 */
-.ev2 small .pl { font-family:var(--font-body); }                       /* 장소는 직접 쓴 글이라 날짜·시간과 다른 글꼴 */
+.ev2 small.pl { font-family:var(--font-body); font-weight:500; letter-spacing:0; overflow-wrap:anywhere; }                       /* 장소는 직접 쓴 글이라 날짜·시간과 다른 글꼴 */
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-family:Oswald, Paperlogy, "Apple SD Gothic Neo", sans-serif; font-weight:600; letter-spacing:.04em; }
 .day .line-dd summary > b, .role span { font-size:17px; }
 </style>
@@ -418,7 +418,7 @@ details.dd .chip, #fNames .chip, #sNames, #allRot td, .mc i, #meName, #gNames bu
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-20';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-21';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -759,10 +759,10 @@ let calView = 'list', calAnchor = '', calSel = '';
 try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
 const evHtml = (l, i, eds) => {
-  const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time), l.place && `<span class="pl">📍 ${esc(l.place)}</span>`].filter(Boolean);
+  const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time)].filter(Boolean);   // 장소는 아래 줄에 따로 (길면 줄바꿈)
   return `<div class="ev2${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-    ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>`;
+    ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}${l.place ? `<small class="pl">📍 ${esc(l.place)}</small>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
