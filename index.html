@@ -416,7 +416,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-26';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-27';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -563,11 +563,6 @@ async function call(fn, ...args) {
 }
 
 // 저장은 시트에만 쓰고 바로 끝난다. 캘린더·알림은 뒤에서 따로 (기다리지 않음)
-// 실패해도 10분 트리거가 다시 맞추므로 오류 창은 띄우지 않는다 (앱을 내리면 iOS 가 요청을 끊어 'Load failed' 가 나곤 했다)
-function syncCalendar(fn) {
-  call('syncNow', fn === 'setRotation' ? '순번' : '근태')
-    .catch(() => {});                                                // 반영 완료 알림은 띄우지 않는다 (몇 초 뒤 늦게 떠서 헷갈림)
-}
 
 // 서버 답을 기다리지 않고 화면에 먼저 그린다. 실패하면 load() 가 서버 내용으로 되돌린다
 function preview(fn, args) {
@@ -599,7 +594,6 @@ async function run(fn, args, msg) {
     const r = await call(fn, ...args);
     setData(r.data);
     if (!shown) toast(msg);
-    if (fn !== 'addPeriod') syncCalendar(fn);
     return true;
   } catch (e) {
     toast('실패: ' + e.message); load();
@@ -947,6 +941,11 @@ function resetForm() {
   applyKind(); applyNames();
   document.querySelectorAll('.editing').forEach(x => x.classList.remove('editing'));
 }
+// 저장 실패 때 폼 되살리기 (새 일정이면 '일정 추가' 상태로)
+function refill(f, ed) {
+  startEdit({ ...(ed || {}), name: f.names.join(', '), kind: f.kind, time: f.time, start: f.start, end: f.end || f.start, memo: f.memo, place: f.place });
+  if (!ed) { editing = null; $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#editBtns').hidden = true; }
+}
 function startEdit(l) {
   editing = l; kind = l.kind;
   names = new Set(l.name.split(/,\s*/).filter(Boolean));
@@ -1032,8 +1031,11 @@ document.addEventListener('click', async e => {
     if (kind === '기타' && !f.memo) return toast('무엇인지 적어 주세요');
     if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전체")을 넣어 주세요');
     b.disabled = true;
-    const ok = editing ? await run('updateLeave', [editing.row, editing.sig, f], '수정됨') : await run('addLeave', [f], '저장됨');
-    if (ok) resetForm();
+    // 화면엔 바로 반영되니 입력칸도 바로 비운다. 서버가 캘린더·알림까지 끝내느라 몇 초 걸리는데, 실패하면 적은 내용을 되살린다
+    const ed = editing;
+    resetForm();
+    const ok = ed ? await run('updateLeave', [ed.row, ed.sig, f], '수정됨') : await run('addLeave', [f], '저장됨');
+    if (!ok) refill(f, ed);
     b.disabled = false;
   } else if (b.id === 'delEdit') {
     if (!b.classList.contains('armed')) {                            // 두 번 누르기
@@ -1041,7 +1043,9 @@ document.addEventListener('click', async e => {
       return setTimeout(() => { b.classList.remove('armed'); b.textContent = '삭제'; }, 3000);
     }
     b.classList.remove('armed'); b.textContent = '삭제';
-    if (await run('deleteLeave', [editing.row, editing.sig], '삭제됨')) resetForm();
+    const ed = editing;
+    resetForm();
+    if (!await run('deleteLeave', [ed.row, ed.sig], '삭제됨')) startEdit(ed);
   } else if (b.id === 'cancelEdit') {
     resetForm();
   } else if (b.dataset.open) {
