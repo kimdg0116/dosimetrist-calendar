@@ -19,8 +19,7 @@
    Samsung Blue #1428a0 · SMC Blue #0a4bff (80% #2e70ff, 60% #508eff, 40% #8cbaff, 20% #bedaff)
    SMC Black 90% #191919 · 60% #666666 · 포인트 SMC Orange #ff871e (20% #ffe7d2) · SMC Red #fa4b50 */
 :root {
-  --font-body:OswaldLatin, Paperlogy, "SUIT Variable", "Apple SD Gothic Neo", sans-serif;   /* 영문 Oswald, 한글·숫자 페이퍼로지 */
-  --font-name:"SUIT Variable", "Apple SD Gothic Neo", sans-serif;                      /* 사람 이름 */
+  --font-body:"SUIT Variable", "Apple SD Gothic Neo", sans-serif;
   --bg:#eef5ff; --bg-top:#e3eeff; --card:#ffffff; --fg:#191919; --mute:#666666; --line:#dbe8ff;
   --acc:#2e70ff; --deep:#1428a0; --soft:#e8f1ff; --blue:#2e70ff; --sky:#00b4ff;
   --red:#fa4b50; --warn:#fa4b50; --orange:#ff871e; --clash:#ffe7d2; --toast:#1428a0; --orange-ink:#b04f00;
@@ -46,7 +45,7 @@
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
 html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 안드로이드 글자 자동 키움 끄기 */
 [hidden] { display:none !important; }
-/* 글꼴: 사람 이름 SUIT · 영문 글자 Oswald · 그 밖의 한글과 직접 쓴 숫자(내용·장소) 페이퍼로지 · 날짜·시간 숫자 Oswald. 모두 직접 불러와서 아이폰·갤럭시가 같게 보인다 */
+/* 글꼴 (웬들러식, 항목별로 하나씩 — 한 항목 안에서 글자마다 섞지 않는다): 본문·이름·제목 SUIT · 날짜·시간 항목과 영문 업무명 Oswald · 한글 업무명(온콜·당직) 페이퍼로지 */
 body { margin:0; padding:0 16px 90px; font:16px/1.45 var(--font-body); background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
 button { font-family:inherit; cursor:pointer; }
 
@@ -309,27 +308,20 @@ footer { margin-top:28px; }
 #picker .hols { min-height:20px; margin:8px 0; font-size:13px; line-height:1.6; color:var(--red); }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
-.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, Paperlogy, "Apple SD Gothic Neo", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
 .day h3 .dt, .ev .tm { font-size:18px; font-weight:600; color:var(--fg); }              /* 맨 위 블록: 크게 */
 #pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
 @font-face { font-family:"SUIT Variable"; src:url(https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2) format("woff2-variations"); font-weight:100 900; font-display:swap; }
-@font-face { font-family:OswaldLatin; src:url(https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2) format("woff2-variations"); font-weight:200 700; font-display:swap; unicode-range:U+0041-005A, U+0061-007A; }   /* 영문 글자만 (숫자 제외) */
-@font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2) format("woff2"); font-weight:400; font-display:swap; }
-@font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2) format("woff2"); font-weight:500; font-display:swap; }
 @font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2) format("woff2"); font-weight:600; font-display:swap; }
-@font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format("woff2"); font-weight:700; font-display:swap; }
 /* 제목: 페이퍼로지 */
-.day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-family:var(--font-body); font-weight:700; letter-spacing:-.01em; }
+.day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-weight:800; letter-spacing:-.02em; }
 #fTitle, .lhead h3 { font-size:17px; color:var(--deep); }
-nav button { font-family:var(--font-body); font-weight:600; }
-/* 사람 이름만 SUIT */
-.names, .line-dd summary > span, .role details.dd summary b, .clash details.dd summary b, .subst .who, .subst .orig,
-details.dd .chip, #fNames .chip, #dNames.has #sNames, #allRot td, .mc i, #meName, #gNames button { font-family:var(--font-name); }
-.line-dd summary > span small { font-family:var(--font-body); }        /* (연차 · 백업 없음) 같은 설명 */
+nav button { font-weight:700; }
 .ev2 small.pl { font-family:var(--font-body); font-weight:500; letter-spacing:0; overflow-wrap:anywhere; }                       /* 장소는 직접 쓴 글이라 날짜·시간과 다른 글꼴 */
-.day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-family:Oswald, Paperlogy, "Apple SD Gothic Neo", sans-serif; font-weight:600; letter-spacing:.04em; }
+.day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-weight:600; }
+.rl.en { font-family:Oswald, var(--font-body); letter-spacing:.04em; } .rl.ko { font-family:Paperlogy, var(--font-body); }
 .day .line-dd summary > b, .role span { font-size:17px; }
 </style>
 </head>
@@ -418,7 +410,7 @@ details.dd .chip, #fNames .chip, #dNames.has #sNames, #allRot td, .mc i, #meName
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-21';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-22';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -513,6 +505,7 @@ const away = (name, day) => D.leaves.find(l => AWAY.includes(l.kind) && l.start 
 const isSub = l => l.kind === '백업' || l.kind === '대체';          // '대체' 는 2026-10-02 이전 이름 (서버가 '백업'으로 바꿔 둔다)
 const subs = () => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => isSub(l) && SUB_RE.test(l.memo))
   .map(({ l, i }) => { const [, role, orig] = l.memo.match(SUB_RE); return { i, day: l.start, role, orig, who: l.name }; });
+const rl = n => `rl ${/[가-힣]/.test(n) ? 'ko' : 'en'}`;               // 업무명 글꼴: 온콜·당직 = 페이퍼로지, TOMO·SGRT = Oswald
 const subFor = (role, day) => subs().find(s => s.role === role && s.day === day);
 
 // 기간 p 안에서 담당자가 근태로 빠지는데 백업이 아직 없는 날
@@ -636,12 +629,12 @@ function renderDay() {
     const out = !s && cur.who[i] && away(cur.who[i], day);
     const v = s && s.who !== s.orig ? `${esc(s.who)} <small>(← ${esc(s.orig)})</small>`
       : esc(cur.who[i]) + (out && !s ? ` <small class="red">(${esc(out.kind)} · 백업 없음)</small>` : '');
-    if (!cur.who[i]) return s ? `<div class="line"><b>${esc(r.name)}</b>${v}</div>` : '';
+    if (!cur.who[i]) return s ? `<div class="line"><b class="${rl(r.name)}">${esc(r.name)}</b>${v}</div>` : '';
     const orig = cur.who[i], opts = D.people.includes(orig) ? D.people : [orig, ...D.people];
     return dd(`day|${i}|${day}`, opts.map(n => {                     // 누르면 그날만 대신 설 사람 고르기
       const a = away(n, day);
       return { v: n, t: n + (n === orig ? ' (원래 담당)' : a ? ` (${a.kind})` : '') };
-    }), s ? s.who : orig, '', `<b>${esc(r.name)}</b><span>${v}</span>`, ' line-dd');
+    }), s ? s.who : orig, '', `<b class="${rl(r.name)}">${esc(r.name)}</b><span>${v}</span>`, ' line-dd');
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
   const list = arrange(evOn(day));
   $('#todayLeave').innerHTML = head('일정') + (list.length
@@ -700,20 +693,20 @@ function render() {
         const v = p.who[ri];
         const opts = ['', ...D.people];
         if (v && !opts.includes(v)) opts.push(v);
-        return `<div class="role"><span>${esc(r.name)}</span>${dd(`rot|${pi}|${ri}`,
+        return `<div class="role"><span class="${rl(r.name)}">${esc(r.name)}</span>${dd(`rot|${pi}|${ri}`,
           opts.map(o => ({ v: o, t: o ? o + (D.people.includes(o) ? '' : ' (명단 외)') : '-' })), v)}</div>`;
       }).join('')}
       ${clashes(p).map(c => `
-        <div class="clash"><div class="msg">⚠️ ${mdh(c.day)} <b>${esc(c.role)}</b> ${esc(c.v)} - ${esc(c.kind)}</div>
+        <div class="clash"><div class="msg">⚠️ ${mdh(c.day)} <b class="${rl(c.role)}">${esc(c.role)}</b> ${esc(c.v)} - ${esc(c.kind)}</div>
           <div class="two"><div>${dd(`sub|${pi}|${c.ri}|${c.day}`,
             [{ v: c.v, t: '백업 불필요' }, ...D.people.filter(n => n !== c.v).map(n => ({ v: n, t: n + (n === c.rec ? ' (백업)' : '') }))],
             subPick[`${pi}|${c.ri}|${c.day}`] ?? c.rec, '백업 지정')}</div>
           <div><button data-sub="${pi}|${c.ri}|${c.day}">확인</button></div></div></div>`).join('')}
       ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
         // 평소엔 한 줄, 누르면 백업자 바꾸기·삭제가 열린다 (일정 탭과 같은 방식)
-        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${s.who === s.orig ? '(백업 불필요)' : `(← ${esc(s.orig)})`}</span></div></div>`;
+        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b class="${rl(s.role)}">${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${s.who === s.orig ? '(백업 불필요)' : `(← ${esc(s.orig)})`}</span></div></div>`;
         const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
-        return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b>${esc(s.role)}</b> <span class="orig">(← ${esc(s.orig)})</span></div>
+        return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b class="${rl(s.role)}">${esc(s.role)}</b> <span class="orig">(← ${esc(s.orig)})</span></div>
           ${dd(`subi|${s.i}`, [{ v: s.orig, t: '백업 불필요' }, ...opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n }))], s.who)}
           <div class="two" style="margin-top:8px"><div><button class="sub" data-subclose="1">닫기</button></div>
           <div><button class="sub del-sub" data-i="${s.i}">삭제</button></div></div></div>`;
@@ -746,7 +739,7 @@ function openAllRot() {
   const nSub = (p, role) => subs().some(s => s.role === role && p.start <= s.day && s.day <= p.end);
   $('#allScroll').innerHTML = `<table><thead><tr><th>업무</th>${D.periods.map((p, k) =>
     `<th class="${cls(p)}"><button type="button" data-goper="${k}">${mdNum(p.start)}<br>~${mdNum(p.end)}</button></th>`).join('')}</tr></thead>
-    <tbody>${D.roles.map((r, ri) => `<tr><th>${esc(r.name)}</th>${D.periods.map(p =>
+    <tbody>${D.roles.map((r, ri) => `<tr><th class="${rl(r.name)}">${esc(r.name)}</th>${D.periods.map(p =>
       `<td class="${cls(p)}">${esc(p.who[ri] || '-')}${nSub(p, r.name) ? '<i class="dot"></i>' : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   $('#allRot').hidden = false;
   const now = $('#allScroll thead th.now');
