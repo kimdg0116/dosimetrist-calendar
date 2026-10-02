@@ -308,7 +308,7 @@ footer { margin-top:28px; }
 #picker .hols { min-height:20px; margin:8px 0; font-size:13px; line-height:1.6; color:var(--red); }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
-.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
 .day h3 .dt, .ev .tm { font-size:18px; font-weight:600; color:var(--fg); }              /* 맨 위 블록: 크게 */
 #pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
@@ -321,7 +321,7 @@ footer { margin-top:28px; }
 nav button { font-weight:700; }
 .ev2 small.pl { font-family:var(--font-body); font-weight:500; letter-spacing:0; overflow-wrap:anywhere; }                       /* 장소는 직접 쓴 글이라 날짜·시간과 다른 글꼴 */
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-weight:600; }
-.rl.en { font-family:Oswald, var(--font-body); letter-spacing:.04em; } .rl.ko { font-family:Paperlogy, var(--font-body); }
+.rl.en { font-family:Oswald, Paperlogy, var(--font-body); letter-spacing:.04em; } .rl.ko { font-family:Paperlogy, var(--font-body); }
 .day .line-dd summary > b, .role span { font-size:17px; }
 </style>
 </head>
@@ -410,7 +410,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-22';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-23';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
