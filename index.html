@@ -123,7 +123,8 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 #pnav button:disabled { opacity:.3; }
 #pnav button svg { display:block; width:17px; height:17px; }
 #periods { touch-action:pan-y; }
-#periods .card.in-l { animation:pin .18s ease-out; --dx:24px; } #periods .card.in-r { animation:pin .18s ease-out; --dx:-24px; }
+.in-l { animation:pin .18s ease-out; --dx:24px; } .in-r { animation:pin .18s ease-out; --dx:-24px; }
+#leaves { touch-action:pan-y; }
 @keyframes pin { from { opacity:.4; transform:translateX(var(--dx)); } }
 #periods #addPeriod { margin-top:14px; }
 #allRot { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; background:rgba(10,20,60,.4); }
@@ -424,7 +425,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-28';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-29';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -673,16 +674,20 @@ function moveDay(n) {
   dayOff = n === 0 ? 0 : Math.min(MAX_OFF, Math.max(MIN_OFF, dayOff + n));
   renderDay();
 }
-// 세로 스크롤 중 손가락이 옆으로 조금 휘는 건 넘기기가 아니다 → 가로로 확실히 밀었을 때만
-let touch = null;
-$('#dayView').addEventListener('touchstart', e => { touch = e.touches.length === 1 ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
-$('#dayView').addEventListener('touchcancel', () => { touch = null; });
-$('#dayView').addEventListener('touchend', e => {
-  if (!touch) return;
-  const dx = e.changedTouches[0].clientX - touch[0], dy = e.changedTouches[0].clientY - touch[1];
-  touch = null;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) moveDay(dx < 0 ? 1 : -1);   // 왼쪽으로 밀면 다음 날
-});
+// 옆으로 밀어 넘기기 (맨 위 블록·업무 기간·일정 주/월 공통)
+// 세로 스크롤 중 손가락이 옆으로 조금 휘는 건 넘기기가 아니다 → 가로로 확실히 밀었을 때만. 왼쪽으로 밀면 다음
+function swipe(el, go) {
+  let t = null;
+  el.addEventListener('touchstart', e => { t = e.touches.length === 1 && !e.target.closest('details[open]') ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
+  el.addEventListener('touchcancel', () => { t = null; });
+  el.addEventListener('touchend', e => {
+    if (!t) return;
+    const dx = e.changedTouches[0].clientX - t[0], dy = e.changedTouches[0].clientY - t[1];
+    t = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) go(dx < 0 ? 1 : -1);
+  });
+}
+swipe($('#dayView'), moveDay);
 
 function render() {
   renderDay();
@@ -738,15 +743,7 @@ function movePeriod(n) {
   if (k === pPage) return;
   pSlide = n > 0 ? 'l' : 'r'; pPage = k; openSub = null; render();
 }
-let pTouch = null;                                                     // 맨 위 블록과 같은 규칙: 가로로 확실히 밀었을 때만
-$('#periods').addEventListener('touchstart', e => { pTouch = e.touches.length === 1 && !e.target.closest('details[open]') ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
-$('#periods').addEventListener('touchcancel', () => { pTouch = null; });
-$('#periods').addEventListener('touchend', e => {
-  if (!pTouch) return;
-  const dx = e.changedTouches[0].clientX - pTouch[0], dy = e.changedTouches[0].clientY - pTouch[1];
-  pTouch = null;
-  if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) movePeriod(dx < 0 ? 1 : -1);
-});
+swipe($('#periods'), movePeriod);
 // 전체 보기: 행 = 업무, 열 = 기간 (처음 받은 엑셀 모양). 날짜를 누르면 그 기간으로
 function openAllRot() {
   const cur = p => p.start <= D.today && D.today <= p.end;
@@ -823,7 +820,10 @@ function moveCal(n) {
   if (calView === 'week') calAnchor = addDays(calAnchor, 7 * n);
   else { const d = new Date(a.getFullYear(), a.getMonth() + n, 1); calAnchor = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`; }
   renderLeaves();
+  const el = $('#leaves');                                             // 넘기는 방향으로 살짝 미끄러지게
+  el.classList.remove('in-l', 'in-r'); void el.offsetWidth; el.classList.add(n > 0 ? 'in-l' : 'in-r');
 }
+swipe($('#leaves'), n => { if (calView !== 'list') moveCal(n); });    // 주·월 보기만 (목록은 넘길 게 없음)
 
 let openSub = null;                                                    // 업무 탭에서 열어 둔 백업 근무 (D.leaves 번호)
 // 업무 탭 드롭다운 (휴대폰 기본 선택창 대신 일정 탭과 같은 팝업 목록)
