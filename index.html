@@ -13,7 +13,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="favicon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap">
+<!-- 처음 여는 순간 서버들과 미리 연결해 둔다 (데이터·글꼴·초인종) -->
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ntfy.sh">
+<script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');</script>
 <style>
 /* 색은 SMC 디자인 시스템 가이드라인 3.0 (1.5 Color) 기준
    Samsung Blue #1428a0 · SMC Blue #0a4bff (80% #2e70ff, 60% #508eff, 40% #8cbaff, 20% #bedaff)
@@ -313,6 +318,7 @@ footer { margin-top:28px; }
 #pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
+@font-face { font-family:Oswald; src:url(https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2) format("woff2-variations"); font-weight:200 700; font-display:swap; }   /* 구글 폰트 CSS 를 거치지 않아 첫 화면이 안 막힌다 */
 @font-face { font-family:"SUIT Variable"; src:url(https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2) format("woff2-variations"); font-weight:100 900; font-display:swap; }
 @font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2) format("woff2"); font-weight:600; font-display:swap; }
 /* 제목: 페이퍼로지 */
@@ -329,6 +335,8 @@ nav button { font-weight:700; }
 .ar { width:.95em; height:.95em; margin-right:1px; vertical-align:-.12em; }
 .ttl-line .memo { font-weight:800; }                                   /* 내용 */
 .ev-sub, .ev2 small.pl { font-weight:700; }                             /* 장소 */
+/* 안드로이드: 상단 바 뒤 흐림 효과는 스크롤을 끊기게 해서 불투명 배경으로 */
+.android .top { -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--bg-top); }
 </style>
 </head>
 <body>
@@ -416,7 +424,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-27';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-28';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -545,10 +553,13 @@ let auth = {};
 try { auth = JSON.parse(localStorage.getItem('auth') || '{}'); } catch (e) {}
 const saveAuth = () => { try { localStorage.setItem('auth', JSON.stringify(auth)); } catch (e) {} };
 
+// 이 기기 번호: 초인종을 누가 눌렀는지 (자기 신호는 무시)
+const DEV = (() => { let d = ''; try { d = localStorage.getItem('dev') || ''; } catch (e) {}
+  if (!d) { d = Math.random().toString(36).slice(2, 10); try { localStorage.setItem('dev', d); } catch (e) {} } return d; })();
 async function call(fn, ...args) {
   let out;
   try {
-    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args, code: auth.code, who: auth.me || '' }) });
+    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args, code: auth.code, who: auth.me || '', dev: DEV }) });
     out = await res.json();
   } catch (e) {
     throw new Error('인터넷 연결을 확인해 주세요');
@@ -593,6 +604,7 @@ async function run(fn, args, msg) {
   try {
     const r = await call(fn, ...args);
     setData(r.data);
+    if (r.rang === false) ring();                                      // 서버가 못 눌렀으면 이 폰이 초인종을
     if (!shown) toast(msg);
     return true;
   } catch (e) {
@@ -1157,20 +1169,44 @@ async function start() {
   if (!auth.code) return showGate(1);
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('data') || 'null'); } catch (e) {}
-  if (saved) { D = saved; D.today = localToday(); render(); initForm(); }   // 저장본으로 바로 그리기
-  await load();
+  listen();
+  if (saved) { D = saved; D.today = localToday(); render(); initForm(); await pull(true); }   // 저장본으로 바로 그리고, 바뀐 게 있을 때만 받기
+  else await load();
   if (D) { initForm(); if (!auth.me) showGate(2); }
 }
-// 앱을 보고 있는 동안 15초마다 변경 번호만 확인해서, 누가 바꿨으면 새 내용을 받는다 (고르는 중·수정 중엔 쉼)
+// ── 여러 기기 동기화 ──
+// 1) 초인종: 앱이 화면에 있는 동안 ntfy 초인종 방을 듣는다. 누가 저장하면 서버가 누르고 → 1~2초 안에 새로 받음
+// 2) 받기는 한 번에: pull(내 변경 번호) → 그대로면 빈 답, 바뀌었으면 전체 데이터
+// 3) 보험: 초인종을 놓쳐도 30초마다 확인. 앱을 다시 열 때도 바로 확인
+// 고르는 중·수정 중·저장 중엔 화면을 바꾸지 않고 '받을 게 있음'만 기억했다가, 끝나면 받는다
+const BELL = 'smc-dose-bell-c84ec6618b6cfd37';
 const idle = () => document.visibilityState === 'visible' && auth.code && D && !editing && !busy
   && $('#picker').hidden && $('#allRot').hidden && !document.querySelector('details[open]');
-setInterval(async () => {
-  if (!idle()) return;
-  try { if (await call('getRev') !== D.rev && idle()) load(); } catch (e) {}
-}, 15000);
-// 다른 앱에 갔다 돌아오면 최신 내용으로 (수정 중일 땐 건드리지 않음)
+let pending = false, pulling = false;
+async function pull(showErr) {
+  if (!idle() || pulling) { pending = true; return; }
+  pending = false; pulling = true;
+  try {
+    const r = await call('pull', D.rev || '');
+    if (!r.same) { if (idle()) setData(r); else pending = true; }
+  } catch (e) { if (showErr) toast('최신 내용을 못 불러왔습니다: ' + e.message); }
+  finally { pulling = false; }
+}
+function ring() { fetch('https://ntfy.sh/' + BELL, { method: 'POST', body: DEV }).catch(() => {}); }
+let bell = null;
+function listen() {
+  if (bell || !auth.code || document.visibilityState !== 'visible' || typeof EventSource === 'undefined') return;
+  bell = new EventSource('https://ntfy.sh/' + BELL + '/sse');
+  bell.onmessage = e => { try { const m = JSON.parse(e.data); if (m.event === 'message' && m.message !== DEV) pull(); } catch (err) {} };
+}
+let tick = 0;
+setInterval(() => {                                                    // 3초마다: 미뤄 둔 게 있으면 받고, 30초마다는 그냥 확인
+  if (document.visibilityState !== 'visible') return;
+  if (++tick % 10 === 0 || pending) pull();
+}, 3000);
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && auth.code && D && !editing && $('#picker').hidden) load();
+  if (document.visibilityState === 'visible') { listen(); if (D) pull(); }
+  else if (bell) { bell.close(); bell = null; }                         // 내려 두면 연결을 끊는다 (배터리)
 });
 start();
 </script>
