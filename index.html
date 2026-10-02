@@ -437,7 +437,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-34';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-35';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -569,14 +569,13 @@ const saveAuth = () => { try { localStorage.setItem('auth', JSON.stringify(auth)
 // 이 기기 번호: 초인종을 누가 눌렀는지 (자기 신호는 무시)
 const DEV = (() => { let d = ''; try { d = localStorage.getItem('dev') || ''; } catch (e) {}
   if (!d) { d = Math.random().toString(36).slice(2, 10); try { localStorage.setItem('dev', d); } catch (e) {} } return d; })();
-async function call(fn, ...args) {
-  let out;
-  try {
-    const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args, code: auth.code, who: auth.me || '', dev: DEV }) });
-    out = await res.json();
-  } catch (e) {
-    throw new Error('인터넷 연결을 확인해 주세요');
-  }
+// 연결 문제(요청이 끊김·서버가 이상한 답)는 e.net = true → 저장은 버리지 않고 다시 보낸다
+const netErr = m => Object.assign(new Error(m), { net: true });
+async function req(fn, args, oid) {
+  let res, out;
+  try { res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args, code: auth.code, who: auth.me || '', dev: DEV, oid }) }); }
+  catch (e) { throw netErr('인터넷 연결이 끊겼습니다'); }                // 앱을 내리거나 잠그면 아이폰이 요청을 끊기도 한다
+  try { out = await res.json(); } catch (e) { throw netErr('서버 응답을 받지 못했습니다'); }   // 구글 서버가 바쁠 때 오류 페이지
   if (out.ok) return out.data;
   if (out.error === 'AUTH') {                                         // 코드가 바뀌었거나 틀림 → 입력 창
     auth.code = ''; saveAuth();
@@ -585,6 +584,7 @@ async function call(fn, ...args) {
   }
   throw new Error(out.error);
 }
+const call = (fn, ...args) => req(fn, args);
 
 // 저장은 시트에만 쓰고 바로 끝난다. 캘린더·알림은 뒤에서 따로 (기다리지 않음)
 
@@ -593,7 +593,8 @@ async function call(fn, ...args) {
 // 저장은 한 번에 하나씩 차례로 보낸다. 앞 저장이 끝나기 전에 또 바꿔도(방금 추가해 줄 번호가 아직 없는 일정 포함)
 // 차례가 오면 S 에서 같은 일정을 '내용'으로 다시 찾아 그 줄을 고친다 (줄 번호는 지우기 등으로 밀릴 수 있어서)
 let S = null, busy = 0, chain = Promise.resolve();
-const queued = [];
+let queued = [];                                                      // 아직 서버가 받았다고 답하지 않은 저장들 = 보관함 (폰에도 저장)
+const saveOutbox = () => { try { localStorage.setItem('outbox', JSON.stringify(queued)); } catch (e) {} };
 const leafKey = l => [l.start, l.end, l.name, l.kind, l.time, l.memo, l.place || ''].join('|');
 function apply_(op) {                                                  // 저장 하나를 화면(D)에 미리 반영
   const { fn, args } = op, L = D.leaves, f = args[args.length - 1];
@@ -618,38 +619,48 @@ function redraw() {
 }
 function run(fn, args, msg) {
   const t = /^(update|delete)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
-  const op = { fn, args, key: t ? leafKey(t) : null };
-  let shown = false;
-  try { shown = apply_(op); } catch (e) {}
-  if (shown) { queued.push(op); render(); }
-  toast(shown ? msg : busy ? '앞 저장을 마치는 중…' : '저장 중…');
+  const op = { fn, args, msg, key: t ? leafKey(t) : null, oid: DEV + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
+  try { op.shown = apply_(op); } catch (e) {}
+  queued.push(op); saveOutbox(); render();
+  toast(op.shown ? msg : busy ? '앞 저장을 마치는 중…' : '저장 중…');
+  return enqueue(op);
+}
+function enqueue(op) {
   busy++;
-  const p = chain.then(() => send_(op, msg, shown));
+  const p = chain.then(() => send_(op));
   chain = p.catch(() => {});
   return p.finally(() => { busy--; });
 }
-async function send_(op, msg, shown) {
-  const drop = () => { const i = queued.indexOf(op); if (i >= 0) queued.splice(i, 1); };
-  let args = op.args;
-  if (op.key) {
-    const cur = S.leaves.find(l => l.row > 0 && leafKey(l) === op.key);
-    if (!cur) { drop(); redraw(); toast('그 일정이 이미 바뀌었습니다. 다시 확인해 주세요'); return false; }
-    args = [cur.row, cur.sig, ...args.slice(2)];
-  }
-  if (op.fn === 'setRotation') {                                       // 같은 칸을 연달아 바꿔도 앞 저장 결과를 기준으로
-    const pp = S.periods.find(p => p.col === args[1]), ri = S.roles.findIndex(r => r.row === args[0]);
-    if (pp && ri >= 0) args = [args[0], args[1], args[2], pp.who[ri]];
-  }
-  try {
-    const r = await call(op.fn, ...args);
-    drop(); setData(r.data);
-    if (r.rang === false) ring();                                      // 서버가 못 눌렀으면 이 폰이 초인종을
-    if (r.pend && r.pend.length) relay(r.pend);                        // 서버가 못 보낸 알림도 이 폰이 대신
-    if (!shown) toast(msg);
-    return true;
-  } catch (e) {
-    drop(); toast('실패: ' + e.message); load();
-    return false;
+// 저장 보내기. 연결 문제면 버리지 않고 2·4·8…초(최대 30초) 간격으로 다시 보낸다. 같은 고유 번호(oid)라 서버에서 두 번 적용되지 않는다
+async function send_(op) {
+  const drop = () => { const i = queued.indexOf(op); if (i >= 0) { queued.splice(i, 1); saveOutbox(); } };
+  for (let n = 0; ; n++) {
+    if (!op.sent) {                                                    // 처음 보낼 때 대상 줄을 정한다 (다시 보낼 땐 그대로)
+      let args = op.args;
+      if (op.key) {
+        const cur = S.leaves.find(l => l.row > 0 && leafKey(l) === op.key);
+        if (!cur) { drop(); redraw(); toast('그 일정이 이미 바뀌었습니다. 다시 확인해 주세요'); return false; }
+        args = [cur.row, cur.sig, ...args.slice(2)];
+      }
+      if (op.fn === 'setRotation') {                                   // 같은 칸을 연달아 바꿔도 앞 저장 결과를 기준으로
+        const pp = S.periods.find(p => p.col === args[1]), ri = S.roles.findIndex(r => r.row === args[0]);
+        if (pp && ri >= 0) args = [args[0], args[1], args[2], pp.who[ri]];
+      }
+      op.sent = args; saveOutbox();
+    }
+    try {
+      const r = await req(op.fn, op.sent, op.oid);
+      drop(); setData(r.data);
+      if (r.rang === false) ring();                                    // 서버가 못 눌렀으면 이 폰이 초인종을
+      if (r.pend && r.pend.length) relay(r.pend);                      // 서버가 못 보낸 알림도 이 폰이 대신
+      if (n > 0 || op.resumed) toast('밀려 있던 저장을 보냈습니다');
+      else if (!op.shown) toast(op.msg);
+      return true;
+    } catch (e) {
+      if (!e.net) { drop(); toast('실패: ' + e.message); load(); return false; }   // 내용 문제(다른 사람이 먼저 고침 등)
+      if (n === 0) toast('연결이 불안정해 다시 보내는 중… (화면엔 반영돼 있어요)');
+      await new Promise(r => setTimeout(r, Math.min(30000, 2000 * 2 ** n)));
+    }
   }
 }
 
@@ -1230,8 +1241,14 @@ async function start() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('data') || 'null'); } catch (e) {}
   listen();
-  if (saved) { S = saved; S.today = localToday(); redraw(); initForm(); await pull(true); }   // 저장본으로 바로 그리고, 바뀐 게 있을 때만 받기
+  let ob = [];
+  try { ob = JSON.parse(localStorage.getItem('outbox') || '[]'); } catch (e) {}
+  if (saved) { S = saved; S.today = localToday(); queued = ob; redraw(); initForm(); if (!ob.length) await pull(true); }   // 저장본으로 바로 그리고, 바뀐 게 있을 때만 받기
   else await load();
+  if (ob.length && S) {                                                // 지난번에 못 보낸 저장 이어 보내기 (같은 번호라 중복 없음)
+    queued = ob; redraw(); toast(`보내지 못한 저장 ${ob.length}건을 다시 보냅니다`);
+    ob.forEach(op => { op.resumed = true; enqueue(op); });
+  }
   if (D) { initForm(); if (!auth.me) showGate(2); }
 }
 // ── 여러 기기 동기화 ──
