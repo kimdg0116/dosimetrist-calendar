@@ -353,6 +353,7 @@ nav button { font-weight:700; }
 #fBody { margin-top:14px; }
 .mhint { margin:2px 0 6px; font-size:13px; font-weight:600; color:var(--acc); text-align:center; }
 #fToggle { scroll-margin-top:70px; }
+.wlink { font-family:var(--font-body); font-size:13px; font-weight:700; letter-spacing:0; color:var(--acc); text-decoration:none; }
 </style>
 </head>
 <body>
@@ -418,7 +419,7 @@ nav button { font-weight:700; }
       <div class="vseg" id="vSeg"><button data-cv="list">목록</button><button data-cv="week">주</button><button data-cv="month">월</button></div></div>
     <div id="leaves"></div></div>
 </div>
-<footer><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
+<footer><p class="ver"><a class="wlink" href="widget-setup.html">아이폰 위젯 설치 ›</a></p><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
 <button type="button" id="upd" class="upd" hidden>새 버전이 있습니다 · 눌러서 새로고침</button>
 <div id="gate" hidden><div class="gbox">
@@ -446,7 +447,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-38';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-39';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);

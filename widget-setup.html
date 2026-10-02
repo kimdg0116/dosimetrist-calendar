@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>위젯 설치 · Dosimetrist Calendar</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+:root { --bg:#eef5ff; --card:#fff; --fg:#191919; --mute:#666; --line:#dbe8ff; --acc:#2e70ff; --deep:#1428a0; --soft:#e8f1ff; color-scheme:light; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0f1420; --card:#1a2233; --fg:#e9eef8; --mute:#9ba8bf; --line:#2b3750; --acc:#508eff; --deep:#8cbaff; --soft:#1d2c4d; color-scheme:dark; } }
+* { box-sizing:border-box; }
+body { margin:0; padding:20px 16px 60px; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system, "Apple SD Gothic Neo", sans-serif; }
+h1 { margin:0 0 4px; font-size:22px; color:var(--deep); }
+.sub { margin:0 0 18px; color:var(--mute); font-size:14px; }
+.card { background:var(--card); border-radius:16px; padding:16px; margin-bottom:12px; }
+ol { margin:0; padding-left:20px; } li { margin:6px 0; }
+b { color:var(--deep); }
+pre { margin:10px 0; padding:12px; max-height:160px; overflow:auto; font-size:11.5px; line-height:1.45; border:1px solid var(--line); border-radius:10px; background:var(--bg); white-space:pre-wrap; word-break:break-all; }
+button, .btn { display:block; width:100%; padding:13px; font:700 16px inherit; text-align:center; text-decoration:none; border:0; border-radius:12px; background:var(--acc); color:#fff; }
+.btn.ghost { background:var(--soft); color:var(--acc); margin-top:8px; }
+.note { font-size:13px; color:var(--mute); }
+code { padding:1px 6px; border-radius:6px; background:var(--soft); font-size:14px; }
+</style>
+</head>
+<body>
+<h1>아이폰 위젯 설치</h1>
+<p class="sub">파트 업무·일정만 보이는 홈 화면 위젯 (Scriptable 앱 이용, 무료)</p>
+
+<div class="card">
+  <ol>
+    <li>App Store 에서 <b>Scriptable</b> 설치
+      <a class="btn ghost" href="https://apps.apple.com/app/scriptable/id1405459188">Scriptable 받기</a></li>
+    <li>아래 <b>설치 코드 복사</b>를 누릅니다.</li>
+    <li>Scriptable 을 열고 오른쪽 위 <b>＋</b> → 빈 화면에 <b>붙여넣기</b> → 맨 위 제목을 <code>파트 위젯</code> 으로 바꾸고 <b>Done</b>.</li>
+    <li>목록의 <b>파트 위젯</b>을 한 번 눌러 실행 → <b>접근 코드</b>(앱과 같은 6자리) 입력 → A·B 미리보기로 확인.</li>
+    <li>홈 화면 빈 곳을 길게 누름 → 왼쪽 위 <b>＋</b> → <b>Scriptable</b> → <b>중간 크기</b> 추가.</li>
+    <li>추가한 위젯을 길게 눌러 <b>위젯 편집</b> → Script: <code>파트 위젯</code> · Parameter: <code>A</code> 또는 <code>B</code>.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <b>설치 코드</b>
+  <pre id="code"></pre>
+  <button id="copy">설치 코드 복사</button>
+  <p class="note">한 번만 붙여넣으면 됩니다. 위젯이 고쳐지면 자동으로 최신이 됩니다. Scriptable 목록에 <code>dosimetrist-widget-core</code> 가 같이 생기는데 위젯 본체라 지우지 마세요.</p>
+</div>
+
+<div class="card">
+  <b>A</b> 오늘 업무 + 오늘 일정 · <b>B</b> 오늘·내일 일정(참석 인원) + 당직·온콜
+  <p class="note">위젯은 iOS 가 정한 때(보통 15~30분)에 새로 그려집니다. 급한 변경은 ntfy 알림으로 옵니다. 접근 코드는 이 폰 안(키체인)에만 저장됩니다.</p>
+</div>
+
+<script>
+const LOADER = `// Dosimetrist Calendar 위젯 설치 코드 — Scriptable 에 한 번만 붙여넣으면 됩니다
+// 실제 위젯은 아래 주소에서 받아 오고, 고쳐지면 자동으로 최신이 됩니다
+const SRC = 'https://kimdg0116.github.io/dosimetrist-calendar/widget.js';
+const fm = FileManager.iCloud().isFileStoredIniCloud(module.filename) ? FileManager.iCloud() : FileManager.local();
+const file = fm.joinPath(fm.documentsDirectory(), 'dosimetrist-widget-core.js');
+try {
+  const r = new Request(SRC + '?t=' + Date.now()); r.timeoutInterval = 10;
+  const code = await r.loadString();
+  if (code.includes('DOSIMETRIST_WIDGET')) fm.writeString(file, code);
+} catch (e) {}
+if (fm.isFileStoredIniCloud(file)) await fm.downloadFileFromiCloud(file);
+await importModule('dosimetrist-widget-core')();
+`;
+document.getElementById('code').textContent = LOADER;
+document.getElementById('copy').addEventListener('click', async e => {
+  try { await navigator.clipboard.writeText(LOADER); e.target.textContent = '복사됨 ✓ Scriptable 에 붙여넣으세요'; }
+  catch (err) { e.target.textContent = '복사가 안 되면 위 코드를 길게 눌러 전체 선택 → 복사'; }
+});
+</script>
+</body>
+</html>
