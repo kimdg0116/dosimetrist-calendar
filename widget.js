@@ -165,7 +165,7 @@ module.exports = async () => {
   }
   const w = new ListWidget();
   w.backgroundGradient = fill(C.bg); w.setPadding(13, 15, 12, 15); w.url = APP;
-  w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);         // 다시 그리는 시점은 iOS 가 정한다 (보통 15~30분)
+  w.refreshAfterDate = new Date(Date.now() + 5 * 60 * 1000);          // '가장 빠르면 5분 뒤' 요청. 실제로 다시 그리는 때는 iOS 가 정한다 (하루 횟수 제한)
   const d = code ? await load(code) : { auth: true };
   const fam = config.widgetFamily || 'medium';
   if (d.auth || d.err) {
