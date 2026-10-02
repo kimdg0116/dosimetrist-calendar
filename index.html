@@ -455,7 +455,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-40';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-41';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -490,7 +490,7 @@ document.getElementById('ver').textContent = 'v' + APP_VERSION;
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
 })();
 const KINDS = ['연차', '진료', '교육', '훈련', '회의', '출장', '기타'];
-const ALL = '전체';                                                  // 파트원 모두 참석하는 일정
+const ALL = '전원';                                                  // 파트원 모두 참석하는 일정
 const DOW = '일월화수목금토';
 let D, kind = '', mode = 'day', names = new Set();
 
@@ -1126,7 +1126,7 @@ document.addEventListener('click', async e => {
   } else if (b.dataset.n) {
     const n = b.dataset.n;
     if (names.has(n)) names.delete(n);
-    else { if (n === ALL) names.clear(); else names.delete(ALL); names.add(n); }   // '전체' 와 개별 이름은 같이 못 고름
+    else { if (n === ALL) names.clear(); else names.delete(ALL); names.add(n); }   // '전원' 과 개별 이름은 같이 못 고름
     document.querySelectorAll('#fNames .chip').forEach(x => x.classList.toggle('on', names.has(x.dataset.n)));
     applyNames();
   } else if (b.dataset.i) {
@@ -1155,7 +1155,7 @@ document.addEventListener('click', async e => {
     };
     if (!kind) return toast('구분을 골라 주세요');
     if (kind === '기타' && !f.memo) return toast('무엇인지 적어 주세요');
-    if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전체")을 넣어 주세요');
+    if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전원")을 넣어 주세요');
     b.disabled = true;
     // 화면엔 바로 반영되니 입력칸도 바로 비운다. 서버가 캘린더·알림까지 끝내느라 몇 초 걸리는데, 실패하면 적은 내용을 되살린다
     const ed = editing;
