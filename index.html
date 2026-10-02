@@ -323,6 +323,9 @@ nav button { font-weight:700; }
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-weight:600; }
 .rl.en { font-family:Oswald, Paperlogy, var(--font-body); letter-spacing:.04em; } .rl.ko { font-family:Paperlogy, var(--font-body); }
 .day .line-dd summary > b, .role span { font-size:17px; }
+/* 구분(연차·회의…)과 사람 이름은 한 단계 더 굵게 (SUIT 700 은 폰에서 중간 굵기로 보인다) */
+.kind, .names, .day .line-dd summary > span, .role details.dd summary b, .clash details.dd summary b, .subst .who, #allRot td:not(.past) { font-weight:800; }
+.day .line-dd summary > span small { font-weight:500; }
 </style>
 </head>
 <body>
@@ -410,7 +413,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-23';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-24';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
