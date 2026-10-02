@@ -437,7 +437,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-35';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-36';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -976,9 +976,20 @@ const commitFrom = () => {
 };
 $('#tFrom').addEventListener('change', commitFrom);
 $('#tFrom').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tFrom').blur(); } });
-document.addEventListener('toggle', e => {                          // 어느 목록이든 열면 고른 항목이 보이게
-  const d = e.target, list = d.querySelector && d.querySelector(':scope > .chips'), on = list && list.querySelector('.on');
-  if (d.open && on) list.scrollTop = on.offsetTop - 80;
+// 목록을 열 때: 사람 목록은 딱 5명 높이로, 기준 사람을 가운데(위 2명·아래 2명)에. 맨 위·맨 아래 근처면 처음·끝 5명
+// 기준 = 일정 탭 이름 목록은 '나', 업무 칸들은 지금 담당(고른 사람). 나머지 목록(구분·시각 등)은 고른 항목이 보이게만
+document.addEventListener('toggle', e => {
+  const d = e.target, list = d.querySelector && d.querySelector(':scope > .chips');
+  if (!d.open || !list) return;
+  const on = list.querySelector('.on');
+  if (!d.matches('details.dd, #dNames')) { if (on) list.scrollTop = on.offsetTop - 80; return; }
+  const items = [...list.children], SHOW = 5;
+  if (items.length <= SHOW) { list.style.maxHeight = ''; return; }
+  const anchor = d.id === 'dNames' ? items.find(x => x.dataset.n === auth.me) || on : on;
+  const last = items[SHOW - 1];
+  list.style.maxHeight = (last.offsetTop + last.offsetHeight + items[0].offsetTop) + 'px';   // 위아래 여백 포함 5칸
+  const i = Math.max(0, Math.min(items.length - SHOW, (anchor ? items.indexOf(anchor) : 0) - 2));
+  list.scrollTop = items[i].offsetTop - items[0].offsetTop;
 }, true);
 // ── 날짜 고르기 (기본 달력은 공휴일을 칠할 수 없어서 직접 그린다) ──
 const getD = id => $('#' + id).dataset.v || '';
