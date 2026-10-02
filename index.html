@@ -280,6 +280,14 @@ footer { margin-top:28px; }
 .subst.closed .who { color:var(--acc); }
 .subst.closed .orig { color:var(--mute); }
 .subst.closed .msg::after { content:'›'; float:right; color:var(--mute); }
+@supports (grid-template-columns: subgrid) {                          /* 백업 줄들: 날짜·업무·이름이 줄마다 같은 자리에 오게 열을 맞춘다 */
+  .subs { display:grid; grid-template-columns:repeat(4, auto) minmax(0, 1fr) auto; column-gap:6px; }
+  .subs > .subst { grid-column:1 / -1; }
+  .subst.closed { display:grid; grid-template-columns:subgrid; }
+  .subst.closed .msg { display:contents; }
+  .subst.closed .msg > *, .subst.closed .msg::after { align-self:center; }
+  .subst.closed .orig { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+}
 
 #toast { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:var(--toast); color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px rgba(20,40,160,.3); }
 #toast.show { opacity:.97; }
@@ -447,7 +455,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-39';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-40';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -782,15 +790,15 @@ function render() {
             [{ v: c.v, t: '백업 불필요' }, ...D.people.filter(n => n !== c.v).map(n => ({ v: n, t: n + (n === c.rec ? ' (백업)' : '') }))],
             subPick[`${pi}|${c.ri}|${c.day}`] ?? c.rec, '백업 지정')}</div>
           <div><button data-sub="${pi}|${c.ri}|${c.day}">확인</button></div></div></div>`).join('')}
-      ${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
+      <div class="subs">${subs().filter(s => p.start <= s.day && s.day <= p.end).map(s => {
         // 평소엔 한 줄, 누르면 백업자 바꾸기·삭제가 열린다 (일정 탭과 같은 방식)
-        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg">↪ ${mdh(s.day)} <b class="${rl(s.role)}">${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${s.who === s.orig ? '(백업 불필요)' : `(${AR}${esc(s.orig)})`}</span></div></div>`;
+        if (openSub !== s.i) return `<div class="subst closed" data-subopen="${s.i}"><div class="msg"><span>↪</span> <span>${mdh(s.day)}</span> <b class="${rl(s.role)}">${esc(s.role)}</b> <b class="who">${esc(s.who)}</b> <span class="orig">${s.who === s.orig ? '(백업 불필요)' : `(${AR}${esc(s.orig)})`}</span></div></div>`;
         const opts = D.people.includes(s.who) ? D.people : [s.who, ...D.people];
         return `<div class="subst"><div class="msg">↪ ${mdh(s.day)} <b class="${rl(s.role)}">${esc(s.role)}</b> <span class="orig">(${AR}${esc(s.orig)})</span></div>
           ${dd(`subi|${s.i}`, [{ v: s.orig, t: '백업 불필요' }, ...opts.filter(n => n !== s.orig).map(n => ({ v: n, t: n }))], s.who)}
           <div class="two" style="margin-top:8px"><div><button class="sub" data-subclose="1">닫기</button></div>
           <div><button class="sub del-sub" data-i="${s.i}">삭제</button></div></div></div>`;
-      }).join('')}
+      }).join('')}</div>
       ${last ? ADD : ''}
     </div>`).join('') || `<div class="card"><span class="empty">기간이 없습니다.</span>${ADD}</div>`;
   pSlide = '';
