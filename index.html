@@ -351,6 +351,8 @@ nav button { font-weight:700; }
 .fhead .plus { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--soft); color:var(--acc); font-size:19px; font-weight:700; transition:transform .2s; }
 .fhead.open .plus { transform:rotate(45deg); }
 #fBody { margin-top:14px; }
+.mhint { margin:2px 0 6px; font-size:13px; font-weight:600; color:var(--acc); text-align:center; }
+#fToggle { scroll-margin-top:70px; }
 </style>
 </head>
 <body>
@@ -444,7 +446,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-37';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-38';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -817,7 +819,7 @@ function openAllRot() {
 $('#allRot').addEventListener('click', e => { if (e.target.id === 'allRot') $('#allRot').hidden = true; });
 
 // ── 다가오는 일정: 목록 / 주 / 월 ──
-let calView = 'list', calAnchor = '', calSel = '';
+let calView = 'list', calAnchor = '', calSel = '', calTap = '';     // calTap: 직접 누른 날 (한 번 더 누르면 그날 일정 추가)
 try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
 const evHtml = (l, i, eds) => {
@@ -870,7 +872,7 @@ function renderLeaves() {
   const selEvs = sel ? evOn(sel) : [];
   $('#leaves').innerHTML = `<div class="cnav"><button data-cn="-1">‹</button><b>${y}년 ${m + 1}월</b><button data-cn="1">›</button></div>
     <div class="mgrid">${cells}</div>`
-    + (sel ? `<div class="msel">${dayRow(sel, selEvs)}</div>` : '');
+    + (sel ? `<div class="msel">${calTap === sel ? '<div class="mhint">한 번 더 누르면 이 날에 일정 추가</div>' : ''}${dayRow(sel, selEvs)}</div>` : '');
 }
 function moveCal(n) {
   const a = new Date(calAnchor + 'T00:00');
@@ -1033,6 +1035,11 @@ applyKind();
 
 // ── 일정 수정: 누른 일정을 폼에 채우고, 저장하면 그 줄을 고친다 ──
 let editing = null;
+// 그날로 새 일정 쓰기 (월 보기에서 고른 날을 한 번 더 눌렀을 때)
+function addOn(day) {
+  resetForm(); setD('fStart', day); openForm(true);
+  $('#fToggle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function openForm(on) { $('#fBody').hidden = !on; $('#fToggle').classList.toggle('open', on); }
 function resetForm() {
   editing = null; kind = ''; mode = 'day'; names.clear();
@@ -1095,8 +1102,9 @@ document.addEventListener('click', async e => {
     renderLeaves();
   } else if (b.dataset.cn) {
     moveCal(+b.dataset.cn);
-  } else if (b.dataset.cd) {
-    calSel = b.dataset.cd; renderLeaves();
+  } else if (b.dataset.cd) {                                           // 월 보기 날짜: 한 번 = 고르기, 고른 날을 한 번 더 = 그날 일정 추가
+    if (calTap === b.dataset.cd) { calTap = ''; renderLeaves(); addOn(b.dataset.cd); }
+    else { calSel = calTap = b.dataset.cd; renderLeaves(); }
   } else if (b.dataset.ddv !== undefined) {
     const d = b.closest('details'); d.open = false;
     onDd(d.dataset.dd, b.dataset.ddv);
