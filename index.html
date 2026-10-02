@@ -416,7 +416,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-25';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-26';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -589,7 +589,9 @@ function preview(fn, args) {
 }
 
 // 화면에 먼저 그릴 수 있는 저장은 완료 문구도 바로 띄운다 (서버 응답 2~3초를 기다리지 않음). 실패하면 그때 알린다
+let busy = 0;                                                         // 저장 중이면 자동 새로고침을 쉬게
 async function run(fn, args, msg) {
+  busy++;
   let shown = false;
   try { shown = preview(fn, args); } catch (e) {}
   toast(shown ? msg : '저장 중…');
@@ -602,7 +604,7 @@ async function run(fn, args, msg) {
   } catch (e) {
     toast('실패: ' + e.message); load();
     return false;
-  }
+  } finally { busy--; }
 }
 
 function setData(d) {
@@ -1155,6 +1157,13 @@ async function start() {
   await load();
   if (D) { initForm(); if (!auth.me) showGate(2); }
 }
+// 앱을 보고 있는 동안 15초마다 변경 번호만 확인해서, 누가 바꿨으면 새 내용을 받는다 (고르는 중·수정 중엔 쉼)
+const idle = () => document.visibilityState === 'visible' && auth.code && D && !editing && !busy
+  && $('#picker').hidden && $('#allRot').hidden && !document.querySelector('details[open]');
+setInterval(async () => {
+  if (!idle()) return;
+  try { if (await call('getRev') !== D.rev && idle()) load(); } catch (e) {}
+}, 15000);
 // 다른 앱에 갔다 돌아오면 최신 내용으로 (수정 중일 땐 건드리지 않음)
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && auth.code && D && !editing && $('#picker').hidden) load();
