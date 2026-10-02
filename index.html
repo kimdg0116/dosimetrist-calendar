@@ -13,8 +13,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="favicon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap">
 <style>
 /* 색은 SMC 디자인 시스템 가이드라인 3.0 (1.5 Color) 기준
    Samsung Blue #1428a0 · SMC Blue #0a4bff (80% #2e70ff, 60% #508eff, 40% #8cbaff, 20% #bedaff)
@@ -45,8 +44,8 @@
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
 html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 안드로이드 글자 자동 키움 끄기 */
 [hidden] { display:none !important; }
-/* 글꼴: 영문·숫자 IBM Plex (웬들러와 같음), 한글은 아이폰 기본 고딕. 갤럭시엔 그 글꼴이 없어 비슷한 Pretendard 로 고정 (기기 글꼴 설정을 따르지 않게) */
-body { margin:0; padding:0 16px 90px; font:16px/1.45 "IBM Plex Sans", "Apple SD Gothic Neo", "Pretendard Variable", Pretendard, sans-serif; background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
+/* 글꼴: 본문 SUIT · 제목과 업무명 페이퍼로지 · 날짜·시간 숫자 Oswald. 모두 직접 불러와서 아이폰·갤럭시가 같게 보인다 (기기 글꼴 설정 무시) */
+body { margin:0; padding:0 16px 90px; font:16px/1.45 "SUIT Variable", "Apple SD Gothic Neo", sans-serif; background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
 button { font-family:inherit; cursor:pointer; }
 
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
@@ -308,12 +307,18 @@ footer { margin-top:28px; }
 #picker .hols { min-height:20px; margin:8px 0; font-size:13px; line-height:1.6; color:var(--red); }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
-.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, "IBM Plex Sans", "Apple SD Gothic Neo", "Pretendard Variable", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, "SUIT Variable", "Apple SD Gothic Neo", sans-serif; font-variant-numeric:tabular-nums; letter-spacing:.02em; }
 .day h3 .dt, .ev .tm { font-size:18px; font-weight:600; color:var(--fg); }              /* 맨 위 블록: 크게 */
 #pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
+@font-face { font-family:"SUIT Variable"; src:url(https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2) format("woff2-variations"); font-weight:100 900; font-display:swap; }
 @font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2) format("woff2"); font-weight:600; font-display:swap; }
+@font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2) format("woff2"); font-weight:700; font-display:swap; }
+/* 제목: 페이퍼로지 */
+.day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-family:Paperlogy, "SUIT Variable", sans-serif; font-weight:700; letter-spacing:-.01em; }
+#fTitle, .lhead h3 { font-size:17px; color:var(--deep); }
+nav button { font-family:Paperlogy, "SUIT Variable", sans-serif; font-weight:600; }
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-family:Oswald, Paperlogy, "Apple SD Gothic Neo", sans-serif; font-weight:600; letter-spacing:.04em; }
 .day .line-dd summary > b, .role span { font-size:17px; }
 </style>
@@ -403,7 +408,7 @@ footer { margin-top:28px; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-18';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-19';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
