@@ -14,6 +14,9 @@ const C = {
   deep: dyn('#1428a0', '#8cbaff'), pill: dyn('#e8f1ff', '#1d2c4d'), pillFg: dyn('#2e70ff', '#8cbaff'),
   red: dyn('#fa4b50', '#fb6f73'), line: dyn('#e3eaf7', '#2b3750'),
 };
+// 배경은 단색(backgroundColor) 대신 같은 색 두 개로 만든 그라데이션으로 칠한다.
+// Scriptable 위젯에서 단색 배경은 폰의 라이트/다크 전환을 따라가지 않고, 그라데이션은 따라간다
+const fill = c => { const g = new LinearGradient(); g.colors = [c, c]; g.locations = [0, 1]; return g; };
 const F = { head: Font.heavySystemFont(13), role: Font.semiboldSystemFont(11.5), who: Font.boldSystemFont(12.5),
   pill: Font.boldSystemFont(10.5), ev: Font.boldSystemFont(12), sub: Font.mediumSystemFont(10.5), tiny: Font.mediumSystemFont(9) };
 
@@ -24,7 +27,7 @@ function text(stack, s, font, color, lines = 1) {
 }
 function pill(stack, s) {
   const p = stack.addStack();
-  p.backgroundColor = C.pill; p.cornerRadius = 7; p.setPadding(1, 5, 1, 5);
+  p.backgroundGradient = fill(C.pill); p.cornerRadius = 7; p.setPadding(1, 5, 1, 5);
   text(p, s, F.pill, C.pillFg);
   return p;
 }
@@ -89,7 +92,7 @@ function buildB(w, d) {
     h.addSpacer();
     events(col, t.events, 4, true);
     col.addSpacer();
-    const line = col.addStack(); line.size = new Size(colW, 1); line.backgroundColor = C.line;   // 폭을 정해야 선이 보인다
+    const line = col.addStack(); line.size = new Size(colW, 1); line.backgroundGradient = fill(C.line);   // 폭을 정해야 선이 보인다
     t.roles.filter(r => DUTY.includes(r.role)).forEach(r => {
       const s = col.addStack(); s.layoutHorizontally(); s.centerAlignContent();
       const l = s.addStack(); l.size = new Size(34, 0);
@@ -161,7 +164,7 @@ module.exports = async () => {
     }
   }
   const w = new ListWidget();
-  w.backgroundColor = C.bg; w.setPadding(13, 15, 12, 15); w.url = APP;
+  w.backgroundGradient = fill(C.bg); w.setPadding(13, 15, 12, 15); w.url = APP;
   w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);         // 다시 그리는 시점은 iOS 가 정한다 (보통 15~30분)
   const d = code ? await load(code) : { auth: true };
   const fam = config.widgetFamily || 'medium';
