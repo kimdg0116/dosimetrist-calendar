@@ -338,6 +338,14 @@ nav button { font-weight:700; }
 .ev-sub, .ev2 small.pl { font-weight:700; }                             /* 장소 */
 /* 안드로이드: 상단 바 뒤 흐림 효과는 스크롤을 끊기게 해서 불투명 배경으로 */
 .android .top { -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--bg-top); }
+/* 확인 창 (업무 담당 바꾸기 전) */
+#ask { position:fixed; inset:0; z-index:40; display:flex; align-items:flex-end; background:rgba(10,20,60,.4); }
+#ask .sheet { width:100%; padding:20px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#askT { display:block; font-size:15px; font-weight:700; color:var(--mute); }
+#askM { margin:8px 0 18px; font-size:19px; font-weight:800; line-height:1.5; }
+#askM small { display:block; font-size:15px; font-weight:600; color:var(--mute); }
+#ask .main { margin-top:0; }
+#askNo { width:100%; padding:13px; font-size:16px; font-weight:700; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--fg); }
 </style>
 </head>
 <body>
@@ -360,6 +368,10 @@ nav button { font-weight:700; }
   <div id="pnav"></div>
   <div id="periods"></div>
 </div>
+<div id="ask" hidden><div class="sheet">
+  <b id="askT"></b><p id="askM"></p>
+  <div class="two"><div><button type="button" id="askNo">취소</button></div><div><button type="button" class="main" id="askOk">변경</button></div></div>
+</div></div>
 <div id="allRot" hidden><div class="sheet">
   <div class="hd"><b>업무 전체 보기</b><button type="button" id="allClose">닫기</button></div>
   <div class="scroll" id="allScroll"></div>
@@ -425,7 +437,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-33';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-34';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -860,22 +872,43 @@ function dd(key, opts, value, empty = '-', sum = '', cls = '') {
   return `<details class="dd${cls}" data-dd="${esc(key)}"><summary>${sum || `<b>${esc(cur ? cur.t : empty)}</b>`}</summary>
     <div class="chips">${opts.map(o => `<button type="button" class="chip${o.v === value ? ' on' : ''}" data-ddv="${esc(o.v)}">${esc(o.t)}</button>`).join('')}</div></details>`;
 }
-function onDd(key, v) {
+// 확인 창: 업무 담당을 바꾸기 전에 한 번 더 묻는다 (앱 모양, 바깥을 누르면 취소)
+const ARR = '<svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10.5M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+let askDone = null;
+function ask(title, html, ok = '변경') {
+  $('#askT').textContent = title; $('#askM').innerHTML = html; $('#askOk').textContent = ok;
+  $('#ask').hidden = false;
+  return new Promise(res => { askDone = v => { $('#ask').hidden = true; askDone = null; res(v); }; });
+}
+$('#ask').addEventListener('click', e => {
+  if (!askDone) return;
+  if (e.target.id === 'askOk') askDone(true);
+  else if (e.target.id === 'askNo' || e.target.id === 'ask') askDone(false);
+});
+const nm = n => n ? esc(n) : '비움';
+async function onDd(key, v) {
   const [type, ...a] = key.split('|');
   if (type === 'rot') {                                                // 기간 담당자 바꾸기
-    const p = D.periods[a[0]], r = D.roles[a[1]];
+    const p = D.periods[a[0]], r = D.roles[a[1]], cur = p.who[a[1]] || '';
+    if (v === cur) return;
+    if (!await ask(`${r.name} · ${mdNum(p.start)} ~ ${mdNum(p.end)}`, `${nm(cur)} ${ARR} ${nm(v)}<small>변경하시겠습니까?</small>`)) return;
     run('setRotation', [r.row, p.col, v, p.who[a[1]]], `${r.name}: ${v || '비움'}`);
   } else if (type === 'sub') {                                         // 백업자 고르기 (저장은 백업 버튼)
     subPick[a.join('|')] = v; render();
   } else if (type === 'day') {                                         // 맨 위 업무 줄: 그날만 바꾸기 (원래 담당을 고르면 되돌림)
     const [ri, day] = a, role = D.roles[ri].name, orig = D.periods.find(p => p.start <= day && day <= p.end).who[ri];
-    const s = subFor(role, day), l = s && D.leaves[s.i];
-    if (v === (s ? s.who : orig)) return;
+    const s = subFor(role, day), l = s && D.leaves[s.i], now = s ? s.who : orig;
+    if (v === now) return;
+    if (!await ask(`${role} · ${md(day)}`, v === orig
+      ? `${nm(now)} ${ARR} ${nm(orig)}<small>원래 담당으로 되돌리시겠습니까?</small>`
+      : `${nm(now)} ${ARR} ${nm(v)}<small>이 날만 바꾸시겠습니까?</small>`, v === orig ? '되돌리기' : '변경')) return;
     if (v === orig && !away(orig, day)) run('deleteLeave', [l.row, l.sig], `${md(day)} ${role} 원래대로 (${orig})`);
     else if (l) run('updateLeave', [l.row, l.sig, { start: day, end: '', names: [v], kind: '백업', time: '', memo: l.memo }], `${md(day)} ${role} 백업: ${v}`);
     else run('addLeave', [{ start: day, end: '', names: [v], kind: '백업', time: '', memo: `${role} (${orig} 대신)` }], `${md(day)} ${role} 백업: ${v}`);
   } else if (type === 'subi') {                                        // 이미 정한 백업자 바꾸기
-    const l = D.leaves[a[0]];
+    const l = D.leaves[a[0]], [, role, orig] = l.memo.match(SUB_RE);
+    if (v === l.name) return;
+    if (!await ask(`${role} · ${md(l.start)} 백업`, `${nm(l.name === orig ? '백업 불필요' : l.name)} ${ARR} ${nm(v === orig ? '백업 불필요' : v)}<small>변경하시겠습니까?</small>`)) return;
     openSub = null;
     run('updateLeave', [l.row, l.sig, { start: l.start, end: '', names: [v], kind: '백업', time: '', memo: l.memo }],
       `${md(l.start)} ${v === l.memo.match(SUB_RE)[2] ? '백업 불필요' : '백업: ' + v}`);
@@ -1208,7 +1241,7 @@ async function start() {
 // 고르는 중·수정 중·저장 중엔 화면을 바꾸지 않고 '받을 게 있음'만 기억했다가, 끝나면 받는다
 const BELL = 'smc-dose-bell-c84ec6618b6cfd37';
 const idle = () => document.visibilityState === 'visible' && auth.code && D && !editing && !busy
-  && $('#picker').hidden && $('#allRot').hidden && !document.querySelector('details[open]');
+  && $('#picker').hidden && $('#allRot').hidden && $('#ask').hidden && !document.querySelector('details[open]');
 let pending = false, pulling = false;
 async function pull(showErr) {
   if (!idle() || pulling) { pending = true; return; }
