@@ -425,7 +425,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-32';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-33';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1215,6 +1215,7 @@ async function pull(showErr) {
   pending = false; pulling = true;
   try {
     const r = await call('pull', D.rev || '');
+    if (r.pend) { relay(r.pend); delete r.pend; }                       // 서버가 못 보낸 알림이 남아 있으면 이 폰이 대신
     if (!r.same) { if (idle()) setData(r); else pending = true; }
   } catch (e) { if (showErr) toast('최신 내용을 못 불러왔습니다: ' + e.message); }
   finally { pulling = false; }
