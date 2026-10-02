@@ -425,7 +425,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.02-30';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.02-32';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -576,14 +576,20 @@ async function call(fn, ...args) {
 
 // 저장은 시트에만 쓰고 바로 끝난다. 캘린더·알림은 뒤에서 따로 (기다리지 않음)
 
-// 서버 답을 기다리지 않고 화면에 먼저 그린다. 실패하면 load() 가 서버 내용으로 되돌린다
-function preview(fn, args) {
-  const L = D.leaves, f = args[args.length - 1];
-  const at = row => L.findIndex(l => l.row === row);
+// ── 저장: 화면은 바로, 서버는 차례로 ──
+// S = 서버에서 받은 마지막 내용, D = 화면 = S 위에 아직 서버에 안 간 저장들(queued)을 미리 그린 것.
+// 저장은 한 번에 하나씩 차례로 보낸다. 앞 저장이 끝나기 전에 또 바꿔도(방금 추가해 줄 번호가 아직 없는 일정 포함)
+// 차례가 오면 S 에서 같은 일정을 '내용'으로 다시 찾아 그 줄을 고친다 (줄 번호는 지우기 등으로 밀릴 수 있어서)
+let S = null, busy = 0, chain = Promise.resolve();
+const queued = [];
+const leafKey = l => [l.start, l.end, l.name, l.kind, l.time, l.memo, l.place || ''].join('|');
+function apply_(op) {                                                  // 저장 하나를 화면(D)에 미리 반영
+  const { fn, args } = op, L = D.leaves, f = args[args.length - 1];
+  const at = () => op.key ? L.findIndex(l => leafKey(l) === op.key) : L.findIndex(l => l.row === args[0]);
   const item = () => ({ row: 0, sig: '', start: f.start, end: f.end || f.start, name: f.names.join(', '),
     kind: f.kind, time: f.time || '', memo: f.memo || '', place: f.place || '' });
-  if (fn === 'deleteLeave' && at(args[0]) >= 0) L.splice(at(args[0]), 1);
-  else if (fn === 'updateLeave' && at(args[0]) >= 0) L.splice(at(args[0]), 1, item());
+  if (fn === 'deleteLeave' && at() >= 0) L.splice(at(), 1);
+  else if (fn === 'updateLeave' && at() >= 0) L.splice(at(), 1, item());
   else if (fn === 'setRotation') {                                     // [행, 열, 새 담당, 예전 담당]
     const p = D.periods.find(p => p.col === args[1]), ri = D.roles.findIndex(r => r.row === args[0]);
     if (!p || ri < 0) return false;
@@ -591,32 +597,52 @@ function preview(fn, args) {
   }
   else if (fn === 'addLeave') { const i = L.findIndex(l => l.start > f.start); L.splice(i < 0 ? L.length : i, 0, item()); }
   else return false;
-  render();
   return true;
 }
-
-// 화면에 먼저 그릴 수 있는 저장은 완료 문구도 바로 띄운다 (서버 응답 2~3초를 기다리지 않음). 실패하면 그때 알린다
-let busy = 0;                                                         // 저장 중이면 자동 새로고침을 쉬게
-async function run(fn, args, msg) {
-  busy++;
+function redraw() {
+  D = JSON.parse(JSON.stringify(S));
+  queued.forEach(op => { try { apply_(op); } catch (e) {} });
+  render();
+}
+function run(fn, args, msg) {
+  const t = /^(update|delete)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
+  const op = { fn, args, key: t ? leafKey(t) : null };
   let shown = false;
-  try { shown = preview(fn, args); } catch (e) {}
-  toast(shown ? msg : '저장 중…');
+  try { shown = apply_(op); } catch (e) {}
+  if (shown) { queued.push(op); render(); }
+  toast(shown ? msg : busy ? '앞 저장을 마치는 중…' : '저장 중…');
+  busy++;
+  const p = chain.then(() => send_(op, msg, shown));
+  chain = p.catch(() => {});
+  return p.finally(() => { busy--; });
+}
+async function send_(op, msg, shown) {
+  const drop = () => { const i = queued.indexOf(op); if (i >= 0) queued.splice(i, 1); };
+  let args = op.args;
+  if (op.key) {
+    const cur = S.leaves.find(l => l.row > 0 && leafKey(l) === op.key);
+    if (!cur) { drop(); redraw(); toast('그 일정이 이미 바뀌었습니다. 다시 확인해 주세요'); return false; }
+    args = [cur.row, cur.sig, ...args.slice(2)];
+  }
+  if (op.fn === 'setRotation') {                                       // 같은 칸을 연달아 바꿔도 앞 저장 결과를 기준으로
+    const pp = S.periods.find(p => p.col === args[1]), ri = S.roles.findIndex(r => r.row === args[0]);
+    if (pp && ri >= 0) args = [args[0], args[1], args[2], pp.who[ri]];
+  }
   try {
-    const r = await call(fn, ...args);
-    setData(r.data);
+    const r = await call(op.fn, ...args);
+    drop(); setData(r.data);
     if (r.rang === false) ring();                                      // 서버가 못 눌렀으면 이 폰이 초인종을
     if (r.pend && r.pend.length) relay(r.pend);                        // 서버가 못 보낸 알림도 이 폰이 대신
     if (!shown) toast(msg);
     return true;
   } catch (e) {
-    toast('실패: ' + e.message); load();
+    drop(); toast('실패: ' + e.message); load();
     return false;
-  } finally { busy--; }
+  }
 }
 
 function setData(d) {
-  D = d; render();
+  S = d; redraw();
   try { localStorage.setItem('data', JSON.stringify(d)); } catch (e) {}
 }
 async function load() {
@@ -1171,7 +1197,7 @@ async function start() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem('data') || 'null'); } catch (e) {}
   listen();
-  if (saved) { D = saved; D.today = localToday(); render(); initForm(); await pull(true); }   // 저장본으로 바로 그리고, 바뀐 게 있을 때만 받기
+  if (saved) { S = saved; S.today = localToday(); redraw(); initForm(); await pull(true); }   // 저장본으로 바로 그리고, 바뀐 게 있을 때만 받기
   else await load();
   if (D) { initForm(); if (!auth.me) showGate(2); }
 }
