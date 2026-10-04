@@ -472,7 +472,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.04-03';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.05-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -612,6 +612,7 @@ async function req(fn, args, oid) {
   catch (e) { throw netErr('인터넷 연결이 끊겼습니다'); }                // 앱을 내리거나 잠그면 아이폰이 요청을 끊기도 한다
   try { out = await res.json(); } catch (e) { throw netErr('서버 응답을 받지 못했습니다'); }   // 구글 서버가 바쁠 때 오류 페이지
   if (out.ok) return out.data;
+  if (out.error === 'BUSY') throw netErr('다른 저장이 끝나길 기다리는 중');   // 서버에서 저장 차례를 못 받음 → 버리지 않고 다시 보낸다
   if (out.error === 'AUTH') {                                         // 코드가 바뀌었거나 틀림 → 입력 창
     auth.code = ''; saveAuth();
     showGate(1, '접근 코드가 맞지 않습니다');
