@@ -472,7 +472,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.04-02';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.04-03';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -710,9 +710,8 @@ async function load() {
 }
 const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 
-// 맨 위 두 카드: 옆으로 넘겨 다른 날 보기 (서버가 지난 30일치까지 보낸다)
+// 맨 위 두 카드: 옆으로 넘겨 다른 날 보기 (기한 없음)
 let dayOff = 0;
-const MIN_OFF = -30, MAX_OFF = 60;
 const DAY_WORD = { '-1': '어제', 0: '오늘', 1: '내일', 2: '모레' };
 function renderDay() {
   const day = addDays(D.today, dayOff);
@@ -721,7 +720,7 @@ function renderDay() {
   const head = what => `<h3><span class="t"><span class="ttl">${word ? word + ' ' : ''}${what}</span><span class="dt">${mdh(day)}${hol ? ` <span class="red">${esc(hol)}</span>` : ''}</span></span>`
     + (dayOff ? '<button class="back" data-day="0">오늘</button>' : '')
     + '<button class="cal" data-daycal="1" aria-label="날짜 고르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>'
-    + `<button data-day="-1"${dayOff > MIN_OFF ? '' : ' disabled'}>‹</button><button data-day="1"${dayOff < MAX_OFF ? '' : ' disabled'}>›</button></h3>`;
+    + '<button data-day="-1">‹</button><button data-day="1">›</button></h3>';
   const cur = D.periods.find(p => p.start <= day && day <= p.end);
   $('#todayWork').innerHTML = head('업무') + (cur ? D.roles.map((r, i) => {
     const s = subFor(r.name, day);
@@ -747,14 +746,13 @@ function renderDay() {
     }).join('')
     : '<span class="empty">없음</span>');
 }
-// 달력에서 고른 날로 바로 (서버가 주는 범위 안에서만)
+// 달력에서 고른 날로 바로
 function goDay(v) {
   const n = Math.round((new Date(v + 'T00:00') - new Date(D.today + 'T00:00')) / 864e5);
-  if (n < MIN_OFF || n > MAX_OFF) return toast('지난 30일 ~ 앞으로 60일까지만 볼 수 있어요');
   dayOff = n; renderDay();
 }
 function moveDay(n) {
-  dayOff = n === 0 ? 0 : Math.min(MAX_OFF, Math.max(MIN_OFF, dayOff + n));
+  dayOff = n === 0 ? 0 : dayOff + n;
   renderDay();
 }
 // 옆으로 밀어 넘기기 (맨 위 블록·업무 기간·일정 주/월 공통)
