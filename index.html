@@ -22,7 +22,18 @@
 <link rel="preload" href="https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://ntfy.sh">
-<script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');</script>
+<script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');
+// 설명서 QR (?open=chrome / ?open=safari): 다른 브라우저(삼성 인터넷·카톡 등)로 열렸으면 크롬·사파리로 다시 연다. 주소의 표시는 지운다
+(() => {
+  const want = new URLSearchParams(location.search).get('open'), ua = navigator.userAgent, home = location.origin + location.pathname;
+  if (!want) return;
+  history.replaceState(null, '', home);
+  if (want === 'chrome' && /Android/i.test(ua) && (!/Chrome\//.test(ua) || /SamsungBrowser|EdgA|OPR|Whale|KAKAOTALK|NAVER|; wv\)/.test(ua)))
+    location.replace(`intent://${location.host}${location.pathname}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(home)};end`);
+  if (want === 'safari' && /iPhone|iPad/.test(ua) && /CriOS|FxiOS|EdgiOS|KAKAOTALK|NAVER|Whale/.test(ua))
+    location.replace('x-safari-' + home);                             // iOS 17 이상
+})();
+</script>
 <style>
 /* 색은 SMC 디자인 시스템 가이드라인 3.0 (1.5 Color) 기준
    Samsung Blue #1428a0 · SMC Blue #0a4bff (80% #2e70ff, 60% #508eff, 40% #8cbaff, 20% #bedaff)
@@ -461,7 +472,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.04-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.04-02';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
