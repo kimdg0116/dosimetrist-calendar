@@ -461,7 +461,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.03-04';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.04-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -610,8 +610,6 @@ async function req(fn, args, oid) {
 }
 const call = (fn, ...args) => req(fn, args);
 
-// 저장은 시트에만 쓰고 바로 끝난다. 캘린더·알림은 뒤에서 따로 (기다리지 않음)
-
 // ── 저장: 화면은 바로, 서버는 차례로 ──
 // S = 서버에서 받은 마지막 내용, D = 화면 = S 위에 아직 서버에 안 간 저장들(queued)을 미리 그린 것.
 // 저장은 한 번에 하나씩 차례로 보낸다. 앞 저장이 끝나기 전에 또 바꿔도(방금 추가해 줄 번호가 아직 없는 일정 포함)
@@ -641,8 +639,8 @@ function redraw() {
   queued.forEach(op => { try { apply_(op); } catch (e) {} });
   render();
 }
-function run(fn, args, msg) {
-  const t = /^(update|delete)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
+function run(fn, args, msg, src) {                                    // src: 고치거나 지울 그 일정 (방금 저장해 줄 번호가 아직 없는 것도 내용으로 찾는다)
+  const t = src || /^(update|delete)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
   const op = { fn, args, msg, key: t ? leafKey(t) : null, oid: DEV + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
   try { op.shown = apply_(op); } catch (e) {}
   queued.push(op); saveOutbox(); render();
@@ -1165,13 +1163,12 @@ document.addEventListener('click', async e => {
     if (!kind) return toast('구분을 골라 주세요');
     if (kind === '기타' && !f.memo) return toast('무엇인지 적어 주세요');
     if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전원")을 넣어 주세요');
-    b.disabled = true;
-    // 화면엔 바로 반영되니 입력칸도 바로 비운다. 서버가 캘린더·알림까지 끝내느라 몇 초 걸리는데, 실패하면 적은 내용을 되살린다
+    // 화면엔 바로 반영되니 입력칸도 바로 비우고, 서버 답(캘린더·알림까지 몇 초)은 기다리지 않는다 → 바로 다음 수정 가능.
+    // 서버엔 저장 차례대로 간다. 실패하면 (다른 걸 고치는 중이 아닐 때) 적은 내용을 되살린다
     const ed = editing;
     resetForm();
-    const ok = ed ? await run('updateLeave', [ed.row, ed.sig, f], '수정됨') : await run('addLeave', [f], '저장됨');
-    if (!ok) refill(f, ed);
-    b.disabled = false;
+    (ed ? run('updateLeave', [ed.row, ed.sig, f], '수정됨', ed) : run('addLeave', [f], '저장됨'))
+      .then(ok => { if (!ok && !editing) refill(f, ed); });
   } else if (b.id === 'delEdit') {
     if (!b.classList.contains('armed')) {                            // 두 번 누르기
       b.classList.add('armed'); b.textContent = '한 번 더 누르면 삭제';
@@ -1180,7 +1177,7 @@ document.addEventListener('click', async e => {
     b.classList.remove('armed'); b.textContent = '삭제';
     const ed = editing;
     resetForm();
-    if (!await run('deleteLeave', [ed.row, ed.sig], '삭제됨')) startEdit(ed);
+    if (!await run('deleteLeave', [ed.row, ed.sig], '삭제됨', ed) && !editing) startEdit(ed);
   } else if (b.id === 'cancelEdit') {
     resetForm();
   } else if (b.id === 'fToggle') {                                     // 제목 줄: 펼치기/접기 (수정 중이면 수정 취소)
