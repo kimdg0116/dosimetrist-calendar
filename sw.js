@@ -7,3 +7,26 @@ self.addEventListener('fetch', event => {
   if (req.url.endsWith('.woff2')) event.respondWith(caches.open('fonts-v1').then(c => c.match(req).then(hit => hit
     || fetch(req).then(res => { if (res.ok) c.put(req, res.clone()); return res; }))));
 });
+
+// 웹 푸시는 앱 화면이 닫혀 있어도 여기서 받아 캘린더 이름으로 표시한다.
+self.addEventListener('push', event => {
+  let message = {};
+  try { message = event.data ? event.data.json() : {}; } catch (e) {}
+  event.waitUntil(self.registration.showNotification('파트 일정 변경', {
+    body: typeof message.body === 'string' ? message.body.slice(0, 160) : '파트 일정이 변경됐습니다. 캘린더에서 확인해 주세요.',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    data: { url: self.registration.scope },
+  }));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const url = self.registration.scope;
+    const windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const opened = windows.find(client => client.url.startsWith(url));
+    if (opened) return opened.focus();
+    return clients.openWindow(url);
+  })());
+});

@@ -386,6 +386,7 @@ nav button { font-weight:700; }
   <div class="brand">DOSIMETRIST CALENDAR</div>
   <div class="btns">
     <span id="meName" class="me-tag" hidden></span>
+    <button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button>
     <button type="button" id="theme" class="icon-btn" aria-label="테마"></button>
   </div>
 </div>
@@ -472,7 +473,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.05-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.06-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -604,6 +605,63 @@ const saveAuth = () => { try { localStorage.setItem('auth', JSON.stringify(auth)
 // 이 기기 번호: 초인종을 누가 눌렀는지 (자기 신호는 무시)
 const DEV = (() => { let d = ''; try { d = localStorage.getItem('dev') || ''; } catch (e) {}
   if (!d) { d = Math.random().toString(36).slice(2, 10); try { localStorage.setItem('dev', d); } catch (e) {} } return d; })();
+let pushReg = null, pushKey = null, pushSubscribed = false;
+const pushBtn = $('#pushBtn');
+const pushKeyBytes = key => Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')
+  + '='.repeat((4 - key.length % 4) % 4)), c => c.charCodeAt(0));
+function showPushState() {
+  pushBtn.textContent = pushSubscribed ? '🔔' : '🔕';
+  pushBtn.setAttribute('aria-label', pushSubscribed ? '일정 알림 끄기' : '일정 알림 켜기');
+}
+async function initPush() {
+  if (!auth.code || !auth.me || !('serviceWorker' in navigator)) return;
+  try {
+    const config = await call('getPushConfig');
+    if (!config.publicKey) return;                          // 발송 서버가 준비되기 전에는 버튼을 보이지 않는다
+    pushKey = pushKeyBytes(config.publicKey);
+    pushReg = await navigator.serviceWorker.ready;
+    pushBtn.hidden = false;
+    if (!pushReg.pushManager) return showPushState();
+    const sub = await pushReg.pushManager.getSubscription();
+    pushSubscribed = !!sub;
+    showPushState();
+    if (sub) await call('registerPush', sub.toJSON());       // 브라우저에 남은 구독을 서버에도 다시 등록
+  } catch (e) { console.warn('웹 푸시 설정 확인 실패', e); }
+}
+pushBtn.addEventListener('click', async () => {
+  if (!pushReg || !pushKey) return;
+  if (/iPhone|iPad/.test(navigator.userAgent)
+    && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone) {
+    toast('Safari에서 홈 화면에 추가한 캘린더 앱을 열어 주세요');
+    return;
+  }
+  if (!pushReg.pushManager || !('Notification' in window)) {
+    toast(/iPhone|iPad/.test(navigator.userAgent) ? 'Safari에서 홈 화면에 추가한 앱을 열어 주세요' : '이 브라우저는 웹 푸시를 지원하지 않습니다');
+    return;
+  }
+  pushBtn.disabled = true;
+  try {
+    if (pushSubscribed) {
+      const sub = await pushReg.pushManager.getSubscription();
+      await call('unregisterPush');
+      if (sub) await sub.unsubscribe();
+      pushSubscribed = false;
+      toast('캘린더 알림을 껐습니다');
+    } else {
+      // 사용자 탭에 직접 반응해 구독한다. iPhone은 홈 화면 앱에서만 허용된다.
+      const pending = pushReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKey });
+      const sub = await pending;
+      try { await call('registerPush', sub.toJSON()); }
+      catch (e) { await sub.unsubscribe(); throw e; }
+      pushSubscribed = true;
+      try {
+        const delivered = await call('testPush');
+        toast(delivered ? '시험 알림을 보냈습니다' : '구독 완료 · 시험 알림 발송 상태를 확인해 주세요');
+      } catch (e) { toast('구독 완료 · 시험 알림 발송 상태를 확인해 주세요'); }
+    }
+  } catch (e) { toast(Notification.permission === 'denied' ? '휴대폰 설정에서 캘린더 알림을 허용해 주세요' : '알림 설정 실패: ' + e.message); }
+  finally { pushBtn.disabled = false; showPushState(); }
+});
 // 연결 문제(요청이 끊김·서버가 이상한 답)는 e.net = true → 저장은 버리지 않고 다시 보낸다
 const netErr = m => Object.assign(new Error(m), { net: true });
 async function req(fn, args, oid) {
@@ -1273,7 +1331,7 @@ async function submitCode() {
   try {
     setData(await call('getData'));
     saveAuth(); initForm();
-    if (auth.me) $('#gate').hidden = true; else showGate(2);
+    if (auth.me) { $('#gate').hidden = true; initPush(); } else showGate(2);
   } catch (e) {
     if (auth.code) $('#gMsg').textContent = e.message;               // 코드가 틀린 경우는 call() 이 이미 안내
   }
@@ -1289,6 +1347,7 @@ $('#gate').addEventListener('click', e => {
     $('#gMeOk').disabled = false; $('#gMeOk').textContent = `${pickMe} 님으로 시작`;
   } else if (b.id === 'gMeOk' && pickMe) {
     auth.me = pickMe; saveAuth(); showMe(); $('#gate').hidden = true;
+    initPush();
   }
 });
 
@@ -1310,7 +1369,7 @@ async function start() {
     queued = ob; redraw(); toast(`보내지 못한 저장 ${ob.length}건을 다시 보냅니다`);
     ob.forEach(op => { op.resumed = true; enqueue(op); });
   }
-  if (D) { initForm(); if (!auth.me) showGate(2); }
+  if (D) { initForm(); if (!auth.me) showGate(2); else initPush(); }
 }
 // ── 여러 기기 동기화 ──
 // 1) 초인종: 앱이 화면에 있는 동안 ntfy 초인종 방을 듣는다. 누가 저장하면 서버가 누르고 → 1~2초 안에 새로 받음
