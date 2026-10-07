@@ -473,7 +473,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.06-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.07-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -636,7 +636,7 @@ pushBtn.addEventListener('click', async () => {
     return;
   }
   if (!pushReg.pushManager || !('Notification' in window)) {
-    toast(/iPhone|iPad/.test(navigator.userAgent) ? 'Safari에서 홈 화면에 추가한 앱을 열어 주세요' : '이 브라우저는 웹 푸시를 지원하지 않습니다');
+    toast(/iPhone|iPad/.test(navigator.userAgent) ? 'Safari에서 홈 화면에 추가한 앱을 열어 주세요' : '이 브라우저에서는 알림을 받을 수 없어요. 갤럭시는 Chrome으로 열어 주세요');
     return;
   }
   pushBtn.disabled = true;
@@ -646,7 +646,7 @@ pushBtn.addEventListener('click', async () => {
       await call('unregisterPush');
       if (sub) await sub.unsubscribe();
       pushSubscribed = false;
-      toast('캘린더 알림을 껐습니다');
+      toast('일정 알림을 껐습니다');
     } else {
       // 사용자 탭에 직접 반응해 구독한다. iPhone은 홈 화면 앱에서만 허용된다.
       const pending = pushReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKey });
@@ -656,10 +656,10 @@ pushBtn.addEventListener('click', async () => {
       pushSubscribed = true;
       try {
         const delivered = await call('testPush');
-        toast(delivered ? '시험 알림을 보냈습니다' : '구독 완료 · 시험 알림 발송 상태를 확인해 주세요');
-      } catch (e) { toast('구독 완료 · 시험 알림 발송 상태를 확인해 주세요'); }
+        toast(delivered ? '알림을 켰습니다 · 시험 알림을 보냈어요' : '알림을 켰습니다 · 시험 알림이 오는지 확인해 주세요');
+      } catch (e) { toast('알림을 켰습니다 · 시험 알림이 오는지 확인해 주세요'); }
     }
-  } catch (e) { toast(Notification.permission === 'denied' ? '휴대폰 설정에서 캘린더 알림을 허용해 주세요' : '알림 설정 실패: ' + e.message); }
+  } catch (e) { toast(Notification.permission === 'denied' ? '휴대폰 설정에서 이 앱의 알림을 허용해 주세요' : '알림 설정 실패: ' + e.message); }
   finally { pushBtn.disabled = false; showPushState(); }
 });
 // 연결 문제(요청이 끊김·서버가 이상한 답)는 e.net = true → 저장은 버리지 않고 다시 보낸다

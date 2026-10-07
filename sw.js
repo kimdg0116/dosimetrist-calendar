@@ -8,12 +8,16 @@ self.addEventListener('fetch', event => {
     || fetch(req).then(res => { if (res.ok) c.put(req, res.clone()); return res; }))));
 });
 
-// 웹 푸시는 앱 화면이 닫혀 있어도 여기서 받아 캘린더 이름으로 표시한다.
+// 웹 푸시는 앱 화면이 닫혀 있어도 여기서 받아 표시한다.
+// 서버가 본문 첫 줄에 제목('파트 일정 변경 · 고친 사람')을 실어 보낸다 → 떼어 알림 제목으로 (발송 서버는 본문만 넘겨서)
 self.addEventListener('push', event => {
   let message = {};
   try { message = event.data ? event.data.json() : {}; } catch (e) {}
-  event.waitUntil(self.registration.showNotification('파트 일정 변경', {
-    body: typeof message.body === 'string' ? message.body.slice(0, 160) : '파트 일정이 변경됐습니다. 캘린더에서 확인해 주세요.',
+  let title = '파트 일정 변경', body = typeof message.body === 'string' ? message.body.slice(0, 160) : '파트 일정이 바뀌었어요. 앱에서 확인해 주세요.';
+  const [head, ...rest] = body.split('\n');
+  if (rest.length && /^(파트 일정|일정 알림)/.test(head)) { title = head; body = rest.join('\n'); }
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
     icon: './icon-192.png',
     badge: './icon-192.png',
     data: { url: self.registration.scope },
