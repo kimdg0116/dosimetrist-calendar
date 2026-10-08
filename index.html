@@ -6,7 +6,7 @@
 <title>Dosimetrist Calendar</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dosimetrist">
 <meta name="theme-color" content="#e3eeff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#142039" media="(prefers-color-scheme: dark)">
@@ -63,7 +63,7 @@
   color-scheme:dark;
 }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
-html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; }   /* 안드로이드 글자 자동 키움 끄기 */
+html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; background:var(--bg-top); }   /* 안드로이드 글자 자동 키움 끄기 */
 body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }               /* 꾹 눌러도 글자 블록이 안 잡히게 (입력 칸은 그대로) */
 input, textarea { -webkit-user-select:text; user-select:text; }
 [hidden] { display:none !important; }
@@ -74,7 +74,7 @@ button { font-family:inherit; cursor:pointer; }
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
 .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
   margin:0 -16px 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
-  background:var(--bar); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); color:var(--bar-fg); }
+  background:var(--bg-top); color:var(--bar-fg); }
 .brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; }
 @media (max-width:390px) { .top .brand { font-size:16px; letter-spacing:.04em; white-space:normal; line-height:1.05; } }
 .icon-btn { width:36px; height:32px; padding:0; font-size:15px; line-height:1; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
@@ -136,7 +136,8 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
 .ev-names { margin-top:0; font-size:18px; }
 .ev-names.some { font-size:16px; } .ev-names.many { font-size:15px; gap:2px 8px; }   /* 4~6명, 7명 이상 */
-.ev-sub { margin-top:2px; font-size:14px; color:var(--mute); text-align:center; }
+.ev-sub { margin-top:2px; color:var(--mute); text-align:center; }
+.pin { display:inline-block; width:11px; height:11px; margin-right:2px; vertical-align:-.05em; fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round; stroke-linejoin:round; opacity:.7; }
 #dayView { touch-action:pan-y; }
 /* 업무 탭: 기간 한 장씩 (옆으로 밀거나 ‹ ›), 표 아이콘은 전체 보기 */
 #pnav { display:flex; align-items:center; gap:6px; margin:0 2px 10px; scroll-margin-top:70px; }
@@ -259,6 +260,8 @@ details .chip.on::after { content:'✓'; }
 .ev2 .ttl-line, .ev2 .names { justify-content:center; }
 .ev2-meta { display:flex; justify-content:center; align-items:baseline; flex-wrap:wrap; gap:2px 8px; margin-top:2px; }
 .ev2-meta .names, .ev2-meta small { margin-top:0; }
+#leaves .ev2 { text-align:left; }
+#leaves .ev2 .ttl-line, #leaves .ev2 .names, #leaves .ev2 .ev2-meta { justify-content:flex-start; }
 .ev2 .ttl-line { flex-wrap:wrap; gap:3px 8px; }
 .ev2 .names { margin-top:2px; font-size:16px; }
 .ev2 .names.some { font-size:15px; } .ev2 .names.many { font-size:14px; gap:2px 8px; }
@@ -410,9 +413,7 @@ nav button { font-weight:700; }
 .day .line-dd summary > span small { font-weight:500; }
 .ar { width:.95em; height:.95em; margin-right:1px; vertical-align:-.12em; }
 .ttl-line .memo { font-weight:800; }                                   /* 내용 */
-.ev-sub, .ev2 small.pl { font-weight:700; }                             /* 장소 */
-/* 안드로이드: 상단 바 뒤 흐림 효과는 스크롤을 끊기게 해서 불투명 배경으로 */
-.android .top { -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--bg-top); }
+.ev-sub, .ev2 small.pl { font-size:12px; font-weight:500; line-height:1.3; }    /* 장소 */
 /* 확인 창 (업무 담당 바꾸기 전) */
 #ask { position:fixed; inset:0; z-index:40; display:flex; align-items:flex-end; background:rgba(10,20,60,.4); }
 #ask .sheet { width:100%; padding:20px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
@@ -535,7 +536,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-05';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-06';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -585,6 +586,7 @@ function addDays(s, n) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 const pad = n => String(n).padStart(2, '0');
+const PIN = '<svg class="pin" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14s4-4.4 4-7.5a4 4 0 1 0-8 0C4 9.6 8 14 8 14Z"/><circle cx="8" cy="6.5" r="1.3"/></svg>';
 const fmtTime = t => esc(t).replace(/\s*-\s*/, ' ~ ');          // '10:00-12:00' → '10:00 ~ 12:00'
 // 이름 목록: 4~6명은 조금, 7명 이상은 더 작게
 const namesHtml = (who, cls, eds) => who.length
@@ -876,7 +878,7 @@ function renderDay() {
       return `<div class="ev"${i !== null ? ` data-edit="${i}"` : ''}>
         <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span></div>
         <div class="ev-meta">${namesHtml(who, 'ev-names', eds)}<span class="tm">${when}</span></div>
-        ${l.place ? `<div class="ev-sub">📍 ${esc(l.place)}</div>` : ''}</div>`;
+        ${l.place ? `<div class="ev-sub">${PIN} ${esc(l.place)}</div>` : ''}</div>`;
     }).join('')
     : '<span class="empty">없음</span>');
 }
@@ -982,7 +984,7 @@ const evHtml = (l, i, eds) => {
   const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time)].filter(Boolean);   // 장소는 아래 줄에 따로 (길면 줄바꿈)
   return `<div class="ev2${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-    <div class="ev2-meta">${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>${l.place ? `<small class="pl">📍 ${esc(l.place)}</small>` : ''}</div>`;
+    <div class="ev2-meta">${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>${l.place ? `<small class="pl">${PIN} ${esc(l.place)}</small>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
