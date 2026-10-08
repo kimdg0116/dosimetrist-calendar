@@ -122,16 +122,14 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 /* 오늘/내일 일정: 이름이 많아도 읽히게 */
 .ev { padding:10px 4px 10px 12px; border-top:1px solid var(--line); cursor:pointer; text-align:left; }
 .ev:first-of-type { border-top:0; padding-top:4px; }
-.ev-top { display:block; }
+.ev-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .kind { flex:none; padding:3px 10px; font-size:14px; font-weight:700; border-radius:999px; background:var(--soft); color:var(--acc); }
 .ttl-line { display:flex; align-items:center; gap:8px; min-width:0; }
 .ttl-line .memo { min-width:0; font-size:15px; font-weight:600; line-height:1.4; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
-.ev-top .ttl-line { justify-content:flex-start; flex-wrap:wrap; width:100%; gap:3px 8px; }
-.ev-top .ttl-line .memo { white-space:normal; }
-.ev-meta { display:flex; justify-content:flex-start; align-items:baseline; flex-wrap:wrap; gap:2px 12px; margin-top:7px; }
-.ev-meta .names { justify-content:flex-start; }
-.ev-meta .tm { white-space:nowrap; }
-.ev.no-name .ev-meta { padding-left:53px; }
+.ev-body { margin-top:10px; }
+.ev-body .memo { display:block; font-size:15px; font-weight:800; line-height:1.4; word-break:keep-all; overflow-wrap:anywhere; }
+.ev-body .names { justify-content:flex-start; }
+.ev-body .memo + .names { margin-top:5px; }
 .names { display:flex; flex-wrap:wrap; gap:2px 10px; font-weight:700; }
 
 .ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
@@ -543,7 +541,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-09';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-10';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -882,9 +880,9 @@ function renderDay() {
     ? list.map(({ l, i, eds }) => {
       const who = l.name.split(/,\s*/).filter(Boolean);
       const when = l.time ? fmtTime(l.time) : l.start !== l.end ? `${md(l.start)} ~ ${md(l.end)}` : '종일';
-      return `<div class="ev${who.length ? '' : ' no-name'}"${i !== null ? ` data-edit="${i}"` : ''}>
-        <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span></div>
-        <div class="ev-meta">${namesHtml(who, 'ev-names', eds)}<span class="tm">${when}</span></div>
+      return `<div class="ev"${i !== null ? ` data-edit="${i}"` : ''}>
+        <div class="ev-top"><span class="kind">${esc(l.kind)}</span><span class="tm">${when}</span></div>
+        ${l.memo || who.length ? `<div class="ev-body">${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}${namesHtml(who, 'ev-names', eds)}</div>` : ''}
         ${l.place ? `<div class="ev-sub">${PIN} ${esc(l.place)}</div>` : ''}</div>`;
     }).join('')
     : '<span class="empty">없음</span>');
