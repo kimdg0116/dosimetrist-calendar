@@ -335,6 +335,15 @@ footer { margin-top:28px; }
 .change-item .at { font-size:13px; font-weight:600; color:var(--mute); }
 .change-item .detail { margin-top:4px; font-size:15px; font-weight:600; overflow-wrap:anywhere; }
 #changeList .empty { padding:12px 0; }
+#changeStatus { min-height:20px; margin:6px 0 0; color:var(--mute); font-size:12px; }
+#matchBox { margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); }
+#matchBox h4 { margin:0 0 8px; font-size:14px; }
+.match-item { padding:9px 0; border-top:1px solid var(--line); font-size:13px; }
+.match-item:first-of-type { border-top:0; }
+.match-item b { display:block; margin-bottom:3px; }
+.match-item button { margin-top:7px; padding:7px 10px; border:1px solid var(--acc); border-radius:8px; background:var(--card); color:var(--acc); font-weight:700; }
+.match-item button:disabled { opacity:.5; }
+
 body.modal-open { overflow:hidden; }
 .panel { position:fixed; inset:0; z-index:35; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,60,.48); }
 .panel .sheet { width:100%; max-width:480px; max-height:calc(100dvh - 24px - env(safe-area-inset-top, 0px)); overflow-y:auto; padding:18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); box-shadow:var(--shadow); }
@@ -456,6 +465,7 @@ nav button { font-weight:700; }
     </div>
     <label id="lMemo">내용 (선택)</label><input id="fMemo">
     <label for="fPlace">장소 (선택)</label><input id="fPlace" placeholder="예: 본관 지하 2층 회의실">
+    <div id="matchBox" hidden></div>
     <button class="main" id="save">저장</button>
     <div class="two" id="editBtns" style="margin-top:8px" hidden>
       <div><button class="sub" id="cancelEdit">수정 취소</button></div>
@@ -471,6 +481,7 @@ nav button { font-weight:700; }
 <div id="changes" class="panel" role="dialog" aria-modal="true" aria-labelledby="changesTitle" hidden><div class="sheet">
   <div class="head"><h3 id="changesTitle">최근 변경</h3><button type="button" id="changesClose" aria-label="최근 변경 닫기">닫기</button></div>
   <div id="changeList"><span class="empty">불러오는 중…</span></div>
+  <div id="changeStatus" role="status"></div>
   <div class="change-pager"><button type="button" id="changePrev" aria-label="최신 기록" disabled>‹</button><span id="changePageLabel">1–5건</span><button type="button" id="changeNext" aria-label="이전 기록" disabled>›</button></div>
 </div></div>
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
@@ -507,7 +518,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-02';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-03';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -703,7 +714,8 @@ async function req(fn, args, oid) {
   let res, out;
   try { res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn, args, code: auth.code, who: auth.me || '', dev: DEV, oid }) }); }
   catch (e) { throw netErr('인터넷 연결이 끊겼습니다'); }                // 앱을 내리거나 잠그면 아이폰이 요청을 끊기도 한다
-  try { out = await res.json(); } catch (e) { throw netErr('서버 응답을 받지 못했습니다'); }   // 구글 서버가 바쁠 때 오류 페이지
+  if (!res.ok) throw netErr(`서버가 잠시 응답하지 않습니다 (HTTP ${res.status})`);
+  try { out = await res.json(); } catch (e) { throw netErr('서버 응답 형식을 읽지 못했습니다'); }   // 구글 서버가 바쁠 때 오류 페이지
   if (out.ok) return out.data;
   if (out.error === 'BUSY') throw netErr('다른 저장이 끝나길 기다리는 중');   // 서버에서 저장 차례를 못 받음 → 버리지 않고 다시 보낸다
   if (out.error === 'AUTH') {                                         // 코드가 바뀌었거나 틀림 → 입력 창
@@ -728,7 +740,11 @@ function apply_(op) {                                                  // 저장
   const at = () => op.key ? L.findIndex(l => leafKey(l) === op.key) : L.findIndex(l => l.row === args[0]);
   const item = () => ({ row: 0, sig: '', start: f.start, end: f.end || f.start, name: f.names.join(', '),
     kind: f.kind, time: f.time || '', memo: f.memo || '', place: f.place || '' });
-  if (fn === 'deleteLeave' && at() >= 0) L.splice(at(), 1);
+  if (fn === 'joinLeave' && at() >= 0) {
+    const l = L[at()], current = l.name.split(/,\s*/).filter(Boolean);
+    l.name = current.includes(ALL) || args[2].includes(ALL) ? ALL : [...new Set([...current, ...args[2]])].join(', ');
+  }
+  else if (fn === 'deleteLeave' && at() >= 0) L.splice(at(), 1);
   else if (fn === 'updateLeave' && at() >= 0) L.splice(at(), 1, item());
   else if (fn === 'setRotation') {                                     // [행, 열, 새 담당, 예전 담당]
     const p = D.periods.find(p => p.col === args[1]), ri = D.roles.findIndex(r => r.row === args[0]);
@@ -743,9 +759,10 @@ function redraw() {
   D = JSON.parse(JSON.stringify(S));
   queued.forEach(op => { try { apply_(op); } catch (e) {} });
   render();
+  if (D && !$('#fBody').hidden) renderMatches();
 }
 function run(fn, args, msg, src) {                                    // src: 고치거나 지울 그 일정 (방금 저장해 줄 번호가 아직 없는 것도 내용으로 찾는다)
-  const t = src || /^(update|delete)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
+  const t = src || /^(update|delete|join)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
   const op = { fn, args, msg, key: t ? leafKey(t) : null, oid: DEV + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
   try { op.shown = apply_(op); } catch (e) {}
   queued.push(op); saveOutbox(); render();
@@ -1062,11 +1079,13 @@ function applyKind() {
   $('#wHour').hidden = !hourly();
   $('#lMemo').textContent = kind === '기타' ? '무엇인가요? (필수)' : '내용 (선택)';
   $('#fMemo').placeholder = kind === '기타' ? '예: 건강검진' : '예: 학회';
+  if (D && !$('#fBody').hidden) renderMatches();
 }
 function applyNames() {
   const n = [...names];
   $('#sNames').textContent = !n.length ? '선택' : n.length === 1 ? n[0] : `${n[0]} 외 ${n.length - 1}명`;
   $('#dNames').classList.toggle('has', n.length > 0);
+  if (D && !$('#fBody').hidden) renderMatches();
 }
 function plusHours(t, h) {
   const [hh, mm] = t.split(':').map(Number);
@@ -1085,6 +1104,7 @@ function setTime(from, hours) {
     `<button type="button" class="chip${h === +hours ? ' on' : ''}" data-hrs="${h}">${h}시간 (~${plusHours(from, h)})</button>`).join('');
   $('#tFrom').value = from;
   $('#sHours').textContent = `${hours}시간 (~${plusHours(from, +hours)})`;
+  if (D && !$('#fBody').hidden) renderMatches();
 }
 setTime('09:00', 1);
 // 직접 입력: 칸을 눌러도 목록이 열리지 않게 하고, 입력이 끝나면 '13:30' 꼴로 맞춘다 (930·0930·9:30 모두 됨)
@@ -1123,6 +1143,7 @@ function setD(id, v) {
   b.dataset.v = v;
   b.classList.toggle('none', !v);
   b.innerHTML = v ? mdh(v) : '선택 안 함';
+  if (D && !$('#fBody').hidden) renderMatches();
 }
 let pick = {};
 function openPicker(id) {
@@ -1151,6 +1172,39 @@ function drawPicker() {
 function closePicker() { $('#picker').hidden = true; }
 applyKind();
 
+// 날짜·시간·내용이 같은 기존 일정을 입력 중에 보여준다. 이름은 일치 판단에서 제외한다.
+function formLeave() {
+  return { start: getD('fStart'), end: $('#wEnd').hidden ? '' : getD('fEnd'), kind,
+    names: [...names], memo: $('#fMemo').value.trim(), place: $('#fPlace').value.trim(),
+    time: hourly() ? `${$('#fFrom').value}-${plusHours($('#fFrom').value, +$('#fHours').value)}` : '' };
+}
+function renderMatches() {
+  const box = $('#matchBox');
+  if (!D || $('#fBody').hidden || editing || !kind || !getD('fStart') || ['백업', '진료'].includes(kind)) { box.hidden = true; return; }
+  const f = formLeave(), end = f.end || f.start, norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  const overlaps = l => {
+    if (l.start > end || f.start > l.end) return false;
+    if (!l.time || !f.time || l.start !== f.start) return true;
+    const [a, b] = l.time.split('-'), [c, d] = f.time.split('-');
+    return a < d && c < b;
+  };
+  const candidates = D.leaves.filter(l => l.row > 0 && l.kind === kind && overlaps(l));
+  const exact = candidates.filter(l => kind !== '연차' && l.start === f.start && l.end === end && l.time === f.time
+    && f.memo && norm(l.memo) === norm(f.memo) && norm(l.place) === norm(f.place));
+  const similar = candidates.filter(l => !exact.includes(l)).slice(0, 3);
+  if (!exact.length && !similar.length) { box.hidden = true; return; }
+  const rowHtml = (l, match) => {
+    const current = l.name.split(/,\s*/).filter(Boolean), add = f.names.filter(n => !current.includes(n));
+    const canJoin = match && add.length && !current.includes(ALL);
+    const label = canJoin ? '이 일정에 이름 추가' : current.includes(ALL) ? '전원 일정입니다' : f.names.length ? '이미 이름이 포함되어 있습니다' : '추가할 이름을 선택해 주세요';
+    return `<div class="match-item"><b>${match ? '같은 일정' : '같은 날짜·시간'} · ${esc(l.memo || l.kind)}</b><div>${esc(l.start)}${l.end !== l.start ? '–' + esc(l.end) : ''}${l.time ? ' · ' + esc(l.time) : ''} · ${esc(l.name || '이름 없음')}${l.place ? ' · ' + esc(l.place) : ''}</div>${match ? `<button type="button" data-join="${l.row}" ${canJoin ? '' : 'disabled'}>${label}</button>` : ''}</div>`;
+  };
+  box.innerHTML = `<h4>먼저 등록된 일정</h4>${exact.slice(0, 3).map(l => rowHtml(l, true)).join('')}${similar.map(l => rowHtml(l, false)).join('')}`;
+  box.hidden = false;
+}
+$('#fMemo').addEventListener('input', renderMatches);
+$('#fPlace').addEventListener('input', renderMatches);
+
 // ── 일정 수정: 누른 일정을 폼에 채우고, 저장하면 그 줄을 고친다 ──
 let editing = null;
 // 그날로 새 일정 쓰기 (월 보기에서 고른 날을 한 번 더 눌렀을 때)
@@ -1158,7 +1212,7 @@ function addOn(day) {
   resetForm(); setD('fStart', day); openForm(true);
   $('#fToggle').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-function openForm(on) { $('#fBody').hidden = !on; $('#fToggle').classList.toggle('open', on); }
+function openForm(on) { $('#fBody').hidden = !on; $('#fToggle').classList.toggle('open', on); if (on) renderMatches(); }
 function resetForm() {
   editing = null; kind = ''; mode = 'day'; names.clear();
   openForm(false);
@@ -1195,10 +1249,22 @@ function startEdit(l) {
 }
 
 const CHANGE_PAGE_SIZE = 5;
-let changeRows = [], changePage = 0, changeHasMore = false, changesLoading = false;
+let changeRows = [], changeLocal = [], changeServer = [], changeOffset = 0, changePage = 0, changeHasMore = false, changesLoading = false;
+const changeCacheKey = 'recentChangesServer-v1';
+async function localChanges() {
+  try {
+    const cache = await caches.open('push-changes-v1'), keys = await cache.keys();
+    const rows = await Promise.all(keys.map(async k => { try { return await (await cache.match(k)).json(); } catch (e) { return null; } }));
+    return rows.filter(Boolean).sort((a, b) => b.ts - a.ts);
+  } catch (e) { return []; }
+}
+function combineChanges() {
+  const lines = new Set(changeLocal.flatMap(r => String(r.text).split('\n')));
+  changeRows = [...changeLocal, ...changeServer.filter(r => !lines.has(r.text))];
+}
 function renderChangePage() {
   const first = changePage * CHANGE_PAGE_SIZE, rows = changeRows.slice(first, first + CHANGE_PAGE_SIZE);
-  $('#changeList').innerHTML = rows.length ? rows.map(r => `<div class="change-item"><div class="at">${esc(r.at)} · ${esc(r.who)}${r.legacy ? ' · 이전 알림 첫 줄' : ''}</div><div class="detail">${esc(r.text)}</div></div>`).join('')
+  $('#changeList').innerHTML = rows.length ? rows.map(r => `<div class="change-item"><div class="at">${esc(r.at)} · ${esc(r.who)}${r.local ? ' · 이 기기 알림' : r.legacy ? ' · 이전 알림 첫 줄' : ''}</div><div class="detail">${esc(r.text)}</div></div>`).join('')
     : '<span class="empty">아직 기록된 변경이 없습니다.</span>';
   $('#changePageLabel').textContent = rows.length ? `${first + 1}–${first + rows.length}건` : '0건';
   $('#changePrev').disabled = changePage === 0;
@@ -1207,21 +1273,43 @@ function renderChangePage() {
 async function fetchChanges(reset) {
   if (changesLoading) return false;
   changesLoading = true;
-  if (reset) {
-    changeRows = []; changePage = 0; changeHasMore = false;
+  try {
+    // 읽기 요청에만 한 번 재시도한다. 저장 요청은 별도 고유 번호로 재시도한다.
+    let result;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try { result = await call('getRecentChanges', reset ? 0 : changeOffset); break; }
+      catch (e) { if (attempt || !e.net) throw e; await new Promise(r => setTimeout(r, 700)); }
+    }
+    if (reset) { changeServer = result.rows || []; changeOffset = changeServer.length; }
+    else { changeServer.push(...(result.rows || [])); changeOffset += (result.rows || []).length; }
+    changeHasMore = !!result.more;
+    try { localStorage.setItem(changeCacheKey, JSON.stringify({ rows: changeServer.slice(0, 50), more: changeHasMore || changeOffset > 50 })); } catch (e) {}
+    combineChanges(); renderChangePage();
+    $('#changeStatus').textContent = changeLocal.length ? '이 기기 알림은 바로 표시됩니다 · 서버 기록 확인 완료' : '서버 기록 확인 완료';
+    return true;
+  } catch (e) {
+    if (!changeRows.length) $('#changeList').innerHTML = `<span class="empty">불러오지 못했습니다: ${esc(e.message)}<br>잠시 후 다시 열어 주세요.</span>`;
+    else $('#changeStatus').textContent = `저장된 기록 표시 중 · 서버 연결 실패: ${e.message}`;
+    if (!reset) toast('이전 기록을 불러오지 못했습니다');
+    return false;
+  } finally { changesLoading = false; }
+}
+async function initChanges() {
+  changeLocal = await localChanges(); changePage = 0;
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(changeCacheKey) || 'null'); } catch (e) {}
+  changeServer = Array.isArray(saved?.rows) ? saved.rows : [];
+  changeOffset = changeServer.length; changeHasMore = saved ? !!saved.more : true;
+  combineChanges();
+  if (changeRows.length) {
+    renderChangePage();
+    $('#changeStatus').textContent = changeLocal.length ? '이 기기 알림 · 서버 기록 확인 중…' : '저장된 서버 기록 · 최신 내용 확인 중…';
+  } else {
     $('#changeList').innerHTML = '<span class="empty">불러오는 중…</span>';
     $('#changePageLabel').textContent = '불러오는 중…';
     $('#changePrev').disabled = $('#changeNext').disabled = true;
   }
-  try {
-    const result = await call('getRecentChanges', changeRows.length);
-    changeRows.push(...(result.rows || [])); changeHasMore = !!result.more;
-    renderChangePage(); return true;
-  } catch (e) {
-    if (reset) $('#changeList').innerHTML = `<span class="empty">불러오지 못했습니다: ${esc(e.message)}</span>`;
-    else toast('이전 기록을 불러오지 못했습니다');
-    return false;
-  } finally { changesLoading = false; }
+  fetchChanges(true);
 }
 async function moveChanges(step) {
   const next = changePage + step;
@@ -1231,10 +1319,11 @@ async function moveChanges(step) {
   }
   if (next * CHANGE_PAGE_SIZE < changeRows.length) { changePage = next; renderChangePage(); }
 }
+
 function openPanel(id) {
   $('#changes').hidden = id !== 'changes'; $('#settings').hidden = id !== 'settings';
   document.body.classList.add('modal-open');
-  if (id === 'changes') fetchChanges(true);
+  if (id === 'changes') initChanges();
   $('#' + (id === 'changes' ? 'changesClose' : 'settingsClose')).focus({ preventScroll: true });
 }
 function closePanel(id) {
@@ -1331,12 +1420,14 @@ document.addEventListener('click', async e => {
     if (!who) return toast('백업을 지정해 주세요');
     run('addLeave', [{ start: day, end: '', names: [who], kind: '백업', time: '', memo: `${role} (${orig} 대신)` }],
       `${md(day)} ${role} ${who === orig ? '백업 불필요' : '백업: ' + who}`);           // 이름 = 원래 담당이면 '백업 불필요' (시트에만 기록)
+  } else if (b.dataset.join) {
+    const l = D.leaves.find(x => x.row === +b.dataset.join), f = formLeave();
+    if (!l || !f.names.length) return toast('합류할 이름을 골라 주세요');
+    if (!await ask('같은 일정에 합류', `${esc(l.memo || l.kind)}<small>${esc(l.name || '이름 없음')} + ${esc(f.names.join(', '))}</small>`)) return;
+    resetForm();
+    run('joinLeave', [l.row, l.sig, f.names, l.place || ''], '이름을 추가했습니다', l);
   } else if (b.id === 'save') {
-    const f = {
-      start: getD('fStart'), kind, names: [...names], memo: $('#fMemo').value.trim(), place: $('#fPlace').value.trim(),
-      end: $('#wEnd').hidden ? '' : getD('fEnd'),
-      time: hourly() ? `${$('#fFrom').value}-${plusHours($('#fFrom').value, +$('#fHours').value)}` : '',
-    };
+    const f = formLeave();
     if (!kind) return toast('구분을 골라 주세요');
     if (kind === '기타' && !f.memo) return toast('무엇인지 적어 주세요');
     if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전원")을 넣어 주세요');
