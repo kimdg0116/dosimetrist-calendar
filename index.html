@@ -333,6 +333,7 @@ footer { margin-top:28px; }
 .change-item .at { font-size:13px; font-weight:600; color:var(--mute); }
 .change-item .detail { margin-top:4px; font-size:15px; font-weight:600; overflow-wrap:anywhere; }
 #changeList .empty { padding:12px 0; }
+#changeMore { margin-top:10px; }
 #gWarn { margin:10px 0 0; font-size:13px; text-align:center; color:var(--mute); }
 
 /* 날짜 고르기: 공휴일·일요일 빨강, 토요일 파랑 */
@@ -457,7 +458,7 @@ nav button { font-weight:700; }
     <div id="leaves"></div></div>
 </div>
 <div id="changes" hidden>
-  <div class="card"><h3>최근 변경</h3><div id="changeList"><span class="empty">탭을 열면 최근 변경을 불러옵니다.</span></div></div>
+  <div class="card"><h3>최근 변경</h3><div id="changeList"><span class="empty">탭을 열면 최근 변경을 불러옵니다.</span></div><button type="button" class="sub" id="changeMore" hidden>이전 기록 더 보기</button></div>
 </div>
 <div id="settings" hidden>
   <div class="card">
@@ -495,7 +496,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.08-03';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1182,14 +1183,25 @@ function startEdit(l) {
   $('#fTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function loadChanges() {
-  const list = $('#changeList');
-  list.innerHTML = '<span class="empty">불러오는 중…</span>';
+let changeOffset = 0, changesLoading = false;
+async function loadChanges(more = false) {
+  if (changesLoading) return;
+  changesLoading = true;
+  const list = $('#changeList'), button = $('#changeMore');
+  if (!more) { changeOffset = 0; list.innerHTML = '<span class="empty">불러오는 중…</span>'; }
+  button.hidden = true;
   try {
-    const rows = await call('getRecentChanges');
-    list.innerHTML = rows.length ? rows.map(r => `<div class="change-item"><div class="at">${esc(r.at)} · ${esc(r.who)}</div><div class="detail">${esc(r.text)}</div></div>`).join('')
-      : '<span class="empty">아직 기록된 변경이 없습니다.</span>';
-  } catch (e) { list.innerHTML = `<span class="empty">불러오지 못했습니다: ${esc(e.message)}</span>`; }
+    const page = await call('getRecentChanges', changeOffset);
+    const rows = page.rows || [];
+    const html = rows.map(r => `<div class="change-item"><div class="at">${esc(r.at)} · ${esc(r.who)}${r.legacy ? ' · 이전 알림 첫 줄' : ''}</div><div class="detail">${esc(r.text)}</div></div>`).join('');
+    if (more) list.insertAdjacentHTML('beforeend', html);
+    else list.innerHTML = html || '<span class="empty">아직 기록된 변경이 없습니다.</span>';
+    changeOffset += rows.length;
+    button.hidden = !page.more;
+  } catch (e) {
+    if (more) { button.hidden = false; toast('이전 기록을 불러오지 못했습니다'); }
+    else list.innerHTML = `<span class="empty">불러오지 못했습니다: ${esc(e.message)}</span>`;
+  } finally { changesLoading = false; }
 }
 function selectTab(tab, scroll) {
   document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
@@ -1214,6 +1226,8 @@ document.addEventListener('click', async e => {
     selectTab(b.dataset.tab);
   } else if (b.id === 'meName') {
     selectTab('settings', true);
+  } else if (b.id === 'changeMore') {
+    loadChanges(true);
   } else if (b.dataset.k) {
     kind = kind === b.dataset.k ? '' : b.dataset.k;
     mode = ['회의', '진료'].includes(kind) ? 'hour' : 'day';         // 회의·진료는 보통 시간 단위
