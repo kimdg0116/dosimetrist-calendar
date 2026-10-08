@@ -110,30 +110,33 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .day details.line-dd:first-of-type { border-top:0; }
 .day .line-dd summary { justify-content:flex-start; align-items:baseline; gap:8px; padding:8px 0; font-size:18px; font-weight:700; }
 .day .line-dd summary > b { flex:0 0 116px; font-size:15px; font-weight:500; color:var(--mute); text-align:left; }
-.day .line-dd summary > span { flex:1; min-width:0; color:var(--fg); font-size:18px; font-weight:700; }
+.day .line-dd summary > span { flex:1; min-width:0; color:var(--fg); font-size:18px; font-weight:700; text-align:center; }
 .day .line-dd summary small { font-size:13px; font-weight:500; color:var(--mute); }
 .day .line { display:flex; align-items:baseline; gap:8px; padding:8px 0; font-size:18px; font-weight:700; border-top:1px solid var(--line); }
 .day .line:first-of-type { border-top:0; }
 .day .line b { flex:0 0 116px; min-width:0; font-size:15px; font-weight:500; color:var(--mute); }
 .day .line small { font-size:13px; font-weight:500; }
+.day .line .who { flex:1; min-width:0; text-align:center; }
 .line small.red { color:var(--red); font-weight:700; }
 .day .empty { font-size:16px; }
 /* 오늘/내일 일정: 이름이 많아도 읽히게 */
-.ev { padding:10px 0; border-top:1px solid var(--line); cursor:pointer; }
-.ev:first-of-type { border-top:0; padding-top:4px; }
-.ev-top { display:flex; flex-direction:column; align-items:stretch; gap:3px; }
+.ev { padding:7px 0; border-top:1px solid var(--line); cursor:pointer; text-align:center; }
+.ev:first-of-type { border-top:0; padding-top:2px; }
+.ev-top { display:block; }
 .kind { flex:none; padding:3px 10px; font-size:14px; font-weight:700; border-radius:999px; background:var(--soft); color:var(--acc); }
 .ttl-line { display:flex; align-items:center; gap:8px; min-width:0; }
 .ttl-line .memo { min-width:0; font-size:15px; font-weight:600; line-height:1.4; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
-.ev-top .ttl-line { display:block; width:100%; }
-.ev-top .ttl-line .memo { display:block; margin-top:3px; }
-.ev-top .tm { align-self:flex-end; }
+.ev-top .ttl-line { justify-content:center; flex-wrap:wrap; width:100%; gap:3px 8px; }
+.ev-top .ttl-line .memo { white-space:normal; }
+.ev-meta { display:flex; justify-content:center; align-items:baseline; flex-wrap:wrap; gap:2px 12px; margin-top:3px; }
+.ev-meta .names { justify-content:center; }
+.ev-meta .tm { white-space:nowrap; }
 .names { display:flex; flex-wrap:wrap; gap:2px 10px; font-weight:700; }
 
 .ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
-.ev-names { margin-top:7px; font-size:18px; }
+.ev-names { margin-top:0; font-size:18px; }
 .ev-names.some { font-size:16px; } .ev-names.many { font-size:15px; gap:2px 8px; }   /* 4~6명, 7명 이상 */
-.ev-sub { margin-top:4px; font-size:14px; color:var(--mute); }
+.ev-sub { margin-top:2px; font-size:14px; color:var(--mute); text-align:center; }
 #dayView { touch-action:pan-y; }
 /* 업무 탭: 기간 한 장씩 (옆으로 밀거나 ‹ ›), 표 아이콘은 전체 보기 */
 #pnav { display:flex; align-items:center; gap:6px; margin:0 2px 10px; scroll-margin-top:70px; }
@@ -244,18 +247,22 @@ details .chip.on::after { content:'✓'; }
 .cnav { display:flex; align-items:center; justify-content:space-between; margin:4px 0 10px; }
 .cnav b { font-size:16px; }
 .cnav button { min-width:36px; height:32px; font-size:17px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
-.wrow { display:flex; gap:10px; padding:10px 0; border-top:1px solid var(--line); }
+.wrow { display:flex; gap:10px; padding:7px 0; border-top:1px solid var(--line); }
 .wrow:first-of-type { border-top:0; }
 .wrow.today { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
 .wrow.today .kind { background:var(--card); }
 .wrow.today .ev2.editing { background:var(--card); }
 .wd { flex:0 0 64px; font-weight:700; }
 .wd small { display:block; font-size:12px; font-weight:500; }
-.wevs { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
-.ev2 { cursor:pointer; }
-.ev2 .names { margin-top:4px; font-size:16px; }
+.wevs { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.ev2 { cursor:pointer; text-align:center; line-height:1.3; }
+.ev2 .ttl-line, .ev2 .names { justify-content:center; }
+.ev2-meta { display:flex; justify-content:center; align-items:baseline; flex-wrap:wrap; gap:2px 8px; margin-top:2px; }
+.ev2-meta .names, .ev2-meta small { margin-top:0; }
+.ev2 .ttl-line { flex-wrap:wrap; gap:3px 8px; }
+.ev2 .names { margin-top:2px; font-size:16px; }
 .ev2 .names.some { font-size:15px; } .ev2 .names.many { font-size:14px; gap:2px 8px; }
-.ev2 small { display:block; margin-top:3px; font-size:13px; color:var(--mute); }
+.ev2 small { display:block; margin-top:1px; font-size:13px; color:var(--mute); }
 .ev2.editing { margin:-4px -6px; padding:4px 6px; border-radius:8px; background:var(--soft); }
 .wd { flex:0 0 70px; }
 .mgrid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:2px; }
@@ -347,7 +354,7 @@ footer { margin-top:28px; }
 #matchBox h4 { margin:0 0 8px; font-size:14px; }
 .match-item { padding:12px 0; border-top:1px solid var(--line); }
 .match-item:first-of-type { border-top:0; }
-.match-date { margin-bottom:5px; color:var(--mute); font-size:13px; font-weight:700; }
+.match-date { margin-bottom:4px; color:var(--mute); font-size:13px; font-weight:700; text-align:center; }
 .match-item .ev2 { cursor:default; }
 .match-item .ev2 .memo { white-space:normal; overflow:visible; text-overflow:clip; }
 .match-item button { width:100%; margin-top:10px; padding:10px; border:1px solid var(--acc); border-radius:9px; background:var(--card); color:var(--acc); font-size:14px; font-weight:700; }
@@ -528,7 +535,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-04';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-05';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -854,7 +861,7 @@ function renderDay() {
     const out = !s && cur.who[i] && away(cur.who[i], day);
     const v = s && s.who !== s.orig ? `${esc(s.who)} <small>(${AR}${esc(s.orig)})</small>`
       : esc(cur.who[i]) + (out && !s ? ` <small class="red">(${esc(out.kind)} · 백업 없음)</small>` : '');
-    if (!cur.who[i]) return s ? `<div class="line"><b class="${rl(r.name)}">${esc(r.name)}</b>${v}</div>` : '';
+    if (!cur.who[i]) return s ? `<div class="line"><b class="${rl(r.name)}">${esc(r.name)}</b><span class="who">${v}</span></div>` : '';
     const orig = cur.who[i], opts = D.people.includes(orig) ? D.people : [orig, ...D.people];
     return dd(`day|${i}|${day}`, opts.map(n => {                     // 누르면 그날만 대신 설 사람 고르기
       const a = away(n, day);
@@ -867,8 +874,8 @@ function renderDay() {
       const who = l.name.split(/,\s*/).filter(Boolean);
       const when = l.time ? fmtTime(l.time) : l.start !== l.end ? `${md(l.start)} ~ ${md(l.end)}` : '종일';
       return `<div class="ev"${i !== null ? ` data-edit="${i}"` : ''}>
-        <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span><span class="tm">${when}</span></div>
-        ${namesHtml(who, 'ev-names', eds)}
+        <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span></div>
+        <div class="ev-meta">${namesHtml(who, 'ev-names', eds)}<span class="tm">${when}</span></div>
         ${l.place ? `<div class="ev-sub">📍 ${esc(l.place)}</div>` : ''}</div>`;
     }).join('')
     : '<span class="empty">없음</span>');
@@ -975,7 +982,7 @@ const evHtml = (l, i, eds) => {
   const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time)].filter(Boolean);   // 장소는 아래 줄에 따로 (길면 줄바꿈)
   return `<div class="ev2${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-    ${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}${l.place ? `<small class="pl">📍 ${esc(l.place)}</small>` : ''}</div>`;
+    <div class="ev2-meta">${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>${l.place ? `<small class="pl">📍 ${esc(l.place)}</small>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
