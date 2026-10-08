@@ -75,7 +75,8 @@ button { font-family:inherit; cursor:pointer; }
 .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
   margin:0 -16px 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
   background:var(--bar); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); color:var(--bar-fg); }
-.brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; }
+@media (max-width:390px) { .top .brand { font-size:16px; letter-spacing:.04em; white-space:normal; line-height:1.05; } }
 .icon-btn { width:36px; height:32px; padding:0; font-size:15px; line-height:1; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
 
 /* 카드 */
@@ -88,7 +89,7 @@ input:focus, select:focus, .datebtn:focus { outline:2px solid var(--acc); outlin
 .two { display:flex; gap:8px; } .two > div { flex:1; min-width:0; }
 
 /* 탭: 알약 모양 */
-nav { display:flex; gap:4px; margin:6px 0 12px; padding:4px; border-radius:14px; background:var(--card); border:1px solid var(--card-border); box-shadow:var(--shadow); }
+nav { display:flex; gap:4px; margin:6px 0 12px; scroll-margin-top:70px; padding:4px; border-radius:14px; background:var(--card); border:1px solid var(--card-border); box-shadow:var(--shadow); }
 nav button { flex:1; padding:10px; font-size:15px; font-weight:600; border:0; border-radius:10px; background:none; color:var(--mute); }
 nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,112,255,.3); }
 
@@ -321,7 +322,17 @@ footer { margin-top:28px; }
 #gNames button.on { color:var(--acc); font-weight:700; } #gNames button.on::after { content:'✓'; }
 #gMsg { min-height:20px; margin-top:10px; text-align:center; font-size:14px; color:var(--red); }
 .top .btns { display:flex; align-items:center; gap:8px; }
-.me-tag { padding:5px 10px; font-size:13px; font-weight:600; border-radius:999px; background:var(--card); color:var(--acc); border:1px solid var(--line); white-space:nowrap; }
+.me-tag { max-width:100px; overflow:hidden; text-overflow:ellipsis; padding:5px 10px; font-size:13px; font-weight:600; border-radius:999px; background:var(--card); color:var(--acc); border:1px solid var(--line); white-space:nowrap; }
+.settings-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 0; border-top:1px solid var(--line); }
+.settings-row:first-of-type { border-top:0; }
+.settings-row b { display:block; font-size:16px; }
+.settings-row p { margin:3px 0 0; font-size:13px; color:var(--mute); }
+.settings-row .icon-btn { flex:none; width:44px; height:40px; font-size:19px; }
+.change-item { padding:12px 0; border-top:1px solid var(--line); }
+.change-item:first-child { border-top:0; }
+.change-item .at { font-size:13px; font-weight:600; color:var(--mute); }
+.change-item .detail { margin-top:4px; font-size:15px; font-weight:600; overflow-wrap:anywhere; }
+#changeList .empty { padding:12px 0; }
 #gWarn { margin:10px 0 0; font-size:13px; text-align:center; color:var(--mute); }
 
 /* 날짜 고르기: 공휴일·일요일 빨강, 토요일 파랑 */
@@ -385,9 +396,7 @@ nav button { font-weight:700; }
 <div class="top">
   <div class="brand">DOSIMETRIST CALENDAR</div>
   <div class="btns">
-    <span id="meName" class="me-tag" hidden></span>
-    <button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button>
-    <button type="button" id="theme" class="icon-btn" aria-label="테마"></button>
+    <button type="button" id="meName" class="me-tag" aria-label="개인 설정 열기" hidden></button>
   </div>
 </div>
 <div id="dayView">
@@ -397,6 +406,8 @@ nav button { font-weight:700; }
 <nav>
   <button data-tab="rot" class="on">업무</button>
   <button data-tab="leave">일정</button>
+  <button data-tab="changes">변경</button>
+  <button data-tab="settings">설정</button>
 </nav>
 <div id="rot">
   <div id="pnav"></div>
@@ -445,6 +456,17 @@ nav button { font-weight:700; }
       <div class="vseg" id="vSeg"><button data-cv="list">목록</button><button data-cv="week">주</button><button data-cv="month">월</button></div></div>
     <div id="leaves"></div></div>
 </div>
+<div id="changes" hidden>
+  <div class="card"><h3>최근 변경</h3><div id="changeList"><span class="empty">탭을 열면 최근 변경을 불러옵니다.</span></div></div>
+</div>
+<div id="settings" hidden>
+  <div class="card">
+    <h3>개인 설정</h3>
+    <div class="settings-row"><div><b>사용자</b><p id="settingName"></p></div></div>
+    <div class="settings-row" id="pushSetting" hidden><div><b>일정 알림</b><p id="pushStateLabel">이 기기의 알림 설정</p></div><button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button></div>
+    <div class="settings-row"><div><b>화면 모드</b><p id="themeMode"></p></div><button type="button" id="theme" class="icon-btn" aria-label="화면 모드 변경"></button></div>
+  </div>
+</div>
 <footer><p class="ver"><a class="wlink" href="widget-setup.html">아이폰 위젯 설치 ›</a></p><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
 <button type="button" id="upd" class="upd" hidden>새 버전이 있습니다 · 눌러서 새로고침</button>
@@ -473,7 +495,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.08-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.08-03';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -612,6 +634,7 @@ const pushKeyBytes = key => Uint8Array.from(atob(key.replace(/-/g, '+').replace(
 function showPushState() {
   pushBtn.textContent = pushSubscribed ? '🔔' : '🔕';
   pushBtn.setAttribute('aria-label', pushSubscribed ? '일정 알림 끄기' : '일정 알림 켜기');
+  $('#pushStateLabel').textContent = pushSubscribed ? '알림 켜짐 · 누르면 끄기' : '알림 꺼짐 · 누르면 켜기';
 }
 async function initPush() {
   if (!auth.code || !auth.me || !('serviceWorker' in navigator)) return;
@@ -620,7 +643,7 @@ async function initPush() {
     if (!config.publicKey) return;                          // 발송 서버가 준비되기 전에는 버튼을 보이지 않는다
     pushKey = pushKeyBytes(config.publicKey);
     pushReg = await navigator.serviceWorker.ready;
-    pushBtn.hidden = false;
+    pushBtn.hidden = false; $('#pushSetting').hidden = false;
     if (!pushReg.pushManager) return showPushState();
     const sub = await pushReg.pushManager.getSubscription();
     pushSubscribed = !!sub;
@@ -1155,9 +1178,25 @@ function startEdit(l) {
   $('#fTitle').textContent = '일정 수정'; $('#save').textContent = '수정 저장'; $('#editBtns').hidden = false;
   openForm(true);
   applyKind(); applyNames(); render();
-  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.tab === 'leave'));
-  $('#leave').hidden = false; $('#rot').hidden = true;
+  selectTab('leave');
   $('#fTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function loadChanges() {
+  const list = $('#changeList');
+  list.innerHTML = '<span class="empty">불러오는 중…</span>';
+  try {
+    const rows = await call('getRecentChanges');
+    list.innerHTML = rows.length ? rows.map(r => `<div class="change-item"><div class="at">${esc(r.at)} · ${esc(r.who)}</div><div class="detail">${esc(r.text)}</div></div>`).join('')
+      : '<span class="empty">아직 기록된 변경이 없습니다.</span>';
+  } catch (e) { list.innerHTML = `<span class="empty">불러오지 못했습니다: ${esc(e.message)}</span>`; }
+}
+function selectTab(tab, scroll) {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x.dataset.tab === tab));
+  $('#rot').hidden = tab !== 'rot'; $('#leave').hidden = tab !== 'leave';
+  $('#changes').hidden = tab !== 'changes'; $('#settings').hidden = tab !== 'settings';
+  if (tab === 'changes') loadChanges();
+  if (scroll) document.querySelector('nav').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 document.addEventListener('click', async e => {
@@ -1172,8 +1211,9 @@ document.addEventListener('click', async e => {
   const b = e.target.closest('button');
   if (!b) return;
   if (b.dataset.tab) {
-    document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
-    $('#leave').hidden = b.dataset.tab !== 'leave'; $('#rot').hidden = b.dataset.tab !== 'rot';
+    selectTab(b.dataset.tab);
+  } else if (b.id === 'meName') {
+    selectTab('settings', true);
   } else if (b.dataset.k) {
     kind = kind === b.dataset.k ? '' : b.dataset.k;
     mode = ['회의', '진료'].includes(kind) ? 'hour' : 'day';         // 회의·진료는 보통 시간 단위
@@ -1305,13 +1345,18 @@ function setTheme(t) {
   if (t === 'system') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
   $('#theme').textContent = THEME_ICON[t];
+  $('#themeMode').textContent = { system: '기기 설정에 맞춤', light: '밝게', dark: '어둡게' }[t];
   try { localStorage.setItem('theme', t); } catch (e) {}
 }
 setTheme(theme);
 
 // ── 첫 화면: 접근 코드 → 본인 이름 (한 번만) ──
 let pickMe = '';
-function showMe() { $('#meName').hidden = !auth.me; $('#meName').textContent = auth.me || ''; }
+function showMe() {
+  $('#meName').hidden = !auth.me; $('#meName').textContent = auth.me || '';
+  $('#meName').setAttribute('aria-label', auth.me ? `${auth.me} 개인 설정 열기` : '개인 설정 열기');
+  $('#settingName').textContent = auth.me || '';
+}
 function showGate(step, msg) {
   $('#gate').hidden = false;
   $('#gStep1').hidden = step !== 1; $('#gStep2').hidden = step !== 2;
