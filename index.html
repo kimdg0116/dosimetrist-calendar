@@ -68,7 +68,7 @@ body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 input, textarea { -webkit-user-select:text; user-select:text; }
 [hidden] { display:none !important; }
 /* 글꼴 (웬들러식, 항목별로 하나씩 — 한 항목 안에서 글자마다 섞지 않는다): 본문·이름·제목 SUIT · 날짜·시간 항목과 영문 업무명 Oswald · 한글 업무명(온콜·당직) 페이퍼로지 */
-body { margin:0; padding:0 16px 90px; font:16px/1.45 var(--font-body); background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
+body { margin:0; padding:0 16px 90px; font:16px/1.5 var(--font-body); background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
 button { font-family:inherit; cursor:pointer; }
 
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
@@ -98,7 +98,7 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .day h3 .ttl::before { content:''; display:inline-block; width:10px; height:10px; margin:0 8px 3px 0; border-radius:50%; background:var(--deep); vertical-align:middle; }
 .day h3 { display:flex; align-items:center; gap:6px; margin-bottom:8px; color:var(--fg); }
 .day h3 .t { flex:1; min-width:0; }
-.day h3 .ttl { display:block; font-size:22px; font-weight:800; letter-spacing:-.02em; }
+.day h3 .ttl { display:block; font-size:clamp(19px, 5.4vw, 22px); line-height:1.2; font-weight:800; letter-spacing:-.02em; }
 .day h3 .ttl { color:var(--deep); }                               /* 두 블록 제목·점 같은 색 */
 .day h3 .dt { display:block; margin-top:3px; font-size:14px; font-weight:500; color:var(--mute); }
 .day h3 button { min-width:34px; height:32px; padding:0 10px; font-size:17px; line-height:1; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
@@ -121,10 +121,13 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 /* 오늘/내일 일정: 이름이 많아도 읽히게 */
 .ev { padding:10px 0; border-top:1px solid var(--line); cursor:pointer; }
 .ev:first-of-type { border-top:0; padding-top:4px; }
-.ev-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.ev-top { display:flex; flex-direction:column; align-items:stretch; gap:3px; }
 .kind { flex:none; padding:3px 10px; font-size:14px; font-weight:700; border-radius:999px; background:var(--soft); color:var(--acc); }
 .ttl-line { display:flex; align-items:center; gap:8px; min-width:0; }
-.ttl-line .memo { min-width:0; font-size:15px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ttl-line .memo { min-width:0; font-size:15px; font-weight:600; line-height:1.4; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
+.ev-top .ttl-line { display:block; width:100%; }
+.ev-top .ttl-line .memo { display:block; margin-top:3px; }
+.ev-top .tm { align-self:flex-end; }
 .names { display:flex; flex-wrap:wrap; gap:2px 10px; font-weight:700; }
 
 .ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
@@ -179,7 +182,11 @@ summary span { flex:none; }
 .pick > .col { flex:1; min-width:0; }
 details.dd { flex:1; margin-top:0; background:var(--bg); }
 details.dd summary b { flex:1; text-align:left; }
-#tFrom { flex:1; min-width:0; padding:0; font:inherit; font-weight:600; border:0; background:none; color:var(--fg); }
+#tFrom { flex:1; min-width:0; padding:0; font:inherit; font-weight:700; text-align:center; border:0; background:none; color:var(--fg); }
+#tFrom::placeholder { color:var(--mute); opacity:1; }
+#dFrom summary, #dHours summary { justify-content:center; align-items:center; }
+#dFrom summary::after, #dHours summary::after { position:absolute; right:12px; }
+#dHours summary b { text-align:center; font-weight:700; }
 #tFrom:focus { outline:none; }
 .pick > .col details { margin-top:0; }
 .pick > .col summary b { flex:1; text-align:left; }
@@ -214,7 +221,7 @@ details .chip.on::after { content:'✓'; }
 .main { width:100%; margin-top:18px; padding:13px; font-size:16px; font-weight:700; border:0; border-radius:12px; background:var(--acc); color:#fff; box-shadow:0 4px 12px rgba(46,112,255,.25); }
 .main:disabled { opacity:.6; }
 .sub { width:100%; padding:11px; font-size:15px; font-weight:600; border:1.5px dashed var(--line); border-radius:12px; background:none; color:var(--acc); }
-.datebtn { width:100%; padding:11px 12px; font:inherit; font-size:16px; text-align:left; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+.datebtn { width:100%; padding:11px 12px; font:inherit; font-size:16px; font-weight:700; text-align:center; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
 .datebtn.none { color:var(--mute); }
 
 /* 목록 */
@@ -338,11 +345,14 @@ footer { margin-top:28px; }
 #changeStatus { min-height:20px; margin:6px 0 0; color:var(--mute); font-size:12px; }
 #matchBox { margin:14px 0; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); }
 #matchBox h4 { margin:0 0 8px; font-size:14px; }
-.match-item { padding:9px 0; border-top:1px solid var(--line); font-size:13px; }
+.match-item { padding:12px 0; border-top:1px solid var(--line); }
 .match-item:first-of-type { border-top:0; }
-.match-item b { display:block; margin-bottom:3px; }
-.match-item button { margin-top:7px; padding:7px 10px; border:1px solid var(--acc); border-radius:8px; background:var(--card); color:var(--acc); font-weight:700; }
+.match-date { margin-bottom:5px; color:var(--mute); font-size:13px; font-weight:700; }
+.match-item .ev2 { cursor:default; }
+.match-item .ev2 .memo { white-space:normal; overflow:visible; text-overflow:clip; }
+.match-item button { width:100%; margin-top:10px; padding:10px; border:1px solid var(--acc); border-radius:9px; background:var(--card); color:var(--acc); font-size:14px; font-weight:700; }
 .match-item button:disabled { opacity:.5; }
+.match-note { margin:8px 0 0; color:var(--mute); font-size:12px; line-height:1.4; }
 
 body.modal-open { overflow:hidden; }
 .panel { position:fixed; inset:0; z-index:35; display:flex; align-items:flex-end; justify-content:center; background:rgba(10,20,60,.48); }
@@ -373,7 +383,7 @@ body.modal-open { overflow:hidden; }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
 .day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
-.day h3 .dt, .ev .tm { font-size:18px; font-weight:600; color:var(--fg); }              /* 맨 위 블록: 크게 */
+.day h3 .dt, .ev .tm { font-size:clamp(16px, 4.5vw, 18px); font-weight:700; line-height:1.3; color:var(--fg); }              /* 맨 위 블록: 크게 */
 #pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
@@ -458,10 +468,10 @@ nav button { font-weight:700; }
     </div>
     <div class="pick" id="wHour" hidden>
       <div class="col"><label>시작 시각</label>
-        <details id="dFrom"><summary><input id="tFrom" inputmode="numeric" maxlength="5" value="09:00" aria-label="시작 시각"></summary><div class="chips" id="lFrom"></div></details></div>
+        <details id="dFrom"><summary><input id="tFrom" inputmode="numeric" maxlength="5" placeholder="시작 시간 선택" readonly aria-label="시작 시각"></summary><div class="chips" id="lFrom"></div></details></div>
       <div class="col"><label>소요 시간</label>
         <details id="dHours"><summary><b id="sHours">1시간</b></summary><div class="chips" id="lHours"></div></details></div>
-      <input type="hidden" id="fFrom" value="09:00"><input type="hidden" id="fHours" value="1">
+      <input type="hidden" id="fFrom" value=""><input type="hidden" id="fHours" value="1">
     </div>
     <label id="lMemo">내용 (선택)</label><input id="fMemo">
     <label for="fPlace">장소 (선택)</label><input id="fPlace" placeholder="예: 본관 지하 2층 회의실">
@@ -518,7 +528,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-03';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-04';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -742,6 +752,13 @@ function apply_(op) {                                                  // 저장
     kind: f.kind, time: f.time || '', memo: f.memo || '', place: f.place || '' });
   if (fn === 'joinLeave' && at() >= 0) {
     const l = L[at()], current = l.name.split(/,\s*/).filter(Boolean);
+    for (let i = L.length - 1; i >= 0; i--) {
+      const x = L[i];
+      if (x !== l && x.start === l.start && x.end === l.end && x.kind === l.kind && x.time === l.time
+        && x.memo === l.memo && (x.place || '') === (l.place || '')) {
+        current.push(...x.name.split(/,\s*/).filter(Boolean)); L.splice(i, 1);
+      }
+    }
     l.name = current.includes(ALL) || args[2].includes(ALL) ? ALL : [...new Set([...current, ...args[2]])].join(', ');
   }
   else if (fn === 'deleteLeave' && at() >= 0) L.splice(at(), 1);
@@ -1089,7 +1106,7 @@ function applyNames() {
 }
 function plusHours(t, h) {
   const [hh, mm] = t.split(':').map(Number);
-  return `${pad(hh + h)}:${pad(mm)}`;
+  return t ? `${pad(hh + h)}:${pad(mm)}` : '';
 }
 
 $('#fKind').innerHTML = KINDS.map(k => `<button class="chip" data-k="${k}">${k}</button>`).join('');
@@ -1103,23 +1120,35 @@ function setTime(from, hours) {
   $('#lHours').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(h =>
     `<button type="button" class="chip${h === +hours ? ' on' : ''}" data-hrs="${h}">${h}시간 (~${plusHours(from, h)})</button>`).join('');
   $('#tFrom').value = from;
-  $('#sHours').textContent = `${hours}시간 (~${plusHours(from, +hours)})`;
+  $('#sHours').textContent = `${hours}시간${from ? ` (~${plusHours(from, +hours)})` : ''}`;
   if (D && !$('#fBody').hidden) renderMatches();
 }
-setTime('09:00', 1);
+setTime('', 1);
 // 직접 입력: 칸을 눌러도 목록이 열리지 않게 하고, 입력이 끝나면 '13:30' 꼴로 맞춘다 (930·0930·9:30 모두 됨)
 function parseHM(v) {
   const d = String(v).replace(/[^0-9]/g, '');
   const [h, m] = d.length <= 2 ? [+d, 0] : [+d.slice(0, -2), +d.slice(-2)];
   return d && h <= 23 && m <= 59 ? `${pad(h)}:${pad(m)}` : null;
 }
-$('#tFrom').addEventListener('click', e => e.preventDefault());
+// 첫 누름은 시간 목록, 목록이 열린 상태에서 다시 누르면 직접 입력한다.
+let timeEditing = false;
+$('#tFrom').addEventListener('click', e => {
+  e.stopPropagation();
+  const d = $('#dFrom'), input = $('#tFrom');
+  if (!d.open) { e.preventDefault(); d.open = true; input.blur(); return; }
+  if (!timeEditing) { timeEditing = true; input.readOnly = false; input.blur(); input.focus(); input.select(); }
+});
 const commitFrom = () => {
-  const t = parseHM($('#tFrom').value);
-  if (t) setTime(t, $('#fHours').value); else { toast('시각은 13:30 이나 1330 처럼 넣어 주세요'); $('#tFrom').value = $('#fFrom').value; }
+  const raw = $('#tFrom').value.trim(), t = parseHM(raw);
+  if (t) setTime(t, $('#fHours').value);
+  else if (!raw) setTime('', $('#fHours').value);
+  else { toast('시각은 13:30 이나 1330 처럼 넣어 주세요'); $('#tFrom').value = $('#fFrom').value; }
 };
 $('#tFrom').addEventListener('change', commitFrom);
-$('#tFrom').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tFrom').blur(); } });
+$('#tFrom').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#tFrom').blur(); $('#dFrom').open = false; } });
+$('#dFrom').addEventListener('toggle', () => {
+  if (!$('#dFrom').open) { timeEditing = false; $('#tFrom').readOnly = true; }
+});
 // 목록을 열 때: 사람 목록은 딱 5명 높이로, 기준 사람을 가운데(위 2명·아래 2명)에. 맨 위·맨 아래 근처면 처음·끝 5명
 // 기준 = 일정 탭 이름 목록은 '나', 업무 칸들은 지금 담당(고른 사람). 나머지 목록(구분·시각 등)은 고른 항목이 보이게만
 document.addEventListener('toggle', e => {
@@ -1172,7 +1201,7 @@ function drawPicker() {
 function closePicker() { $('#picker').hidden = true; }
 applyKind();
 
-// 날짜·시간·내용이 같은 기존 일정을 입력 중에 보여준다. 이름은 일치 판단에서 제외한다.
+// 선택한 날짜에 먼저 등록된 일정을 기존 목록과 같은 카드로 보여준다.
 function formLeave() {
   return { start: getD('fStart'), end: $('#wEnd').hidden ? '' : getD('fEnd'), kind,
     names: [...names], memo: $('#fMemo').value.trim(), place: $('#fPlace').value.trim(),
@@ -1180,26 +1209,17 @@ function formLeave() {
 }
 function renderMatches() {
   const box = $('#matchBox');
-  if (!D || $('#fBody').hidden || editing || !kind || !getD('fStart') || ['백업', '진료'].includes(kind)) { box.hidden = true; return; }
-  const f = formLeave(), end = f.end || f.start, norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLowerCase();
-  const overlaps = l => {
-    if (l.start > end || f.start > l.end) return false;
-    if (!l.time || !f.time || l.start !== f.start) return true;
-    const [a, b] = l.time.split('-'), [c, d] = f.time.split('-');
-    return a < d && c < b;
-  };
-  const candidates = D.leaves.filter(l => l.row > 0 && l.kind === kind && overlaps(l));
-  const exact = candidates.filter(l => kind !== '연차' && l.start === f.start && l.end === end && l.time === f.time
-    && f.memo && norm(l.memo) === norm(f.memo) && norm(l.place) === norm(f.place));
-  const similar = candidates.filter(l => !exact.includes(l)).slice(0, 3);
-  if (!exact.length && !similar.length) { box.hidden = true; return; }
-  const rowHtml = (l, match) => {
-    const current = l.name.split(/,\s*/).filter(Boolean), add = f.names.filter(n => !current.includes(n));
-    const canJoin = match && add.length && !current.includes(ALL);
-    const label = canJoin ? '이 일정에 이름 추가' : current.includes(ALL) ? '전원 일정입니다' : f.names.length ? '이미 이름이 포함되어 있습니다' : '추가할 이름을 선택해 주세요';
-    return `<div class="match-item"><b>${match ? '같은 일정' : '같은 날짜·시간'} · ${esc(l.memo || l.kind)}</b><div>${esc(l.start)}${l.end !== l.start ? '–' + esc(l.end) : ''}${l.time ? ' · ' + esc(l.time) : ''} · ${esc(l.name || '이름 없음')}${l.place ? ' · ' + esc(l.place) : ''}</div>${match ? `<button type="button" data-join="${l.row}" ${canJoin ? '' : 'disabled'}>${label}</button>` : ''}</div>`;
-  };
-  box.innerHTML = `<h4>먼저 등록된 일정</h4>${exact.slice(0, 3).map(l => rowHtml(l, true)).join('')}${similar.map(l => rowHtml(l, false)).join('')}`;
+  if (!D || $('#fBody').hidden || editing || !getD('fStart')) { box.hidden = true; return; }
+  const f = formLeave(), end = f.end || f.start;
+  // 날짜가 겹치는 기존 일정은 구분·내용·시각을 아직 입력하지 않아도 보여준다.
+  const candidates = D.leaves.filter(l => l.row > 0 && !isSub(l) && l.start <= end && f.start <= l.end)
+    .sort((a, b) => (a.kind === kind ? -1 : 0) - (b.kind === kind ? -1 : 0) || a.start.localeCompare(b.start) || a.time.localeCompare(b.time));
+  if (!candidates.length) { box.hidden = true; return; }
+  box.innerHTML = `<h4>먼저 등록된 일정</h4>${candidates.map(l => {
+    const current = l.name.split(/,\s*/).filter(Boolean);
+    const canJoin = !current.includes(ALL) && f.names.some(n => !current.includes(n));
+    return `<div class="match-item"><div class="match-date">${mdh(l.start)}${l.end !== l.start ? ' ~ ' + mdh(l.end) : ''}</div>${evHtml(l, null, null)}<button type="button" data-join="${l.row}" ${canJoin ? '' : 'disabled'}>이 일정에 이름 추가</button></div>`;
+  }).join('')}<p class="match-note">이름을 추가하면 위에 표시된 기존 일정의 날짜·시간·내용·장소를 그대로 사용합니다.</p>`;
   box.hidden = false;
 }
 $('#fMemo').addEventListener('input', renderMatches);
@@ -1217,7 +1237,7 @@ function resetForm() {
   editing = null; kind = ''; mode = 'day'; names.clear();
   openForm(false);
   setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = ''; $('#fPlace').value = '';
-  setTime('09:00', 1);
+  setTime('', 1);
   document.querySelectorAll('#fNames .chip.on').forEach(x => x.classList.remove('on'));
   $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#editBtns').hidden = true;
   applyKind(); applyNames();
@@ -1391,7 +1411,7 @@ document.addEventListener('click', async e => {
     const d = b.closest('details'); d.open = false;
     onDd(d.dataset.dd, b.dataset.ddv);
   } else if (b.dataset.from) {
-    setTime(b.dataset.from, $('#fHours').value); $('#dFrom').open = false;
+    setTime(b.dataset.from, $('#fHours').value); $('#dFrom').open = false; timeEditing = false; $('#tFrom').readOnly = true;
   } else if (b.dataset.hrs) {
     setTime($('#fFrom').value, b.dataset.hrs); $('#dHours').open = false;
   } else if (b.dataset.a) {
@@ -1423,7 +1443,9 @@ document.addEventListener('click', async e => {
   } else if (b.dataset.join) {
     const l = D.leaves.find(x => x.row === +b.dataset.join), f = formLeave();
     if (!l || !f.names.length) return toast('합류할 이름을 골라 주세요');
-    if (!await ask('같은 일정에 합류', `${esc(l.memo || l.kind)}<small>${esc(l.name || '이름 없음')} + ${esc(f.names.join(', '))}</small>`)) return;
+    const current = l.name.split(/,\s*/).filter(Boolean);
+    if (isSub(l) || current.includes(ALL) || f.names.every(n => current.includes(n))) return;
+    if (!await ask('기존 일정에 이름 추가', `${esc(l.memo || l.kind)}<small>${md(l.start)}${l.time ? ' · ' + esc(fmtTime(l.time)) : ''} · ${esc(l.name || '이름 없음')}<br>추가: ${esc(f.names.join(', '))}<br>기존 일정의 날짜·시간·내용·장소를 사용합니다.</small>`, '이름 추가')) return;
     resetForm();
     run('joinLeave', [l.row, l.sig, f.names, l.place || ''], '이름을 추가했습니다', l);
   } else if (b.id === 'save') {
@@ -1431,6 +1453,7 @@ document.addEventListener('click', async e => {
     if (!kind) return toast('구분을 골라 주세요');
     if (kind === '기타' && !f.memo) return toast('무엇인지 적어 주세요');
     if (!f.start || !(f.names.length || f.memo)) return toast('날짜와 이름(모두면 "전원")을 넣어 주세요');
+    if (hourly() && !$('#fFrom').value) return toast('시작 시간을 골라 주세요');
     // 화면엔 바로 반영되니 입력칸도 바로 비우고, 서버 답(캘린더·알림까지 몇 초)은 기다리지 않는다 → 바로 다음 수정 가능.
     // 서버엔 저장 차례대로 간다. 실패하면 (다른 걸 고치는 중이 아닐 때) 적은 내용을 되살린다
     const ed = editing;
