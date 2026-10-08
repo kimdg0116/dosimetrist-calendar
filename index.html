@@ -131,6 +131,7 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .ev-meta { display:flex; justify-content:flex-start; align-items:baseline; flex-wrap:wrap; gap:2px 12px; margin-top:7px; }
 .ev-meta .names { justify-content:flex-start; }
 .ev-meta .tm { white-space:nowrap; }
+.ev.no-name .ev-meta { padding-left:53px; }
 .names { display:flex; flex-wrap:wrap; gap:2px 10px; font-weight:700; }
 
 .ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
@@ -270,6 +271,7 @@ details .chip.on::after { content:'✓'; }
 .ev2 .names.some { font-size:15px; } .ev2 .names.many { font-size:14px; gap:2px 8px; }
 .ev2 small { display:block; margin-top:3px; font-size:13px; color:var(--mute); }
 .ev2 .ev2-meta small { margin-top:0; }
+.ev2.no-name .ev2-meta { padding-left:53px; }
 .ev2.editing { margin:-4px -6px; padding:4px 6px; border-radius:8px; background:var(--soft); }
 .mgrid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:2px; }
 .mdow { padding:2px 0 6px; text-align:center; font-size:12px; font-weight:600; color:var(--mute); }
@@ -541,7 +543,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-08';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.09-09';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -880,7 +882,7 @@ function renderDay() {
     ? list.map(({ l, i, eds }) => {
       const who = l.name.split(/,\s*/).filter(Boolean);
       const when = l.time ? fmtTime(l.time) : l.start !== l.end ? `${md(l.start)} ~ ${md(l.end)}` : '종일';
-      return `<div class="ev"${i !== null ? ` data-edit="${i}"` : ''}>
+      return `<div class="ev${who.length ? '' : ' no-name'}"${i !== null ? ` data-edit="${i}"` : ''}>
         <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span></div>
         <div class="ev-meta">${namesHtml(who, 'ev-names', eds)}<span class="tm">${when}</span></div>
         ${l.place ? `<div class="ev-sub">${PIN} ${esc(l.place)}</div>` : ''}</div>`;
@@ -987,9 +989,10 @@ try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
 const evHtml = (l, i, eds) => {
   const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time)].filter(Boolean);   // 장소는 아래 줄에 따로 (길면 줄바꿈)
-  return `<div class="ev2${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
+  const who = l.name.split(/,\s*/).filter(Boolean);
+  return `<div class="ev2${who.length ? '' : ' no-name'}${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-    <div class="ev2-meta">${namesHtml(l.name.split(/,\s*/).filter(Boolean), '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>${l.place ? `<small class="pl">${PIN} ${esc(l.place)}</small>` : ''}</div>`;
+    <div class="ev2-meta">${namesHtml(who, '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>${l.place ? `<small class="pl">${PIN} ${esc(l.place)}</small>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
