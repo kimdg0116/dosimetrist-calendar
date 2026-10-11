@@ -14,7 +14,8 @@ const PARAM = String((typeof args !== 'undefined' && args.widgetParameter) || ''
 const THEME = /라이트|light/i.test(PARAM) ? 'light' : /다크|dark/i.test(PARAM) ? 'dark' : '';
 const dyn = (l, d) => THEME === 'light' ? new Color(l) : THEME === 'dark' ? new Color(d)
   : Color.dynamic(new Color(l), new Color(d));                       // 라이트 / 다크 (앱과 같은 색)
-// 위젯 색 = 앱 테마 색. 앱 개인 설정 → 아이폰 위젯 → '파트 위젯 실행'이 scriptable:///run/파트%20위젯?color=mint 처럼 열어 이 폰 키체인에 적어 둔다
+// 위젯 색 = 앱 테마 색. 앱 개인 설정 → 아이폰 위젯 → '위젯 색 맞추기'가 scriptable:///run/dosimetrist-widget-core?color=mint 처럼 열어 이 폰 키체인에 적어 둔다
+// (설치 코드 이름은 사람마다 다를 수 있어서, 이름이 고정된 위젯 본체를 연다)
 const COLOR_KEY = 'dosimetrist-color';
 const QP = (typeof args !== 'undefined' && args.queryParameters) || {};
 if (QP.color && /^[a-z]+$/.test(QP.color)) Keychain.set(COLOR_KEY, QP.color);
@@ -194,3 +195,6 @@ module.exports = async () => {
   else await w.presentMedium();
   Script.complete();
 };
+// 목록에서 이 파일(dosimetrist-widget-core)을 직접 눌러도 위젯 미리보기로 돈다. 예전엔 함수만 만들고 끝나지 않아 동그라미만 계속 돌았다.
+// '파트 위젯'(설치 코드)이 불러올 때는 Script.name() 이 '파트 위젯' 이라 두 번 돌지 않는다
+if (Script.name() === 'dosimetrist-widget-core') module.exports();
