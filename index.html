@@ -472,11 +472,17 @@ nav button { font-weight:700; }
 #fBody { margin-top:14px; }
 .mhint { margin:2px 0 6px; font-size:13px; font-weight:600; color:var(--acc); text-align:center; }
 #fToggle { scroll-margin-top:70px; }
-/* 제목 = 화면 바꾸기 단추 (파트 ↔ 의학물리팀) */
+/* 제목 = 화면 목록 (파트 · 의학물리팀 …). 앱을 새로 열면 늘 파트 화면 */
 button.brand { padding:0; border:0; background:none; color:inherit; text-align:left; }
-.brand svg { width:.72em; height:.72em; margin-left:7px; vertical-align:.02em; opacity:.55; }
-/* 의학물리팀 근무표 화면: 제목을 누르면 파트 화면 대신 보인다 (앱을 새로 열면 늘 파트 화면) */
-body:not(.team) #team, body.team #dayView, body.team nav, body.team #rot, body.team #leave { display:none !important; }
+.brand svg { width:.75em; height:.75em; margin-left:6px; vertical-align:-.04em; opacity:.6; transition:transform .2s; }
+#brand[aria-expanded="true"] svg { transform:rotate(180deg); }
+#screens { position:absolute; top:calc(100% - 4px); left:12px; z-index:25; width:min(290px, calc(100vw - 24px)); padding:6px; border:1px solid var(--line); border-radius:14px; background:var(--card); box-shadow:0 10px 30px color-mix(in srgb, var(--acc) 18%, transparent); }
+#screens button { position:relative; display:block; width:100%; padding:10px 40px 10px 12px; border:0; border-radius:10px; background:none; color:var(--fg); text-align:left; }
+#screens button b { display:block; font-family:Oswald, sans-serif; font-size:17px; font-weight:700; letter-spacing:.06em; color:var(--deep); }
+#screens button small { display:block; margin-top:1px; font-size:13px; font-weight:600; color:var(--mute); }
+#screens button.on { background:var(--soft); }
+#screens button.on::after { content:'✓'; position:absolute; right:14px; top:50%; transform:translateY(-50%); font-weight:800; color:var(--acc); }
+body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]) :is(#dayView, nav, #rot, #leave) { display:none !important; }
 #team .evi { padding:8px 0; row-gap:1px; cursor:default; }   /* 역할이 9~10줄이라 일정보다 조금 촘촘히 */
 #team .evi .ln.pl { font-size:13px; }
 #team .grp { margin-top:10px; font-family:Oswald, var(--font-body); font-size:13px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); }
@@ -488,7 +494,7 @@ body:not(.team) #team, body.team #dayView, body.team nav, body.team #rot, body.t
 .tgrid .th b { display:block; font-family:Oswald, var(--font-body); font-size:16px; font-weight:600; color:var(--fg); }
 .tgrid .th.red, .tgrid .th.red b { color:var(--red); } .tgrid .th.sat b { color:var(--blue); }
 .tgrid .th.today b { color:var(--acc); text-decoration:underline; text-underline-offset:3px; }
-.tgrid .tsel { border-radius:10px; background:color-mix(in srgb, var(--acc) 9%, transparent); }   /* 고른 날 세로줄 */
+.tgrid .th.on { border-radius:10px; box-shadow:inset 0 0 0 1.5px var(--acc); }   /* 고른 날: 요일 칸에만 테두리 */
 .tgrid .tl { grid-column:1; align-self:center; font-family:Oswald, Paperlogy, var(--font-body); font-size:14px; font-weight:600; text-align:center; color:var(--mute); }
 .tgrid .tbar { display:flex; align-items:center; justify-content:center; min-width:0; min-height:30px; padding:4px 1px; font-size:13px; font-weight:800; line-height:1.25; text-align:center; word-break:keep-all; border-radius:8px; background:var(--soft); color:var(--badge, var(--acc)); }
 .tgrid .tsep { grid-column:1 / -1; height:1px; margin:2px 0; background:var(--line); }
@@ -500,7 +506,8 @@ body:not(.team) #team, body.team #dayView, body.team nav, body.team #rot, body.t
 </head>
 <body>
 <div class="top">
-  <button type="button" class="brand" id="brand" aria-label="의학물리팀 근무표로">DOSIMETRIST CALENDAR<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4 4-4-4 4-4"/></svg></button>
+  <button type="button" class="brand" id="brand" aria-haspopup="true" aria-expanded="false">DOSIMETRIST CALENDAR<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+  <div id="screens" hidden></div>
   <div class="btns">
     <button type="button" id="changesBtn" class="icon-btn" aria-label="최근 변경 보기" title="최근 변경" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
     <button type="button" id="meName" class="me-tag" aria-label="개인 설정 열기" hidden></button>
@@ -611,7 +618,7 @@ body:not(.team) #team, body.team #dayView, body.team nav, body.team #rot, body.t
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-08';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-09';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1017,15 +1024,27 @@ function parseTeam(g) {
 }
 // </team-parse>
 
-// ── 의학물리팀 근무표: 제목을 누르면 파트 화면 ↔ 팀 화면 (앱을 새로 열면 늘 파트 화면, 파트 캘린더라서) ──
-// 월말에 나오는 엑셀을 누구든 '근무표 올리기'로 올린다 (폰에서 읽어 확인 → 서버 '의학물리팀' 탭). 클로드에게 맡긴 달은 서버 코드로 들어온다
-const SWAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4 4-4-4 4-4"/></svg>';
-function setTeam(on) {
-  document.body.classList.toggle('team', on);
-  $('#brand').innerHTML = (on ? 'MEDICAL PHYSICS TEAM' : 'DOSIMETRIST CALENDAR') + SWAP;
-  $('#brand').setAttribute('aria-label', on ? '파트 화면으로' : '의학물리팀 근무표로');
+// ── 화면 목록: 제목을 누르면 펼쳐진다. 앱을 새로 열면 늘 파트 화면 (파트 캘린더라서) ──
+// 화면을 늘리려면 여기 한 줄 + 화면 틀(<div id="<id>">) + CSS 숨김 규칙 한 줄
+const SCREENS = [
+  { id: 'part', title: 'DOSIMETRIST CALENDAR', sub: '선량설계파트 업무 · 일정' },
+  { id: 'team', title: 'MEDICAL PHYSICS TEAM', sub: '의학물리팀 근무표' },
+];
+const DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+let screen = 'part';
+function showScreens(open) {
+  $('#screens').hidden = !open;
+  $('#brand').setAttribute('aria-expanded', open);
+  if (open) $('#screens').innerHTML = SCREENS.map(x => `<button type="button" data-screen="${x.id}"${x.id === screen ? ' class="on"' : ''}><b>${x.title}</b><small>${esc(x.sub)}</small></button>`).join('');
+}
+function setScreen(id) {
+  screen = id; document.body.dataset.screen = id;
+  $('#brand').innerHTML = SCREENS.find(x => x.id === id).title + DOWN;
+  showScreens(false);
   scrollTo({ top: 0, behavior: 'instant' });
 }
+// ── 의학물리팀 근무표 ──
+// 월말에 나오는 엑셀을 누구든 '근무표 올리기'로 올린다 (폰에서 읽어 확인 → 서버 '의학물리팀' 탭). 클로드에게 맡긴 달은 서버 코드로 들어온다
 const teamOf = v => (D.team || {})[v.slice(0, 7)];
 const teamDay = v => { const t = teamOf(v); return t ? t.days[v] || [] : null; };
 const whoHtml = (w, br) => w.split('/').map(esc).join(br ? '<br>' : ' · ');   // '홍길동/김철수'
@@ -1060,8 +1079,8 @@ function renderTeam() {
     row++;
     return out;
   }).join('');
-  $('#tWeek').innerHTML = cells ? `<div class="tgrid" data-sun="${sun}"><i class="tsel" style="grid-column:${ds.indexOf(day) + 2};grid-row:1 / ${row}"></i>`
-    + ds.map((v, k) => `<span class="th ${dayCls(v)}${v === D.today ? ' today' : ''}" style="grid-column:${k + 2}">${DOW[k]}<b>${+v.slice(8)}</b></span>`).join('')
+  $('#tWeek').innerHTML = cells ? `<div class="tgrid" data-sun="${sun}">`
+    + ds.map((v, k) => `<span class="th ${dayCls(v)}${v === day ? ' on' : ''}${v === D.today ? ' today' : ''}" style="grid-column:${k + 2}">${DOW[k]}<b>${+v.slice(8)}</b></span>`).join('')
     + cells + '</div>' : '<span class="empty">이 주 근무표가 없습니다</span>';
   const at = t && new Date(t.at);
   $('#tSrc').textContent = t ? `${+t.month.slice(5)}월 근무표 · ${at.getMonth() + 1}/${at.getDate()} ${pad(at.getHours())}:${pad(at.getMinutes())} ${t.by || ''} 올림` : '';
@@ -1607,6 +1626,7 @@ $('#changeList').addEventListener('touchend', e => {
 }, { passive: true });
 ['changes', 'settings'].forEach(id => $('#' + id).addEventListener('click', e => { if (e.target.id === id) closePanel(id); }));
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') showScreens(false);
   if (e.key === 'Escape') ['changes', 'settings'].forEach(id => { if (!$('#' + id).hidden) closePanel(id); });
 });
 
@@ -1734,7 +1754,9 @@ document.addEventListener('click', async e => {
   } else if (b.id === 'theme') {
     setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]);
   } else if (b.id === 'brand') {
-    setTeam(!document.body.classList.contains('team'));
+    showScreens($('#screens').hidden);
+  } else if (b.dataset.screen) {
+    setScreen(b.dataset.screen);
   } else if (b.dataset.tw) {
     moveDay(7 * b.dataset.tw);
   } else if (b.id === 'tUp') {
@@ -1773,6 +1795,7 @@ $('#picker').addEventListener('click', e => { if (e.target.id === 'picker') clos
 // 구분·이름 목록: 바깥을 누르면 닫힘
 document.addEventListener('click', e => {
   document.querySelectorAll(':is(.pick details, details.dd)[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; });
+  if (!$('#screens').hidden && !e.target.closest('#screens, #brand')) showScreens(false);
 });   // 바깥 누르면 닫힘
 
 // ── 테마: 자동(◐) → 라이트(☀) → 다크(☾). 기기에 기억 ──
