@@ -618,7 +618,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-11';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-12';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1069,11 +1069,12 @@ function renderTeam() {
   const cells = roles.map(r => {
     const who = ds.map(v => (teamDay(v) || []).filter(([c]) => c === r.code).map(([, w]) => w).join('/'));
     if (!who.some(Boolean)) return '';
+    const same = who.map(w => w.split('/').sort().join('/'));         // '이현호/김혜영' 과 '김혜영/이현호' 는 같은 막대 (엑셀에서 순서만 바뀐 날)
     let out = r.group && prev && r.group !== prev ? `<i class="tsep" style="grid-row:${row++}"></i>` : '';
     prev = r.group || prev;
     out += `<span class="tl" style="grid-row:${row}">${esc(r.code)}</span>`;
     for (let k = 0, n; k < 7; k += n) {
-      for (n = 1; who[k] && k + n < 7 && who[k + n] === who[k]; n++);
+      for (n = 1; who[k] && k + n < 7 && same[k + n] === same[k]; n++);
       if (who[k]) out += `<span class="tbar" style="grid-row:${row};grid-column:${k + 2} / span ${n}">${whoHtml(who[k], n === 1)}</span>`;
     }
     row++;
