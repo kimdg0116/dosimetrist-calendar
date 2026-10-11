@@ -25,7 +25,10 @@
 <script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');
 // 폭이 393보다 좁은 폰(갤럭시 대부분 360·384)은 393 폭으로 그린 뒤 화면에 맞춰 줄인다 → 아이폰과 같은 배치·같은 줄바꿈.
 // 갤럭시는 화면 1칸(CSS px)이 아이폰보다 실제로 커서, 줄여도 손에 보이는 글자 크기는 아이폰과 비슷하다. 더 넓은 폰·태블릿은 그대로
-if (screen.width < 393) document.querySelector('meta[name=viewport]').content = 'width=393, user-scalable=no, viewport-fit=cover';
+// 접는 폰은 접고 펼 때(화면 폭이 바뀔 때)마다 다시 맞춘다
+{ const fit = () => { const m = document.querySelector('meta[name=viewport]'), v = screen.width < 393 ? 'width=393, user-scalable=no, viewport-fit=cover'
+    : 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'; if (m.content !== v) m.content = v; };
+  fit(); addEventListener('resize', fit); }
 try { const c = localStorage.getItem('color'); if (c && c !== 'blue') document.documentElement.dataset.color = c; } catch (e) {}   // 테마 색은 첫 화면부터
 // 설명서 QR (?open=chrome / ?open=safari): 다른 브라우저(삼성 인터넷·카톡 등)로 열렸으면 크롬·사파리로 다시 연다. 주소의 표시는 지운다
 (() => {
@@ -121,12 +124,14 @@ body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
 input, textarea { -webkit-user-select:text; user-select:text; }
 [hidden] { display:none !important; }
 /* 글꼴 (웬들러식, 항목별로 하나씩 — 한 항목 안에서 글자마다 섞지 않는다): 본문·이름·제목 SUIT · 날짜·시간 항목과 영문 업무명 Oswald · 한글 업무명(온콜·당직) 페이퍼로지 */
-body { overscroll-behavior-y:none; margin:0; padding:0 16px 90px; font:16px/1.5 var(--font-body); background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
+/* 넓은 화면(펼친 폴드·태블릿·컴퓨터)도 큰 폰과 같은 폭(내용 400)으로 가운데에. 폰에선 --gut = 16px 그대로 */
+:root { --gut:max(16px, calc((100vw - 400px) / 2)); }
+body { overscroll-behavior-y:none; margin:0; padding:0 var(--gut) 90px; font:16px/1.5 var(--font-body); background:linear-gradient(180deg, var(--bg-top) 0, var(--bg) 360px) no-repeat, var(--bg); color:var(--fg); letter-spacing:-.01em; }
 button { font-family:inherit; cursor:pointer; }
 
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
 .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
-  margin:0 -16px 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+  margin:0 calc(-1 * var(--gut)) 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) var(--gut) 12px;
   background:var(--bg-top); color:var(--bar-fg); }
 .brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; }
 @media (max-width:390px) { .top .brand { font-size:16px; letter-spacing:.04em; white-space:normal; line-height:1.05; } }
@@ -206,7 +211,7 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px color-mi
 #periods #addPeriod, #periods .padd { margin-top:14px; }
 #periods .padd #addPeriod { margin-top:0; }
 #allRot { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; background:color-mix(in srgb, color-mix(in srgb, var(--deep) 25%, #000) 40%, transparent); }
-#allRot .sheet { width:100%; max-height:86vh; display:flex; flex-direction:column; padding:16px 0 calc(14px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#allRot .sheet { width:100%; max-width:480px; margin-inline:auto; max-height:86vh; display:flex; flex-direction:column; padding:16px 0 calc(14px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
 #allRot .hd { display:flex; align-items:center; padding:0 16px 10px; }
 #allRot .hd b { flex:1; font-size:18px; font-weight:800; color:var(--deep); }
 #allRot .hd button { height:32px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); font-weight:600; }
@@ -330,7 +335,7 @@ details .chip.on::after { content:'✓'; }
 /* 업데이트 안내 (웬들러와 같은 방식) */
 footer { margin-top:28px; }
 .ver { margin:0; text-align:right; font-family:Oswald, sans-serif; font-size:11px; letter-spacing:.06em; color:var(--mute); font-variant-numeric:tabular-nums; }
-.upd { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); z-index:35; padding:13px; font-size:15px; font-weight:700;
+.upd { position:fixed; left:var(--gut); right:var(--gut); bottom:calc(20px + env(safe-area-inset-bottom, 0px)); z-index:35; padding:13px; font-size:15px; font-weight:700;
   border:0; border-radius:12px; background:var(--acc); color:#fff; box-shadow:0 6px 20px color-mix(in srgb, var(--acc) 35%, transparent); }
 .item.editing { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
 [data-edit] { cursor:pointer; }
@@ -370,7 +375,7 @@ footer { margin-top:28px; }
   .subst.closed .orig { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 }
 
-#toast { position:fixed; left:16px; right:16px; bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:var(--toast); color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px color-mix(in srgb, var(--acc) 30%, transparent); }
+#toast { position:fixed; left:var(--gut); right:var(--gut); bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:var(--toast); color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px color-mix(in srgb, var(--acc) 30%, transparent); }
 #toast.show { opacity:.97; }
 #gate { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:24px 16px;
   background:linear-gradient(180deg, var(--bg-top), var(--bg)); overflow-y:auto; }
@@ -462,7 +467,7 @@ nav button { font-weight:700; }
 .ar { width:.95em; height:.95em; margin-right:1px; vertical-align:-.12em; }
 /* 확인 창 (업무 담당 바꾸기 전) */
 #ask { position:fixed; inset:0; z-index:40; display:flex; align-items:flex-end; background:color-mix(in srgb, color-mix(in srgb, var(--deep) 25%, #000) 40%, transparent); }
-#ask .sheet { width:100%; padding:20px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#ask .sheet { width:100%; max-width:480px; margin-inline:auto; padding:20px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
 #askT { display:block; font-size:15px; font-weight:700; color:var(--mute); }
 #askM { margin:8px 0 18px; font-size:19px; font-weight:800; line-height:1.5; }
 #askM small { display:block; font-size:15px; font-weight:600; color:var(--mute); }
@@ -479,7 +484,7 @@ nav button { font-weight:700; }
 button.brand { padding:0; border:0; background:none; color:inherit; text-align:left; }
 .brand svg { width:.75em; height:.75em; margin-left:6px; vertical-align:-.04em; opacity:.6; transition:transform .2s; }
 #brand[aria-expanded="true"] svg { transform:rotate(180deg); }
-#screens { position:absolute; top:calc(100% - 4px); left:12px; z-index:25; width:min(290px, calc(100vw - 24px)); padding:6px; border:1px solid var(--line); border-radius:14px; background:var(--card); box-shadow:0 10px 30px color-mix(in srgb, var(--acc) 18%, transparent); }
+#screens { position:absolute; top:calc(100% - 4px); left:calc(var(--gut) - 4px); z-index:25; width:min(290px, calc(100vw - 24px)); padding:6px; border:1px solid var(--line); border-radius:14px; background:var(--card); box-shadow:0 10px 30px color-mix(in srgb, var(--acc) 18%, transparent); }
 #screens button { position:relative; display:block; width:100%; padding:10px 40px 10px 12px; border:0; border-radius:10px; background:none; color:var(--fg); text-align:left; }
 #screens button b { display:block; font-family:Oswald, sans-serif; font-size:17px; font-weight:700; letter-spacing:.06em; color:var(--deep); }
 #screens button small { display:block; margin-top:1px; font-size:13px; font-weight:600; color:var(--mute); }
@@ -621,7 +626,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-14';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-15';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
