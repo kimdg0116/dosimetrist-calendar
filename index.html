@@ -23,6 +23,8 @@
 <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://ntfy.sh">
 <script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');
+// 세로 고정: 설치한 갤럭시 앱은 여기서 바로 잠근다 (manifest portrait 는 크롬이 앱 정보를 새로 받아야 적용돼 하루쯤 늦다). 아이폰·일반 브라우저는 실패 → 무시
+try { screen.orientation.lock('portrait').catch(() => {}); } catch (e) {}
 // 폭이 393보다 좁은 폰(갤럭시 대부분 360·384)은 393 폭으로 그린 뒤 화면에 맞춰 줄인다 → 아이폰과 같은 배치·같은 줄바꿈.
 // 갤럭시는 화면 1칸(CSS px)이 아이폰보다 실제로 커서, 줄여도 손에 보이는 글자 크기는 아이폰과 비슷하다. 더 넓은 폰·태블릿은 그대로
 // 접는 폰은 접고 펼 때(화면 폭이 바뀔 때)마다 다시 맞춘다
@@ -513,7 +515,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
    높이 500 이하 + 가로가 훨씬 긴 화면만 = 눕힌 폰. 키보드가 올라온 세로 화면·펼친 폴드·태블릿은 해당 없음 */
 #rotate { display:none; }
 @media (orientation:landscape) and (max-height:500px) and (min-aspect-ratio:13/9) {
-  #rotate { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--bg); color:var(--fg); font-size:17px; font-weight:700; }
+  html:not(.android) #rotate { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--bg); color:var(--fg); font-size:17px; font-weight:700; }
   #rotate svg { width:44px; height:44px; color:var(--acc); }
 }
 .wlink { font-family:var(--font-body); font-size:13px; font-weight:700; letter-spacing:0; color:var(--acc); text-decoration:none; }
@@ -634,7 +636,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-16';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-17';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
