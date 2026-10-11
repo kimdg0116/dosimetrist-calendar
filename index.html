@@ -23,6 +23,9 @@
 <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://ntfy.sh">
 <script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');
+// 폭이 393보다 좁은 폰(갤럭시 대부분 360·384)은 393 폭으로 그린 뒤 화면에 맞춰 줄인다 → 아이폰과 같은 배치·같은 줄바꿈.
+// 갤럭시는 화면 1칸(CSS px)이 아이폰보다 실제로 커서, 줄여도 손에 보이는 글자 크기는 아이폰과 비슷하다. 더 넓은 폰·태블릿은 그대로
+if (screen.width < 393) document.querySelector('meta[name=viewport]').content = 'width=393, user-scalable=no, viewport-fit=cover';
 try { const c = localStorage.getItem('color'); if (c && c !== 'blue') document.documentElement.dataset.color = c; } catch (e) {}   // 테마 색은 첫 화면부터
 // 설명서 QR (?open=chrome / ?open=safari): 다른 브라우저(삼성 인터넷·카톡 등)로 열렸으면 크롬·사파리로 다시 연다. 주소의 표시는 지운다
 (() => {
@@ -618,7 +621,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-13';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-14';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1031,14 +1034,14 @@ const SCREENS = [
   { id: 'team', title: 'MEDICAL PHYSICS TEAM', sub: '의학물리팀 근무표' },
 ];
 const DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-let screen = 'part';
+let curScreen = 'part';
 function showScreens(open) {
   $('#screens').hidden = !open;
   $('#brand').setAttribute('aria-expanded', open);
-  if (open) $('#screens').innerHTML = SCREENS.map(x => `<button type="button" data-screen="${x.id}"${x.id === screen ? ' class="on"' : ''}><b>${x.title}</b><small>${esc(x.sub)}</small></button>`).join('');
+  if (open) $('#screens').innerHTML = SCREENS.map(x => `<button type="button" data-screen="${x.id}"${x.id === curScreen ? ' class="on"' : ''}><b>${x.title}</b><small>${esc(x.sub)}</small></button>`).join('');
 }
 function setScreen(id) {
-  screen = id; document.body.dataset.screen = id;
+  curScreen = id; document.body.dataset.screen = id;
   $('#brand').innerHTML = SCREENS.find(x => x.id === id).title + DOWN;
   showScreens(false);
   scrollTo({ top: 0, behavior: 'instant' });
