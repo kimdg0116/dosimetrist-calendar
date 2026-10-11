@@ -155,10 +155,12 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px color-mi
 .day { padding:16px 16px 12px; border-left:5px solid var(--deep); }
 .day h3 .ttl::before { content:''; display:inline-block; width:10px; height:10px; margin:0 8px 3px 0; border-radius:50%; background:var(--deep); vertical-align:middle; }
 .day h3 { display:flex; align-items:center; gap:6px; margin-bottom:8px; color:var(--fg); }
-.day h3 .t { flex:1; min-width:0; }
+.day h3 .t { display:contents; }                                   /* 제목은 윗줄 혼자, 날짜와 오늘·달력·‹ › 는 아랫줄 (제목이 길어도 한 줄) */
+.day h3 { flex-wrap:wrap; row-gap:6px; }
+.day h3 .ttl { flex-basis:100%; }
 .day h3 .ttl { display:block; font-size:clamp(19px, 5.4vw, 22px); line-height:1.2; font-weight:800; letter-spacing:-.02em; }
 .day h3 .ttl { color:var(--deep); }                               /* 두 블록 제목·점 같은 색 */
-.day h3 .dt { display:block; margin-top:3px; font-size:14px; font-weight:500; color:var(--mute); }
+.day h3 .dt { display:block; flex:1; min-width:0; font-size:14px; font-weight:500; color:var(--mute); }
 .day h3 button { min-width:34px; height:32px; padding:0 10px; font-size:17px; line-height:1; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
 .day h3 button:disabled { opacity:.3; }
 .day h3 .back { font-size:13px; font-weight:600; color:var(--acc); }
@@ -711,7 +713,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-05';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-06';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
