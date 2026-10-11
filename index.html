@@ -402,7 +402,7 @@ footer { margin-top:28px; }
 .settings-row .icon-btn { flex:none; width:44px; height:40px; font-size:19px; }
 .settings-row.colors { flex-direction:column; align-items:stretch; }
 .settings-row .pill { flex:none; padding:7px 14px; font-size:14px; font-weight:700; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
-html.android #widgetRow { display:none; }                          /* 위젯은 아이폰(Scriptable)만 */
+html.android .ios-only, html:not(.android) .android-only { display:none !important; }   /* 위젯 설치: 아이폰(Scriptable) · 갤럭시(파트 위젯 앱) */
 /* 아이폰 위젯 설치 (개인 설정 안, 앱 테마 그대로) */
 #widget ol { margin:0 0 4px; padding-left:20px; font-size:15px; line-height:1.6; } #widget li { margin:8px 0; }
 #widget li b { color:var(--deep); }
@@ -658,7 +658,20 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
   <button type="button" class="sub" id="docsAll">모든 교수 보기</button>
 </div></div>
 <div id="widget" class="panel" role="dialog" aria-modal="true" aria-labelledby="widgetTitle" hidden><div class="sheet">
-  <div class="head"><h3 id="widgetTitle">아이폰 위젯 설치</h3><button type="button" id="widgetClose" aria-label="위젯 설치 닫기">닫기</button></div>
+  <div class="head"><h3 id="widgetTitle"><span class="ios-only">아이폰</span><span class="android-only">갤럭시</span> 위젯 설치</h3><button type="button" id="widgetClose" aria-label="위젯 설치 닫기">닫기</button></div>
+  <div class="android-only">
+  <ol>
+    <li>아래 <b>파트 위젯 받기</b>를 눌러 파일을 받습니다.<a class="sub" href="android/part-widget.apk" download>파트 위젯 받기</a></li>
+    <li>받은 파일(<code>part-widget.apk</code>)을 열어 <b>설치</b>. 크롬이 "이 출처의 앱 설치"를 물으면 <b>허용</b>한 뒤 다시 설치합니다.</li>
+    <li>홈 화면 빈 곳을 길게 누름 → <b>위젯</b> → <b>파트 위젯</b>을 끌어다 놓습니다.</li>
+    <li>뜨는 화면에 <b>접근 코드</b>(앱과 같은 6자리)를 넣고 <b>A</b>·<b>B</b> 중 고른 뒤 <b>저장</b>.</li>
+    <li>아래 <b>위젯 색 맞추기</b>를 누르면 위젯이 지금 앱 테마 색으로 바뀝니다. 테마 색을 바꿀 때마다 한 번 누르세요.
+      <button type="button" class="sub" id="wRunA" style="margin-top:8px">위젯 색 맞추기</button></li>
+  </ol>
+  <h4>알아 두기</h4>
+  <p class="wnote" style="margin-top:0">위젯을 누르면 이 앱이 열립니다. A·B나 접근 코드는 위젯을 길게 눌러 <b>설정</b>에서 바꿉니다. 위젯은 30분마다 새로 그려지고 폰의 라이트·다크를 따라갑니다. 위젯 전용이라 앱 목록에 아이콘은 생기지 않습니다.</p>
+  </div>
+  <div class="ios-only">
   <ol>
     <li>App Store 에서 <b>Scriptable</b> 설치<a class="sub" href="https://apps.apple.com/app/scriptable/id1405459188">Scriptable 받기</a></li>
     <li>아래 <b>설치 코드 복사</b>를 누릅니다.</li>
@@ -676,13 +689,14 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
   <p class="wnote">한 번만 붙여넣으면 됩니다. 위젯이 고쳐지면 자동으로 최신이 됩니다. Scriptable 목록에 <code>dosimetrist-widget-core</code> 가 같이 생기는데 위젯 본체라 지우지 마세요.</p>
   <h4>A · B</h4>
   <p class="wnote" style="margin-top:0"><b>A</b> 오늘 업무 + 오늘 일정 · <b>B</b> 오늘·내일 일정(참석 인원) + 당직·온콜. 위젯은 iOS 가 정한 때(보통 15~30분)에 새로 그려집니다. 접근 코드는 그 폰 안(키체인)에만 저장됩니다.</p>
+  </div>
 </div></div>
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="settingsTitle">개인 설정</h3><button type="button" id="settingsClose" aria-label="개인 설정 닫기">닫기</button></div>
   <div class="settings-row"><div><b>사용자</b><p id="settingName"></p></div></div>
   <div class="settings-row" id="pushSetting" hidden><div><b>일정 알림</b><p id="pushStateLabel">이 기기의 알림 설정</p></div><button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button></div>
   <div class="settings-row"><div><b>화면 모드</b><p id="themeMode"></p></div><button type="button" id="theme" class="icon-btn" aria-label="화면 모드 변경"></button></div>
-  <div class="settings-row" id="widgetRow"><div><b>아이폰 위젯</b><p>홈 화면에 오늘 업무·일정</p></div><button type="button" class="pill" id="widgetOpen">설치 방법</button></div>
+  <div class="settings-row" id="widgetRow"><div><b>홈 화면 위젯</b><p>홈 화면에 오늘 업무·일정</p></div><button type="button" class="pill" id="widgetOpen">설치 방법</button></div>
   <div class="settings-row colors"><div><b>테마 색</b><p id="colorName"></p></div><div class="swatches" id="colorPick"></div></div>
 </div></div>
 <footer><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
@@ -713,7 +727,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-09';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-10';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -2065,6 +2079,8 @@ document.addEventListener('click', async e => {
     closePanel('widget');
   } else if (b.id === 'wRun') {                                       // Scriptable 의 위젯 본체(이름 고정)를 실행하며 지금 테마 색을 넘긴다
     location.href = 'scriptable:///run/dosimetrist-widget-core?color=' + encodeURIComponent(color);
+  } else if (b.id === 'wRunA') {                                      // 갤럭시: 파트 위젯 앱에 지금 테마 색을 넘긴다
+    location.href = 'intent://set?color=' + encodeURIComponent(color) + '#Intent;scheme=dosiwidget;package=com.kimdg0116.dosiwidget;end';
   } else if (b.id === 'wCopy') {
     try { await navigator.clipboard.writeText(WIDGET_LOADER); b.textContent = '복사됨 ✓ Scriptable 에 붙여넣으세요'; }
     catch (err) { b.textContent = '복사가 안 되면 위 코드를 길게 눌러 전체 선택 → 복사'; }
