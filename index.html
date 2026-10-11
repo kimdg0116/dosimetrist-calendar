@@ -399,6 +399,16 @@ footer { margin-top:28px; }
 .settings-row p { margin:3px 0 0; font-size:13px; color:var(--mute); }
 .settings-row .icon-btn { flex:none; width:44px; height:40px; font-size:19px; }
 .settings-row.colors { flex-direction:column; align-items:stretch; }
+.settings-row .pill { flex:none; padding:7px 14px; font-size:14px; font-weight:700; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
+html.android #widgetRow { display:none; }                          /* 위젯은 아이폰(Scriptable)만 */
+/* 아이폰 위젯 설치 (개인 설정 안, 앱 테마 그대로) */
+#widget ol { margin:0 0 4px; padding-left:20px; font-size:15px; line-height:1.6; } #widget li { margin:8px 0; }
+#widget li b { color:var(--deep); }
+#widget code { padding:1px 6px; border-radius:6px; background:var(--soft); color:var(--acc); font-size:14px; }
+#widget pre { margin:10px 0; padding:12px; max-height:150px; overflow:auto; font-size:11.5px; line-height:1.45; border:1px solid var(--line); border-radius:10px; background:var(--bg); white-space:pre-wrap; word-break:break-all; -webkit-user-select:text; user-select:text; }
+#widget .wnote { margin:8px 0 0; font-size:13px; color:var(--mute); }
+#widget h4 { margin:18px 0 6px; font-size:15px; color:var(--fg); }
+a.sub { display:block; margin-top:8px; text-align:center; text-decoration:none; }
 .swatches { display:flex; flex-wrap:wrap; gap:10px; }
 .swatches button { width:32px; height:32px; padding:0; border:3px solid var(--card); border-radius:50%; background:var(--sw); box-shadow:0 0 0 1px var(--line); }
 .swatches button.on { box-shadow:0 0 0 2px var(--fg); }
@@ -505,7 +515,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 .tgrid .th.today b { color:var(--acc); text-decoration:underline; text-underline-offset:3px; }
 .tgrid .th.on { border-color:var(--acc); }   /* 고른 날: 요일 칸에만 테두리. 1.5px 그림자 선은 3배 화면에서 칸마다 굵기가 달라 보여 2px 테두리로 */
 .tgrid .tl { grid-column:1; align-self:center; font-family:Oswald, Paperlogy, var(--font-body); font-size:14px; font-weight:600; text-align:center; color:var(--mute); }
-.tgrid .tbar { display:flex; align-items:center; justify-content:center; min-width:0; min-height:30px; padding:4px 1px; font-size:13px; font-weight:800; line-height:1.25; text-align:center; word-break:keep-all; border-radius:8px; background:var(--soft); color:var(--badge, var(--acc)); }
+.tgrid .tbar { display:flex; flex-wrap:wrap; gap:0 8px; align-items:center; justify-content:center; min-width:0; min-height:30px; padding:4px 1px; font-size:13px; font-weight:800; line-height:1.25; text-align:center; word-break:keep-all; border-radius:8px; background:var(--soft); color:var(--badge, var(--acc)); }
 .tgrid .tsep { grid-column:1 / -1; height:1px; margin:2px 0; background:var(--line); }
 #tUp { margin-top:2px; }
 #tSrc { margin:8px 0 0; font-size:13px; text-align:center; color:var(--mute); }
@@ -518,7 +528,8 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 .dpick .dset { margin-left:auto; padding:5px 12px; font-size:13px; font-weight:700; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
 #doc .evi { cursor:default; }
 #dList .wrow { cursor:pointer; }
-.dmore { display:block; width:100%; margin-top:8px; padding:9px; font-size:14px; font-weight:600; border:0; border-radius:10px; background:var(--bg); color:var(--mute); }
+#dDay .ttl { cursor:pointer; }                                     /* 제목을 누르면 담당 교수 ↔ 모든 교수 */
+#dDay .ttl svg { width:.62em; height:.62em; margin-left:6px; vertical-align:.04em; opacity:.5; }
 .dgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 #docsList { margin-bottom:12px; }
 #dTitle { font-size:17px; font-weight:800; letter-spacing:-.02em; color:var(--deep); scroll-margin-top:76px; }
@@ -644,14 +655,33 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
   <div id="docsList" class="dgrid"></div>
   <button type="button" class="sub" id="docsAll">모든 교수 보기</button>
 </div></div>
+<div id="widget" class="panel" role="dialog" aria-modal="true" aria-labelledby="widgetTitle" hidden><div class="sheet">
+  <div class="head"><h3 id="widgetTitle">아이폰 위젯 설치</h3><button type="button" id="widgetClose" aria-label="위젯 설치 닫기">닫기</button></div>
+  <ol>
+    <li>App Store 에서 <b>Scriptable</b> 설치<a class="sub" href="https://apps.apple.com/app/scriptable/id1405459188">Scriptable 받기</a></li>
+    <li>아래 <b>설치 코드 복사</b>를 누릅니다.</li>
+    <li>Scriptable 을 열고 오른쪽 위 <b>＋</b> → 빈 화면에 <b>붙여넣기</b> → 맨 위 제목을 <code>파트 위젯</code> 으로 바꾸고 <b>Done</b>.</li>
+    <li>목록의 <b>파트 위젯</b>을 한 번 눌러 실행 → <b>접근 코드</b>(앱과 같은 6자리) 입력 → A·B 미리보기로 확인.</li>
+    <li>홈 화면 빈 곳을 길게 누름 → 왼쪽 위 <b>＋</b> → <b>Scriptable</b> → <b>중간 크기</b> 추가.</li>
+    <li>추가한 위젯을 길게 눌러 <b>위젯 편집</b> → Script: <code>파트 위젯</code> · Parameter: <code>A</code> 또는 <code>B</code>.
+      <p class="wnote">색을 고정하려면 뒤에 붙입니다: <code>A 라이트</code> · <code>B 다크</code>. 폰이 라이트인데 위젯만 어둡다면 홈 화면 길게 누름 → 편집 → 사용자화 → <b>자동</b>을 확인하세요.</p></li>
+  </ol>
+  <h4>설치 코드</h4>
+  <pre id="wCode"></pre>
+  <button type="button" class="main" id="wCopy" style="margin-top:4px">설치 코드 복사</button>
+  <p class="wnote">한 번만 붙여넣으면 됩니다. 위젯이 고쳐지면 자동으로 최신이 됩니다. Scriptable 목록에 <code>dosimetrist-widget-core</code> 가 같이 생기는데 위젯 본체라 지우지 마세요.</p>
+  <h4>A · B</h4>
+  <p class="wnote" style="margin-top:0"><b>A</b> 오늘 업무 + 오늘 일정 · <b>B</b> 오늘·내일 일정(참석 인원) + 당직·온콜. 위젯은 iOS 가 정한 때(보통 15~30분)에 새로 그려집니다. 접근 코드는 그 폰 안(키체인)에만 저장됩니다.</p>
+</div></div>
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="settingsTitle">개인 설정</h3><button type="button" id="settingsClose" aria-label="개인 설정 닫기">닫기</button></div>
   <div class="settings-row"><div><b>사용자</b><p id="settingName"></p></div></div>
   <div class="settings-row" id="pushSetting" hidden><div><b>일정 알림</b><p id="pushStateLabel">이 기기의 알림 설정</p></div><button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button></div>
   <div class="settings-row"><div><b>화면 모드</b><p id="themeMode"></p></div><button type="button" id="theme" class="icon-btn" aria-label="화면 모드 변경"></button></div>
+  <div class="settings-row" id="widgetRow"><div><b>아이폰 위젯</b><p>홈 화면에 오늘 업무·일정</p></div><button type="button" class="pill" id="widgetOpen">설치 방법</button></div>
   <div class="settings-row colors"><div><b>테마 색</b><p id="colorName"></p></div><div class="swatches" id="colorPick"></div></div>
 </div></div>
-<footer><p class="ver"><a class="wlink" href="widget-setup.html">아이폰 위젯 설치 ›</a></p><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
+<footer><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
 <button type="button" id="upd" class="upd" hidden>새 버전이 있습니다 · 눌러서 새로고침</button>
 <div id="gate" hidden><div class="gbox">
@@ -679,7 +709,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-02';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-03';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1117,14 +1147,14 @@ function setScreen(id) {
 // 월말에 나오는 엑셀을 누구든 '근무표 올리기'로 올린다 (폰에서 읽어 확인 → 서버 '의학물리팀' 탭). 클로드에게 맡긴 달은 서버 코드로 들어온다
 const teamOf = v => (D.team || {})[v.slice(0, 7)];
 const teamDay = v => { const t = teamOf(v); return t ? t.days[v] || [] : null; };
-const whoHtml = (w, br) => w.split('/').map(esc).join(br ? '<br>' : ' · ');   // '홍길동/김철수'
+const whoHtml = w => w.split('/').map(n => `<span>${esc(n)}</span>`).join('');   // '홍길동/김철수' → 이름마다 띄워서 (좁은 칸이면 줄바꿈)
 const weekOf = v => addDays(v, -new Date(v + 'T00:00').getDay());
 function renderTeam() {
   const day = addDays(D.today, dayOff), t = teamOf(day), list = teamDay(day) || [];
   let g = '';
   const rows = t ? t.roles.flatMap(r => list.filter(([c]) => c === r.code).map(([, w]) =>
     (r.group && r.group !== g ? `<div class="grp">${esc(g = r.group)}</div>` : '')
-    + `<div class="evi"><span class="kind">${esc(r.code)}</span><span class="t1">${whoHtml(w)}</span><span class="tm">${esc(r.time)}</span>`
+    + `<div class="evi"><span class="kind">${esc(r.code)}</span><span class="t1">${namesHtml(w.split('/'), '', null)}</span><span class="tm">${esc(r.time)}</span>`
     + `${r.desc ? `<div class="ln pl">${esc(r.desc)}</div>` : ''}</div>`)) : [];
   const note = t && t.notes[day] && !D.holidays[day] ? ' · ' + esc(t.notes[day]) : '';   // 'QA Day' (공휴일 이름은 이미 나옴)
   $('#tDay').innerHTML = dayHead('근무', day, note) + (rows.join('') || `<span class="empty">${t ? '근무 없음' : `${+day.slice(5, 7)}월 근무표가 아직 없습니다`}</span>`);
@@ -1145,7 +1175,7 @@ function renderTeam() {
     out += `<span class="tl" style="grid-row:${row}">${esc(r.code)}</span>`;
     for (let k = 0, n; k < 7; k += n) {
       for (n = 1; who[k] && k + n < 7 && same[k + n] === same[k]; n++);
-      if (who[k]) out += `<span class="tbar" style="grid-row:${row};grid-column:${k + 2} / span ${n}">${whoHtml(who[k], n === 1)}</span>`;
+      if (who[k]) out += `<span class="tbar" style="grid-row:${row};grid-column:${k + 2} / span ${n}">${whoHtml(who[k])}</span>`;
     }
     row++;
     return out;
@@ -1172,8 +1202,14 @@ const saveDocSel = () => { try { localStorage.setItem('docs', JSON.stringify(doc
 const docEvents = () => [...Object.values((D.doc || {}).months || {}).flatMap(m => m.events || []), ...((D.doc || {}).extra || [])];   // 근태계획서 + 앱에서 넣은 것
 const docWho = e => docAll || !docSel.length ? e.who : e.who.filter(n => docSel.includes(n));
 const docVisible = e => e.kind === '과' || docWho(e).length > 0;
+const DOC_SWAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4 4-4-4 4-4"/></svg>';
+$('#dDay').addEventListener('click', e => {                            // 제목을 누르면 담당 교수 일정 ↔ 모든 교수 일정 (화면 전체가 같이 바뀐다)
+  if (!e.target.closest('.ttl')) return;
+  if (!docSel.length) return toast('담당 교수를 먼저 설정해 주세요');
+  docAll = !docAll; renderDoc();
+});
 const docRow = e => {
-  const range = e.start !== e.end ? `${mdh(e.start)}~${mdh(e.end)}` : '', who = docWho(e).map(esc).join(' · ');
+  const range = e.start !== e.end ? `${mdh(e.start)}~${mdh(e.end)}` : '', who = namesHtml(docWho(e), '', null);
   return `<div class="evi"${e.row > 0 ? ` data-dedit="${e.row}"` : ''}><span class="kind">${esc(e.kind)}</span><span class="t1">${e.kind === '과' ? esc(e.title || '') : who}</span>`
     + `<span class="tm">${esc(e.time || '') || range}</span>${e.time && range ? `<div class="ln when">${range}</div>` : ''}`
     + `${e.kind !== '과' && e.title ? `<div class="ln pl">${esc(e.title)}</div>` : ''}${e.place ? `<div class="ln pl">${esc(e.place)}</div>` : ''}</div>`;
@@ -1183,13 +1219,11 @@ function renderDoc() {
   const sel = names.filter(n => docSel.includes(n));
   $('#dPick').innerHTML = '<b>담당 교수</b>' + (sel.length ? sel.map(n => `<span class="dtag">${esc(n)}</span>`).join('') : '<span class="dnone">설정 전 · 모든 교수 일정</span>')
     + '<button type="button" class="dset" data-docpick="1">설정</button>';
-  const on = docEvents().filter(e => e.start <= day && day <= e.end), shown = on.filter(docVisible);
-  const others = new Set(docAll || !docSel.length ? [] : on.flatMap(e => e.who.filter(n => !docSel.includes(n))));
+  const shown = docEvents().filter(e => e.start <= day && day <= e.end && docVisible(e));
+  const all = docAll || !docSel.length;
   const noMonth = D.doc && !D.doc.months[day.slice(0, 7)] ? `<span class="empty">${+day.slice(5, 7)}월 교수 일정이 아직 없습니다</span>` : '';
-  $('#dDay').innerHTML = dayHead('교수 일정', day) + shown.map(docRow).join('')
-    + (shown.length ? noMonth : noMonth || '<span class="empty">없음</span>')
-    + (others.size ? `<button type="button" class="dmore" data-docall="1">담당 외 교수 ${others.size}명 일정 보기</button>`
-      : docAll ? '<button type="button" class="dmore" data-docall="1">담당 교수만 보기</button>' : '');
+  $('#dDay').innerHTML = dayHead(`${all ? '모든' : '담당'} 교수 <span style="white-space:nowrap">일정${docSel.length ? DOC_SWAP : ''}</span>`, day) + shown.map(docRow).join('')
+    + (shown.length ? noMonth : noMonth || '<span class="empty">없음</span>');
   renderDocCal();
 }
 // 다가오는 교수 일정: 목록 · 주 · 월 (일정 탭과 같은 모양)
@@ -1281,6 +1315,21 @@ $('#dList').addEventListener('click', e => {                           // 목록
   if (r) { goDay(r.dataset.dv); scrollTo({ top: 0, behavior: 'smooth' }); }
 });
 swipe($('#dDay'), moveDay);
+// 아이폰 위젯 설치 코드 (Scriptable 에 붙여넣는 짧은 코드. 실제 위젯은 widget.js 를 받아 실행)
+const WIDGET_LOADER = `// Dosimetrist Calendar 위젯 설치 코드 — Scriptable 에 한 번만 붙여넣으면 됩니다
+// 실제 위젯은 아래 주소에서 받아 오고, 고쳐지면 자동으로 최신이 됩니다
+const SRC = 'https://kimdg0116.github.io/dosimetrist-calendar/widget.js';
+const fm = FileManager.iCloud().isFileStoredIniCloud(module.filename) ? FileManager.iCloud() : FileManager.local();
+const file = fm.joinPath(fm.documentsDirectory(), 'dosimetrist-widget-core.js');
+try {
+  const r = new Request(SRC + '?t=' + Date.now()); r.timeoutInterval = 10;
+  const code = await r.loadString();
+  if (code.includes('DOSIMETRIST_WIDGET')) fm.writeString(file, code);
+} catch (e) {}
+if (fm.isFileStoredIniCloud(file)) await fm.downloadFileFromiCloud(file);
+await importModule('dosimetrist-widget-core')();
+`;
+$('#wCode').textContent = WIDGET_LOADER;
 let xlsxLib = null;                                                    // 엑셀 읽기 도구는 올릴 때만 받는다
 const loadXLSX = () => xlsxLib || (xlsxLib = new Promise((res, rej) => {
   const s = document.createElement('script');
@@ -1789,11 +1838,12 @@ async function moveChanges(step) {
   if (next * CHANGE_PAGE_SIZE < changeRows.length) { changePage = next; renderChangePage(); }
 }
 
+const PANELS = ['changes', 'settings', 'docs', 'widget'];
 function openPanel(id) {
-  $('#changes').hidden = id !== 'changes'; $('#settings').hidden = id !== 'settings';
+  PANELS.forEach(p => { $('#' + p).hidden = p !== id; });
   document.body.classList.add('modal-open');
   if (id === 'changes') initChanges();
-  $('#' + (id === 'changes' ? 'changesClose' : 'settingsClose')).focus({ preventScroll: true });
+  $('#' + id + 'Close').focus({ preventScroll: true });
 }
 function closePanel(id) {
   $('#' + id).hidden = true;
@@ -1812,10 +1862,10 @@ $('#changeList').addEventListener('touchend', e => {
   changeTouch = null;
   if (Math.abs(dx) > 55 && Math.abs(dx) > 2 * Math.abs(dy)) moveChanges(dx < 0 ? 1 : -1);
 }, { passive: true });
-['changes', 'settings', 'docs'].forEach(id => $('#' + id).addEventListener('click', e => { if (e.target.id === id) closePanel(id); }));
+PANELS.forEach(id => $('#' + id).addEventListener('click', e => { if (e.target.id === id) closePanel(id); }));
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') showScreens(false);
-  if (e.key === 'Escape') ['changes', 'settings', 'docs'].forEach(id => { if (!$('#' + id).hidden) closePanel(id); });
+  if (e.key === 'Escape') PANELS.forEach(id => { if (!$('#' + id).hidden) closePanel(id); });
 });
 
 document.addEventListener('click', async e => {
@@ -1964,7 +2014,7 @@ document.addEventListener('click', async e => {
     resetDocForm();
   } else if (b.id === 'dDel') {
     const e = dEdit;
-    if (e && await ask('교수 일정 삭제', `${esc(e.who.join(' · '))} ${esc(e.kind)}<small>${span(e.start, e.end)}</small>`, '삭제')) { run('deleteDoc', [e.row, e.sig], '교수 일정 삭제됨'); resetDocForm(); }
+    if (e && await ask('교수 일정 삭제', `${esc(e.who.join(' '))} ${esc(e.kind)}<small>${span(e.start, e.end)}</small>`, '삭제')) { run('deleteDoc', [e.row, e.sig], '교수 일정 삭제됨'); resetDocForm(); }
   } else if (b.dataset.dcv) {
     dView = b.dataset.dcv; dAnchor = dSel = D.today;
     try { localStorage.setItem('docView', dView); } catch (e) {}
@@ -1975,7 +2025,7 @@ document.addEventListener('click', async e => {
     if (dTap === b.dataset.dcd) { dTap = ''; renderDocCal(); resetDocForm(b.dataset.dcd); $('#dTitle').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else { dSel = dTap = b.dataset.dcd; renderDocCal(); }
   } else if (b.dataset.docpick) {
-    renderDocsList(); $('#docs').hidden = false; document.body.classList.add('modal-open');
+    renderDocsList(); openPanel('docs');
   } else if (b.dataset.doc) {
     const n = b.dataset.doc;
     docSel = docSel.includes(n) ? docSel.filter(x => x !== n) : [...docSel, n];
@@ -1984,8 +2034,13 @@ document.addEventListener('click', async e => {
     docSel = []; saveDocSel(); renderDocsList(); renderDoc();
   } else if (b.id === 'docsClose') {
     closePanel('docs');
-  } else if (b.dataset.docall) {
-    docAll = !docAll; renderDoc();
+  } else if (b.id === 'widgetOpen') {
+    openPanel('widget');
+  } else if (b.id === 'widgetClose') {
+    closePanel('widget');
+  } else if (b.id === 'wCopy') {
+    try { await navigator.clipboard.writeText(WIDGET_LOADER); b.textContent = '복사됨 ✓ Scriptable 에 붙여넣으세요'; }
+    catch (err) { b.textContent = '복사가 안 되면 위 코드를 길게 눌러 전체 선택 → 복사'; }
   } else if (b.id === 'tUp') {
     $('#tFile').click();
   } else if (b.dataset.pickcolor) {
