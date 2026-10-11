@@ -713,7 +713,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-06';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-07';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1377,6 +1377,19 @@ function moveDay(n) {
 }
 // 옆으로 밀어 넘기기 (맨 위 블록·업무 기간·일정 주/월 공통)
 // 세로 스크롤 중 손가락이 옆으로 조금 휘는 건 넘기기가 아니다 → 가로로 확실히 밀었을 때만. 왼쪽으로 밀면 다음
+// 넘길 때 꿀렁임 막기: 넘긴 상자가 화면에서 그 자리에 머물게 스크롤을 맞춘다 (위 카드 높이가 바뀌어도).
+// 내용이 짧아져 페이지 끝이 당겨 올라오며 튀지 않게 페이지 높이를 붙잡아 두고, 위로 올려 필요 없어지면 푼다
+function steady(el, fn) {
+  const top = el.getBoundingClientRect().top, b = document.body;
+  b.style.minHeight = Math.max(b.offsetHeight, parseFloat(b.style.minHeight) || 0) + 'px';
+  fn();
+  const dy = el.getBoundingClientRect().top - top;
+  if (dy) scrollBy(0, dy);
+}
+addEventListener('scroll', () => {
+  const b = document.body;
+  if (b.style.minHeight && innerHeight <= $('footer').getBoundingClientRect().bottom + 90) b.style.minHeight = '';
+}, { passive: true });
 function swipe(el, go) {
   let t = null;
   el.addEventListener('touchstart', e => { t = e.touches.length === 1 && !e.target.closest('details[open]') ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
@@ -1385,9 +1398,17 @@ function swipe(el, go) {
     if (!t) return;
     const dx = e.changedTouches[0].clientX - t[0], dy = e.changedTouches[0].clientY - t[1];
     t = null;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) go(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) steady(el, () => go(dx < 0 ? 1 : -1));
   });
 }
+// 단추로 넘길 때도 같게: 누른 단추가 든 상자(아이디 있는 것)를 기준으로
+const STEADY = '[data-day], [data-pg], [data-cn], [data-dcn], [data-tw], [data-cd], [data-dcd], [data-cv], [data-dcv], .tgrid';
+let steadyAt = null;
+document.addEventListener('click', e => {
+  const el = e.target.closest(STEADY) && e.target.closest(STEADY).parentElement.closest('[id]');
+  steadyAt = el ? [el, el.getBoundingClientRect().top] : null;
+  if (el) { const b = document.body; b.style.minHeight = Math.max(b.offsetHeight, parseFloat(b.style.minHeight) || 0) + 'px'; }
+}, true);
 swipe($('#dayView'), moveDay);
 
 function render() {
@@ -2076,6 +2097,12 @@ document.addEventListener('click', async e => {
   } else if (b.id === 'allClose') {
     $('#allRot').hidden = true;
   }
+});
+document.addEventListener('click', () => {                             // 위 click 처리로 화면이 바뀐 뒤: 누른 상자를 제자리로
+  if (!steadyAt) return;
+  const [el, top] = steadyAt, dy = el.isConnected ? el.getBoundingClientRect().top - top : 0;
+  steadyAt = null;
+  if (dy) scrollBy(0, dy);
 });
 
 
