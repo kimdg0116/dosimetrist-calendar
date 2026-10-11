@@ -138,7 +138,6 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .evi .ln.pl { font-size:14px; font-weight:500; color:var(--mute); overflow-wrap:anywhere; }
 .evi.editing { margin:0 -8px; padding-inline:8px; border-radius:8px; background:var(--soft); }
 @media (max-width:360px) { .evi { grid-template-columns:50px minmax(0, 1fr); } .evi .tm { grid-column:2; } }   /* 아주 좁으면 시간은 첫 줄 아래로 */
-.pin { display:inline-block; width:12px; height:12px; margin-right:2px; vertical-align:-.05em; fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round; stroke-linejoin:round; opacity:.7; }
 #dayView { touch-action:pan-y; }
 /* 업무 탭: 기간 한 장씩 (옆으로 밀거나 ‹ ›), 표 아이콘은 전체 보기 */
 #pnav { display:flex; align-items:center; gap:6px; margin:0 2px 10px; scroll-margin-top:70px; }
@@ -526,7 +525,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-02';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -576,7 +575,6 @@ function addDays(s, n) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 const pad = n => String(n).padStart(2, '0');
-const PIN = '<svg class="pin" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 14s4-4.4 4-7.5a4 4 0 1 0-8 0C4 9.6 8 14 8 14Z"/><circle cx="8" cy="6.5" r="1.3"/></svg>';
 const fmtTime = t => esc(t).replace(/\s*-\s*/, ' ~ ');          // '10:00-12:00' → '10:00 ~ 12:00'
 // 이름 목록: 4~6명은 조금, 7명 이상은 더 작게
 const namesHtml = (who, cls, eds) => who.length
@@ -975,7 +973,7 @@ const evHtml = (l, i, eds) => {
     <span class="tm${time || range ? '' : ' q'}">${time || range || '종일'}</span>
     ${l.memo && who.length ? `<div class="ln">${namesHtml(who, '', eds)}</div>` : ''}
     ${time && range ? `<div class="ln when">${range}</div>` : ''}
-    ${l.place ? `<div class="ln pl">${PIN}${esc(l.place)}</div>` : ''}</div>`;
+    ${l.place ? `<div class="ln pl">${esc(l.place)}</div>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
