@@ -68,6 +68,34 @@ try { const c = localStorage.getItem('color'); if (c && c !== 'blue') document.d
 :root[data-color="mint"] { --bg:#eef7f5; --bg-top:#e1f2ee; --line:#d3ebe5; --acc:#00806F; --deep:#00806F; --soft:#e2f4f0; --badge:#00A08C; --toast:#00806F; --bar:rgba(225,242,238,.88); --bar-fg:#00806F; --shadow:0 6px 22px rgba(0,128,111,.10); }
 @media (prefers-color-scheme: dark) { :root[data-color="mint"]:not([data-theme="light"]) { --bg:#0d1716; --bg-top:#11211f; --card:#162523; --fg:#e7f2f0; --mute:#97aba7; --line:#25403b; --acc:#2BB8A5; --deep:#2BB8A5; --soft:#173531; --badge:#2BB8A5; --toast:#00806F; --bar:rgba(17,33,31,.88); --bar-fg:#e7f2f0; --card-border:#1f3632; } }
 :root[data-color="mint"][data-theme="dark"] { --bg:#0d1716; --bg-top:#11211f; --card:#162523; --fg:#e7f2f0; --mute:#97aba7; --line:#25403b; --acc:#2BB8A5; --deep:#2BB8A5; --soft:#173531; --badge:#2BB8A5; --toast:#00806F; --bar:rgba(17,33,31,.88); --bar-fg:#e7f2f0; --card-border:#1f3632; }
+/* 라벤더·코랄·그레이 계열 (2026-10-11). 배경·선·옅은 칸은 민트와 같은 비율로 기본색에서 섞어 만든다 (라이트: 흰색에 7·12·17%, 다크: 검정에 다크색 7~20%) */
+:root[data-color="lavender"] { --bg:#f5f4fa; --bg-top:#edebf6; --line:#e6e3f2; --acc:#6B5BB5; --deep:#6B5BB5; --soft:#efedf7; --badge:#8A7AD6; --toast:#6B5BB5; --bar:rgba(237,235,246,0.88); --bar-fg:#6B5BB5; --shadow:0 6px 22px rgba(107,91,181,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="lavender"]:not([data-theme="light"]) { --bg:#14131b; --bg-top:#1b1924; --card:#23222e; --fg:#e7e6f0; --mute:#9d9ab0; --line:#3b384d; --acc:#A99CF0; --deep:#A99CF0; --soft:#333145; --badge:#A99CF0; --toast:#6B5BB5; --bar:rgba(27,25,36,0.88); --bar-fg:#e7e6f0; --card-border:#2d2b3a; } }
+:root[data-color="lavender"][data-theme="dark"] { --bg:#14131b; --bg-top:#1b1924; --card:#23222e; --fg:#e7e6f0; --mute:#9d9ab0; --line:#3b384d; --acc:#A99CF0; --deep:#A99CF0; --soft:#333145; --badge:#A99CF0; --toast:#6B5BB5; --bar:rgba(27,25,36,0.88); --bar-fg:#e7e6f0; --card-border:#2d2b3a; }
+:root[data-color="lilac"] { --bg:#f7f3f8; --bg-top:#f0eaf3; --line:#eae2ef; --acc:#86529F; --deep:#86529F; --soft:#f2ecf4; --badge:#A878C8; --toast:#86529F; --bar:rgba(240,234,243,0.88); --bar-fg:#86529F; --shadow:0 6px 22px rgba(134,82,159,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="lilac"]:not([data-theme="light"]) { --bg:#16131a; --bg-top:#1e1923; --card:#26222d; --fg:#e9e6ef; --mute:#a29aae; --line:#41384b; --acc:#C99BE6; --deep:#C99BE6; --soft:#3a3143; --badge:#C99BE6; --toast:#86529F; --bar:rgba(30,25,35,0.88); --bar-fg:#e9e6ef; --card-border:#312b39; } }
+:root[data-color="lilac"][data-theme="dark"] { --bg:#16131a; --bg-top:#1e1923; --card:#26222d; --fg:#e9e6ef; --mute:#a29aae; --line:#41384b; --acc:#C99BE6; --deep:#C99BE6; --soft:#3a3143; --badge:#C99BE6; --toast:#86529F; --bar:rgba(30,25,35,0.88); --bar-fg:#e9e6ef; --card-border:#312b39; }
+:root[data-color="indigo"] { --bg:#f3f2f9; --bg-top:#eae9f4; --line:#e1dff0; --acc:#4F45A6; --deep:#4F45A6; --soft:#ecebf5; --badge:#7166D0; --toast:#4F45A6; --bar:rgba(234,233,244,0.88); --bar-fg:#4F45A6; --shadow:0 6px 22px rgba(79,69,166,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="indigo"]:not([data-theme="light"]) { --bg:#14131b; --bg-top:#1a1924; --card:#22212d; --fg:#e6e5f0; --mute:#9b99b0; --line:#39374c; --acc:#9F96EE; --deep:#9F96EE; --soft:#313044; --badge:#9F96EE; --toast:#4F45A6; --bar:rgba(26,25,36,0.88); --bar-fg:#e6e5f0; --card-border:#2c2b3a; } }
+:root[data-color="indigo"][data-theme="dark"] { --bg:#14131b; --bg-top:#1a1924; --card:#22212d; --fg:#e6e5f0; --mute:#9b99b0; --line:#39374c; --acc:#9F96EE; --deep:#9F96EE; --soft:#313044; --badge:#9F96EE; --toast:#4F45A6; --bar:rgba(26,25,36,0.88); --bar-fg:#e6e5f0; --card-border:#2c2b3a; }
+:root[data-color="coral"] { --bg:#fbf2f1; --bg-top:#f7e9e7; --line:#f4e0dd; --acc:#C04A36; --deep:#C04A36; --soft:#f8ebe9; --badge:#E8705A; --toast:#C04A36; --bar:rgba(247,233,231,0.88); --bar-fg:#C04A36; --shadow:0 6px 22px rgba(192,74,54,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="coral"]:not([data-theme="light"]) { --bg:#1a1212; --bg-top:#241717; --card:#2c2021; --fg:#eee4e6; --mute:#ac979a; --line:#4c3434; --acc:#FF8A75; --deep:#FF8A75; --soft:#452d2c; --badge:#FF8A75; --toast:#C04A36; --bar:rgba(36,23,23,0.88); --bar-fg:#eee4e6; --card-border:#37292b; } }
+:root[data-color="coral"][data-theme="dark"] { --bg:#1a1212; --bg-top:#241717; --card:#2c2021; --fg:#eee4e6; --mute:#ac979a; --line:#4c3434; --acc:#FF8A75; --deep:#FF8A75; --soft:#452d2c; --badge:#FF8A75; --toast:#C04A36; --bar:rgba(36,23,23,0.88); --bar-fg:#eee4e6; --card-border:#37292b; }
+:root[data-color="apricot"] { --bg:#faf3f0; --bg-top:#f6ebe6; --line:#f2e2db; --acc:#B5562B; --deep:#B5562B; --soft:#f7ece8; --badge:#E07B45; --toast:#B5562B; --bar:rgba(246,235,230,0.88); --bar-fg:#B5562B; --shadow:0 6px 22px rgba(181,86,43,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="apricot"]:not([data-theme="light"]) { --bg:#1a1312; --bg-top:#241915; --card:#2c2220; --fg:#eee6e5; --mute:#ac9b98; --line:#4c3832; --acc:#FF9E6A; --deep:#FF9E6A; --soft:#45312a; --badge:#FF9E6A; --toast:#B5562B; --bar:rgba(36,25,21,0.88); --bar-fg:#eee6e5; --card-border:#372c2a; } }
+:root[data-color="apricot"][data-theme="dark"] { --bg:#1a1312; --bg-top:#241915; --card:#2c2220; --fg:#eee6e5; --mute:#ac9b98; --line:#4c3832; --acc:#FF9E6A; --deep:#FF9E6A; --soft:#45312a; --badge:#FF9E6A; --toast:#B5562B; --bar:rgba(36,25,21,0.88); --bar-fg:#eee6e5; --card-border:#372c2a; }
+:root[data-color="rose"] { --bg:#fbf2f4; --bg-top:#f7e8ec; --line:#f4dfe4; --acc:#BF4260; --deep:#BF4260; --soft:#f8eaee; --badge:#E06A84; --toast:#BF4260; --bar:rgba(247,232,236,0.88); --bar-fg:#BF4260; --shadow:0 6px 22px rgba(191,66,96,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="rose"]:not([data-theme="light"]) { --bg:#1a1316; --bg-top:#24181c; --card:#2c2126; --fg:#eee5ea; --mute:#ac99a3; --line:#4c363e; --acc:#FF92A8; --deep:#FF92A8; --soft:#452f36; --badge:#FF92A8; --toast:#BF4260; --bar:rgba(36,24,28,0.88); --bar-fg:#eee5ea; --card-border:#372a31; } }
+:root[data-color="rose"][data-theme="dark"] { --bg:#1a1316; --bg-top:#24181c; --card:#2c2126; --fg:#eee5ea; --mute:#ac99a3; --line:#4c363e; --acc:#FF92A8; --deep:#FF92A8; --soft:#452f36; --badge:#FF92A8; --toast:#BF4260; --bar:rgba(36,24,28,0.88); --bar-fg:#eee5ea; --card-border:#372a31; }
+:root[data-color="charcoal"] { --bg:#f2f2f3; --bg-top:#e8e9ea; --line:#dee0e1; --acc:#3F4650; --deep:#3F4650; --soft:#eaebec; --badge:#6B7280; --toast:#3F4650; --bar:rgba(232,233,234,0.88); --bar-fg:#3F4650; --shadow:0 6px 22px rgba(63,70,80,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="charcoal"]:not([data-theme="light"]) { --bg:#151618; --bg-top:#1c1d20; --card:#24252a; --fg:#e8e8ed; --mute:#9fa0a9; --line:#3e3f45; --acc:#B8BEC8; --deep:#B8BEC8; --soft:#36383d; --badge:#B8BEC8; --toast:#3F4650; --bar:rgba(28,29,32,0.88); --bar-fg:#e8e8ed; --card-border:#2f2f35; } }
+:root[data-color="charcoal"][data-theme="dark"] { --bg:#151618; --bg-top:#1c1d20; --card:#24252a; --fg:#e8e8ed; --mute:#9fa0a9; --line:#3e3f45; --acc:#B8BEC8; --deep:#B8BEC8; --soft:#36383d; --badge:#B8BEC8; --toast:#3F4650; --bar:rgba(28,29,32,0.88); --bar-fg:#e8e8ed; --card-border:#2f2f35; }
+:root[data-color="bluegray"] { --bg:#f2f3f5; --bg-top:#e8eaed; --line:#dfe2e6; --acc:#41536B; --deep:#41536B; --soft:#eaecef; --badge:#6A7C93; --toast:#41536B; --bar:rgba(232,234,237,0.88); --bar-fg:#41536B; --shadow:0 6px 22px rgba(65,83,107,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="bluegray"]:not([data-theme="light"]) { --bg:#141519; --bg-top:#1b1c20; --card:#23242a; --fg:#e7e8ed; --mute:#9da0aa; --line:#3b3e46; --acc:#A9B9CE; --deep:#A9B9CE; --soft:#33373e; --badge:#A9B9CE; --toast:#41536B; --bar:rgba(27,28,32,0.88); --bar-fg:#e7e8ed; --card-border:#2d2f36; } }
+:root[data-color="bluegray"][data-theme="dark"] { --bg:#141519; --bg-top:#1b1c20; --card:#23242a; --fg:#e7e8ed; --mute:#9da0aa; --line:#3b3e46; --acc:#A9B9CE; --deep:#A9B9CE; --soft:#33373e; --badge:#A9B9CE; --toast:#41536B; --bar:rgba(27,28,32,0.88); --bar-fg:#e7e8ed; --card-border:#2d2f36; }
+:root[data-color="warmgray"] { --bg:#f3f2f2; --bg-top:#eae9e8; --line:#e1e0df; --acc:#504943; --deep:#504943; --soft:#ecebea; --badge:#7A7168; --toast:#504943; --bar:rgba(234,233,232,0.88); --bar-fg:#504943; --shadow:0 6px 22px rgba(80,73,67,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="warmgray"]:not([data-theme="light"]) { --bg:#161517; --bg-top:#1e1c1d; --card:#262527; --fg:#e9e8eb; --mute:#a2a0a5; --line:#403e40; --acc:#C4BAB0; --deep:#C4BAB0; --soft:#393738; --badge:#C4BAB0; --toast:#504943; --bar:rgba(30,28,29,0.88); --bar-fg:#e9e8eb; --card-border:#302f32; } }
+:root[data-color="warmgray"][data-theme="dark"] { --bg:#161517; --bg-top:#1e1c1d; --card:#262527; --fg:#e9e8eb; --mute:#a2a0a5; --line:#403e40; --acc:#C4BAB0; --deep:#C4BAB0; --soft:#393738; --badge:#C4BAB0; --toast:#504943; --bar:rgba(30,28,29,0.88); --bar-fg:#e9e8eb; --card-border:#302f32; }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
 html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; background:var(--bg-top); }   /* 안드로이드 글자 자동 키움 끄기 */
 body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }               /* 꾹 눌러도 글자 블록이 안 잡히게 (입력 칸은 그대로) */
@@ -346,7 +374,8 @@ footer { margin-top:28px; }
 .settings-row b { display:block; font-size:16px; }
 .settings-row p { margin:3px 0 0; font-size:13px; color:var(--mute); }
 .settings-row .icon-btn { flex:none; width:44px; height:40px; font-size:19px; }
-.swatches { flex:none; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; max-width:60%; }
+.settings-row.colors { flex-direction:column; align-items:stretch; }
+.swatches { display:flex; flex-wrap:wrap; gap:10px; }
 .swatches button { width:32px; height:32px; padding:0; border:3px solid var(--card); border-radius:50%; background:var(--sw); box-shadow:0 0 0 1px var(--line); }
 .swatches button.on { box-shadow:0 0 0 2px var(--fg); }
 .change-item { padding:12px 0; border-top:1px solid var(--line); }
@@ -505,7 +534,7 @@ nav button { font-weight:700; }
   <div class="settings-row"><div><b>사용자</b><p id="settingName"></p></div></div>
   <div class="settings-row" id="pushSetting" hidden><div><b>일정 알림</b><p id="pushStateLabel">이 기기의 알림 설정</p></div><button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button></div>
   <div class="settings-row"><div><b>화면 모드</b><p id="themeMode"></p></div><button type="button" id="theme" class="icon-btn" aria-label="화면 모드 변경"></button></div>
-  <div class="settings-row"><div><b>테마 색</b><p id="colorName"></p></div><div class="swatches" id="colorPick"></div></div>
+  <div class="settings-row colors"><div><b>테마 색</b><p id="colorName"></p></div><div class="swatches" id="colorPick"></div></div>
 </div></div>
 <footer><p class="ver"><a class="wlink" href="widget-setup.html">아이폰 위젯 설치 ›</a></p><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
@@ -535,7 +564,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-04';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-05';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1555,6 +1584,15 @@ setTheme(theme);
 const COLORS = [
   { id: 'blue', name: '파랑', dot: '#2e70ff', bar: ['#e3eeff', '#142039'] },   // 기본 (CSS 는 :root 그대로)
   { id: 'mint', name: '민트', dot: '#00806F', bar: ['#e1f2ee', '#11211f'] },
+  { id: 'lavender', name: '라벤더 · 기본', dot: '#6B5BB5', bar: ['#edebf6', '#1b1924'] },
+  { id: 'lilac', name: '라일락 · 분홍빛', dot: '#86529F', bar: ['#f0eaf3', '#1e1923'] },
+  { id: 'indigo', name: '인디고 라벤더 · 진하게', dot: '#4F45A6', bar: ['#eae9f4', '#1a1924'] },
+  { id: 'coral', name: '코랄 · 기본', dot: '#C04A36', bar: ['#f7e9e7', '#241717'] },
+  { id: 'apricot', name: '살구 코랄 · 주황빛', dot: '#B5562B', bar: ['#f6ebe6', '#241915'] },
+  { id: 'rose', name: '로즈 코랄 · 분홍빛', dot: '#BF4260', bar: ['#f7e8ec', '#24181c'] },
+  { id: 'charcoal', name: '차콜 · 중성', dot: '#3F4650', bar: ['#e8e9ea', '#1c1d20'] },
+  { id: 'bluegray', name: '블루 그레이 · 푸른빛', dot: '#41536B', bar: ['#e8eaed', '#1b1c20'] },
+  { id: 'warmgray', name: '웜 그레이 · 따뜻하게', dot: '#504943', bar: ['#eae9e8', '#1e1c1d'] },
 ];
 let color = 'blue';
 try { color = COLORS.some(c => c.id === localStorage.getItem('color')) ? localStorage.getItem('color') : 'blue'; } catch (e) {}
