@@ -14,11 +14,15 @@ const PARAM = String((typeof args !== 'undefined' && args.widgetParameter) || ''
 const THEME = /라이트|light/i.test(PARAM) ? 'light' : /다크|dark/i.test(PARAM) ? 'dark' : '';
 const dyn = (l, d) => THEME === 'light' ? new Color(l) : THEME === 'dark' ? new Color(d)
   : Color.dynamic(new Color(l), new Color(d));                       // 라이트 / 다크 (앱과 같은 색)
-const C = {
-  bg: dyn('#ffffff', '#1a2233'), fg: dyn('#191919', '#e9eef8'), mute: dyn('#666666', '#9ba8bf'),
-  deep: dyn('#1428a0', '#8cbaff'), pill: dyn('#e8f1ff', '#1d2c4d'), pillFg: dyn('#2e70ff', '#8cbaff'),
-  red: dyn('#fa4b50', '#fb6f73'), line: dyn('#e3eaf7', '#2b3750'),
-};
+// 위젯 색 = 앱 테마 색. 앱 개인 설정 → 아이폰 위젯 → '파트 위젯 실행'이 scriptable:///run/파트%20위젯?color=mint 처럼 열어 이 폰 키체인에 적어 둔다
+const COLOR_KEY = 'dosimetrist-color';
+const QP = (typeof args !== 'undefined' && args.queryParameters) || {};
+if (QP.color && /^[a-z]+$/.test(QP.color)) Keychain.set(COLOR_KEY, QP.color);
+// <palettes> 앱 index.html 테마 색에서 뽑은 [라이트, 다크] × [바탕, 글자, 흐림, 제목, 알약, 알약 글자, 빨강, 줄] (서버 폴더 tools/widget-palettes.py --write)
+const PALETTES = {"blue":[["#ffffff","#191919","#666666","#1428a0","#e8f1ff","#2e70ff","#fa4b50","#dbe8ff"],["#1a2233","#e9eef8","#9ba8bf","#8cbaff","#1d2c4d","#508eff","#fb6f73","#2b3750"]],"mint":[["#ffffff","#191919","#666666","#00806F","#e2f4f0","#00A08C","#fa4b50","#d3ebe5"],["#162523","#e7f2f0","#97aba7","#2BB8A5","#173531","#2BB8A5","#fb6f73","#25403b"]],"lavender":[["#ffffff","#191919","#666666","#6B5BB5","#efedf7","#8A7AD6","#fa4b50","#e6e3f2"],["#23222e","#e7e6f0","#9d9ab0","#A99CF0","#333145","#A99CF0","#fb6f73","#3b384d"]],"lilac":[["#ffffff","#191919","#666666","#86529F","#f2ecf4","#A878C8","#fa4b50","#eae2ef"],["#26222d","#e9e6ef","#a29aae","#C99BE6","#3a3143","#C99BE6","#fb6f73","#41384b"]],"indigo":[["#ffffff","#191919","#666666","#4F45A6","#ecebf5","#7166D0","#fa4b50","#e1dff0"],["#22212d","#e6e5f0","#9b99b0","#9F96EE","#313044","#9F96EE","#fb6f73","#39374c"]],"coral":[["#ffffff","#191919","#666666","#C04A36","#f8ebe9","#E8705A","#fa4b50","#f4e0dd"],["#2c2021","#eee4e6","#ac979a","#FF8A75","#452d2c","#FF8A75","#fb6f73","#4c3434"]],"apricot":[["#ffffff","#191919","#666666","#B5562B","#f7ece8","#E07B45","#fa4b50","#f2e2db"],["#2c2220","#eee6e5","#ac9b98","#FF9E6A","#45312a","#FF9E6A","#fb6f73","#4c3832"]],"rose":[["#ffffff","#191919","#666666","#BF4260","#f8eaee","#E06A84","#fa4b50","#f4dfe4"],["#2c2126","#eee5ea","#ac99a3","#FF92A8","#452f36","#FF92A8","#fb6f73","#4c363e"]],"charcoal":[["#ffffff","#191919","#666666","#3F4650","#eaebec","#6B7280","#fa4b50","#dee0e1"],["#24252a","#e8e8ed","#9fa0a9","#B8BEC8","#36383d","#B8BEC8","#fb6f73","#3e3f45"]],"bluegray":[["#ffffff","#191919","#666666","#41536B","#eaecef","#6A7C93","#fa4b50","#dfe2e6"],["#23242a","#e7e8ed","#9da0aa","#A9B9CE","#33373e","#A9B9CE","#fb6f73","#3b3e46"]],"warmgray":[["#ffffff","#191919","#666666","#504943","#ecebea","#7A7168","#fa4b50","#e1e0df"],["#262527","#e9e8eb","#a2a0a5","#C4BAB0","#393738","#C4BAB0","#fb6f73","#403e40"]],"sky":[["#ffffff","#191919","#666666","#0B5C99","#e6f1f9","#2A9BE0","#fa4b50","#d8e9f6"],["#1b242e","#e0e8f0","#8f9fb1","#5BB8F5","#243646","#5BB8F5","#fb6f73","#2b3e4e"]],"navy":[["#ffffff","#191919","#666666","#1A2D5A","#e8ebf2","#3D63B0","#fa4b50","#dbe1eb"],["#20232d","#e5e7ef","#989eaf","#8FAEE8","#2e3443","#8FAEE8","#fb6f73","#353c4b"]],"cobalt":[["#ffffff","#191919","#666666","#0B3AA8","#e6ecfc","#3B6EF5","#fa4b50","#d9e2fa"],["#1f222f","#e3e6f1","#959cb3","#7FA3FF","#2b3248","#7FA3FF","#fb6f73","#323950"]],"sage":[["#ffffff","#191919","#666666","#4A7A6A","#ebf0ef","#6E9C8B","#fa4b50","#e0e8e6"],["#212627","#e5e9eb","#99a2a5","#94C4B2","#2f3938","#94C4B2","#fb6f73","#364040"]],"teal":[["#ffffff","#191919","#666666","#0E7490","#e4f0f3","#1597B5","#fa4b50","#d6e7ec"],["#1a252c","#dfe9ef","#8ca1ad","#4CC2DE","#213841","#4CC2DE","#fb6f73","#284049"]]};
+// </palettes>
+const P = PALETTES[Keychain.contains(COLOR_KEY) ? Keychain.get(COLOR_KEY) : 'blue'] || PALETTES.blue;
+const C = Object.fromEntries(['bg', 'fg', 'mute', 'deep', 'pill', 'pillFg', 'red', 'line'].map((k, i) => [k, dyn(P[0][i], P[1][i])]));
 // 배경은 단색(backgroundColor) 대신 같은 색 두 개로 만든 그라데이션으로 칠한다.
 // Scriptable 위젯에서 단색 배경은 폰의 라이트/다크 전환을 따라가지 않고, 그라데이션은 따라간다
 const fill = c => { const g = new LinearGradient(); g.colors = [c, c]; g.locations = [0, 1]; return g; };
@@ -153,6 +157,11 @@ async function askCode() {
 }
 
 module.exports = async () => {
+  if (config.runsInApp && QP.color) {
+    const a = new Alert();
+    a.title = '위젯 색'; a.message = '앱 테마 색으로 맞췄습니다. 홈 화면 위젯은 다음에 새로 그릴 때 바뀝니다.'; a.addAction('확인');
+    await a.present();
+  }
   let code = Keychain.contains(KEY) ? Keychain.get(KEY) : '';
   let mode = /^\s*B/i.test(PARAM) ? 'B' : 'A';
   if (config.runsInApp) {                                            // 앱에서 직접 실행: 코드 입력 · 미리보기

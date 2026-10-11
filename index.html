@@ -661,7 +661,8 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
     <li>App Store 에서 <b>Scriptable</b> 설치<a class="sub" href="https://apps.apple.com/app/scriptable/id1405459188">Scriptable 받기</a></li>
     <li>아래 <b>설치 코드 복사</b>를 누릅니다.</li>
     <li>Scriptable 을 열고 오른쪽 위 <b>＋</b> → 빈 화면에 <b>붙여넣기</b> → 맨 위 제목을 <code>파트 위젯</code> 으로 바꾸고 <b>Done</b>.</li>
-    <li>목록의 <b>파트 위젯</b>을 한 번 눌러 실행 → <b>접근 코드</b>(앱과 같은 6자리) 입력 → A·B 미리보기로 확인.</li>
+    <li>아래 <b>파트 위젯 실행</b>을 누르면 Scriptable 이 열립니다 → <b>접근 코드</b>(앱과 같은 6자리) 입력 → A·B 미리보기로 확인. 위젯 색도 지금 앱 테마 색으로 맞춰집니다.
+      <button type="button" class="sub" id="wRun" style="margin-top:8px">파트 위젯 실행</button></li>
     <li>홈 화면 빈 곳을 길게 누름 → 왼쪽 위 <b>＋</b> → <b>Scriptable</b> → <b>중간 크기</b> 추가.</li>
     <li>추가한 위젯을 길게 눌러 <b>위젯 편집</b> → Script: <code>파트 위젯</code> · Parameter: <code>A</code> 또는 <code>B</code>.
       <p class="wnote">색을 고정하려면 뒤에 붙입니다: <code>A 라이트</code> · <code>B 다크</code>. 폰이 라이트인데 위젯만 어둡다면 홈 화면 길게 누름 → 편집 → 사용자화 → <b>자동</b>을 확인하세요.</p></li>
@@ -671,7 +672,8 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
   <button type="button" class="main" id="wCopy" style="margin-top:4px">설치 코드 복사</button>
   <p class="wnote">한 번만 붙여넣으면 됩니다. 위젯이 고쳐지면 자동으로 최신이 됩니다. Scriptable 목록에 <code>dosimetrist-widget-core</code> 가 같이 생기는데 위젯 본체라 지우지 마세요.</p>
   <h4>A · B</h4>
-  <p class="wnote" style="margin-top:0"><b>A</b> 오늘 업무 + 오늘 일정 · <b>B</b> 오늘·내일 일정(참석 인원) + 당직·온콜. 위젯은 iOS 가 정한 때(보통 15~30분)에 새로 그려집니다. 접근 코드는 그 폰 안(키체인)에만 저장됩니다.</p>
+  <p class="wnote" style="margin-top:0">앱 테마 색을 바꿨다면 4번 <b>파트 위젯 실행</b>을 한 번 더 누르면 위젯 색도 바뀝니다.</p>
+  <p class="wnote"><b>A</b> 오늘 업무 + 오늘 일정 · <b>B</b> 오늘·내일 일정(참석 인원) + 당직·온콜. 위젯은 iOS 가 정한 때(보통 15~30분)에 새로 그려집니다. 접근 코드는 그 폰 안(키체인)에만 저장됩니다.</p>
 </div></div>
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="settingsTitle">개인 설정</h3><button type="button" id="settingsClose" aria-label="개인 설정 닫기">닫기</button></div>
@@ -709,7 +711,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-03';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-04';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -2038,6 +2040,8 @@ document.addEventListener('click', async e => {
     openPanel('widget');
   } else if (b.id === 'widgetClose') {
     closePanel('widget');
+  } else if (b.id === 'wRun') {                                       // Scriptable 로 '파트 위젯'을 실행하며 지금 테마 색을 넘긴다
+    location.href = 'scriptable:///run/' + encodeURIComponent('파트 위젯') + '?color=' + encodeURIComponent(color);
   } else if (b.id === 'wCopy') {
     try { await navigator.clipboard.writeText(WIDGET_LOADER); b.textContent = '복사됨 ✓ Scriptable 에 붙여넣으세요'; }
     catch (err) { b.textContent = '복사가 안 되면 위 코드를 길게 눌러 전체 선택 → 복사'; }
