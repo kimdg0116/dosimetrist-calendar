@@ -423,7 +423,8 @@ body.modal-open { overflow:hidden; }
 .panel .sheet { width:100%; max-width:480px; max-height:calc(100dvh - 24px - env(safe-area-inset-top, 0px)); overflow-y:auto; padding:18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); box-shadow:var(--shadow); }
 .panel .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .panel .head h3 { margin:0; font-size:18px; color:var(--fg); }
-.panel .head button, .change-pager button { min-width:38px; height:34px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); font-size:15px; }
+.change-pager button { min-width:38px; height:34px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); font-size:15px; }
+.panel .head button { height:34px; padding:0 16px; font-size:14px; font-weight:700; border:0; border-radius:999px; background:var(--soft); color:var(--acc); }   /* 시트 닫기: 테마 색 알약 */
 .change-pager { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:12px; border-top:1px solid var(--line); }
 .change-pager span { font-size:14px; font-weight:700; color:var(--mute); }
 .change-pager button:disabled { opacity:.3; }
@@ -518,8 +519,14 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 #doc .evi { cursor:default; }
 #dList .wrow { cursor:pointer; }
 .dmore { display:block; width:100%; margin-top:8px; padding:9px; font-size:14px; font-weight:600; border:0; border-radius:10px; background:var(--bg); color:var(--mute); }
-.dhint { margin:0 0 8px; font-size:14px; font-weight:500; color:var(--mute); }
-#docsList { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.dgrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+#docsList { margin-bottom:12px; }
+#dTitle { font-size:17px; font-weight:800; letter-spacing:-.02em; color:var(--deep); scroll-margin-top:76px; }
+#dBody { margin-top:6px; }
+#dBody .seg button { padding:8px 2px; }
+#dWhoList .dchk { padding:10px 8px 10px 36px; font-size:15px; }
+#dWhoList .dchk::before { left:10px; }
+#doc .evi[data-dedit] { cursor:pointer; }
 .dchk { position:relative; padding:12px 10px 12px 40px; font-size:16px; font-weight:700; text-align:left; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--fg); }
 .dchk::before { content:''; position:absolute; left:12px; top:50%; width:18px; height:18px; margin-top:-9px; border:2px solid var(--line); border-radius:5px; box-sizing:border-box; }
 .dchk.on { border-color:var(--acc); background:var(--soft); }
@@ -547,7 +554,28 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 <div id="doc">
   <div id="dPick" class="dpick"></div>
   <div id="dDay" class="card day"></div>
-  <div class="card"><div class="lhead"><h3>다가오는 교수 일정</h3></div><div id="dList"></div></div>
+  <div class="card">
+    <button type="button" class="fhead" id="dToggle"><span id="dTitle">교수 일정 추가</span><span class="plus" aria-hidden="true">＋</span></button>
+    <div id="dBody" hidden>
+      <label>구분</label><div class="seg" id="dKinds"></div>
+      <label>교수</label><div class="dgrid" id="dWhoList"></div>
+      <div class="two">
+        <div><label>시작일</label><button type="button" class="datebtn" id="dStart" data-open="dStart"></button></div>
+        <div><label>종료일 (하루면 비움)</label><button type="button" class="datebtn" id="dEnd" data-open="dEnd"></button></div>
+      </div>
+      <label>시간</label><div class="seg" id="dTimes"></div>
+      <label for="dMemo">내용 (선택)</label><input id="dMemo" placeholder="예: 학회 이름">
+      <button type="button" class="main" id="dSave">저장</button>
+      <div class="two" id="dEditBtns" style="margin-top:8px" hidden>
+        <div><button type="button" class="sub" id="dCancel">수정 취소</button></div>
+        <div><button type="button" class="sub del-sub" id="dDel">삭제</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="lhead"><h3>다가오는 교수 일정</h3>
+      <div class="vseg" id="dSeg"><button data-dcv="list">목록</button><button data-dcv="week">주</button><button data-dcv="month">월</button></div></div>
+    <div id="dList"></div></div>
 </div>
 <div id="dayView">
   <div id="todayWork" class="card day"><span class="empty">불러오는 중…</span></div>
@@ -613,9 +641,8 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 <div id="docs" class="panel" role="dialog" aria-modal="true" aria-labelledby="docsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="docsTitle">담당 교수</h3><button type="button" id="docsClose" aria-label="담당 교수 닫기">닫기</button></div>
-  <p class="dhint">체크한 교수 일정만 보입니다. 과 일정(스탭회의·워크샵 등)은 늘 보입니다.</p>
-  <div id="docsList"></div>
-  <button type="button" class="sub" id="docsAll">모든 교수 보기 (체크 모두 풀기)</button>
+  <div id="docsList" class="dgrid"></div>
+  <button type="button" class="sub" id="docsAll">모든 교수 보기</button>
 </div></div>
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="settingsTitle">개인 설정</h3><button type="button" id="settingsClose" aria-label="개인 설정 닫기">닫기</button></div>
@@ -652,7 +679,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-02';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -893,6 +920,13 @@ function apply_(op) {                                                  // 저장
     p.who[ri] = args[2];
   }
   else if (fn === 'saveTeam') (D.team = D.team || {})[f.month] = { ...f, at: new Date().toISOString(), by: auth.me || '' };
+  else if (/^(add|update|delete)Doc$/.test(fn)) {                       // 교수 일정: [f] · [행, sig, f] · [행, sig]
+    if (!D.doc) return false;
+    const X = D.doc.extra = D.doc.extra || [], k = fn === 'addDoc' ? -1 : X.findIndex(x => x.row === args[0]);
+    if (fn !== 'addDoc' && k < 0) return false;
+    if (fn === 'deleteDoc') X.splice(k, 1);
+    else X.splice(k < 0 ? X.length : k, k < 0 ? 0 : 1, { ...f, row: k < 0 ? 0 : X[k].row, sig: '', end: f.end || f.start, by: auth.me || '' });
+  }
   else if (fn === 'deletePeriod') { const k = D.periods.findIndex(p => p.col === args[0]); if (k < 0) return false; D.periods.splice(k, 1); }
   else if (fn === 'addLeave') { const i = L.findIndex(l => l.start > f.start); L.splice(i < 0 ? L.length : i, 0, item()); }
   else return false;
@@ -1135,12 +1169,12 @@ swipe($('#tWeek'), n => moveDay(7 * n));
 let docSel = [], docAll = false;                                       // docAll: 하루 카드에서 '담당 외 교수도 보기'
 try { docSel = JSON.parse(localStorage.getItem('docs') || '[]'); } catch (e) {}
 const saveDocSel = () => { try { localStorage.setItem('docs', JSON.stringify(docSel)); } catch (e) {} };
-const docEvents = () => Object.values((D.doc || {}).months || {}).flatMap(m => m.events || []);
+const docEvents = () => [...Object.values((D.doc || {}).months || {}).flatMap(m => m.events || []), ...((D.doc || {}).extra || [])];   // 근태계획서 + 앱에서 넣은 것
 const docWho = e => docAll || !docSel.length ? e.who : e.who.filter(n => docSel.includes(n));
 const docVisible = e => e.kind === '과' || docWho(e).length > 0;
 const docRow = e => {
   const range = e.start !== e.end ? `${mdh(e.start)}~${mdh(e.end)}` : '', who = docWho(e).map(esc).join(' · ');
-  return `<div class="evi"><span class="kind">${esc(e.kind)}</span><span class="t1">${e.kind === '과' ? esc(e.title || '') : who}</span>`
+  return `<div class="evi"${e.row > 0 ? ` data-dedit="${e.row}"` : ''}><span class="kind">${esc(e.kind)}</span><span class="t1">${e.kind === '과' ? esc(e.title || '') : who}</span>`
     + `<span class="tm">${esc(e.time || '') || range}</span>${e.time && range ? `<div class="ln when">${range}</div>` : ''}`
     + `${e.kind !== '과' && e.title ? `<div class="ln pl">${esc(e.title)}</div>` : ''}${e.place ? `<div class="ln pl">${esc(e.place)}</div>` : ''}</div>`;
 };
@@ -1156,16 +1190,93 @@ function renderDoc() {
     + (shown.length ? noMonth : noMonth || '<span class="empty">없음</span>')
     + (others.size ? `<button type="button" class="dmore" data-docall="1">담당 외 교수 ${others.size}명 일정 보기</button>`
       : docAll ? '<button type="button" class="dmore" data-docall="1">담당 교수만 보기</button>' : '');
-  const by = {};                                                        // 다가오는 일정: 오늘부터, 여러 날 일정은 시작일(이미 시작했으면 오늘)에
-  docEvents().filter(e => e.end >= D.today && docVisible(e)).forEach(e => (by[e.start < D.today ? D.today : e.start] ||= []).push(e));
-  const days = Object.keys(by).sort();
-  $('#dList').innerHTML = !D.doc ? '<span class="empty">교수 일정이 아직 없습니다</span>' : days.length ? days.map(v => `<div class="wrow${v === D.today ? ' today' : ''}" data-dv="${v}">`
-    + `<div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div><div class="wevs">${by[v].map(docRow).join('')}</div></div>`).join('') : '<span class="empty">없음</span>';
+  renderDocCal();
 }
+// 다가오는 교수 일정: 목록 · 주 · 월 (일정 탭과 같은 모양)
+let dView = 'list', dAnchor = '', dSel = '', dTap = '';
+try { dView = localStorage.getItem('docView') || 'list'; } catch (e) {}
+const docOn = v => docEvents().filter(e => e.start <= v && v <= e.end && docVisible(e));
+const docDayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}" data-dv="${v}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>`
+  + `<div class="wevs">${evs.length ? evs.map(docRow).join('') : '<span class="empty">-</span>'}</div></div>`;
+const docShort = e => e.kind === '과' ? e.title || '과' : (w => w[0] + (w.length > 1 ? '+' + (w.length - 1) : ''))(docWho(e));
+function renderDocCal() {
+  document.querySelectorAll('#dSeg button').forEach(b => b.classList.toggle('on', b.dataset.dcv === dView));
+  if (!D.doc) { $('#dList').innerHTML = '<span class="empty">교수 일정이 아직 없습니다</span>'; return; }
+  if (!dAnchor) dAnchor = dSel = D.today;
+  if (dView === 'list') {                                               // 오늘부터, 여러 날 일정은 시작일(이미 시작했으면 오늘)에
+    const by = {};
+    docEvents().filter(e => e.end >= D.today && docVisible(e)).forEach(e => (by[e.start < D.today ? D.today : e.start] ||= []).push(e));
+    const days = Object.keys(by).sort();
+    $('#dList').innerHTML = days.length ? days.map(v => docDayRow(v, by[v])).join('') : '<span class="empty">없음</span>';
+    return;
+  }
+  const a = new Date(dAnchor + 'T00:00');
+  if (dView === 'week') {
+    const sun = addDays(dAnchor, -a.getDay()), days = [0, 1, 2, 3, 4, 5, 6].map(n => addDays(sun, n));
+    $('#dList').innerHTML = `<div class="cnav"><button data-dcn="-1">‹</button><b>${mdNum(days[0])} ~ ${mdNum(days[6])}</b><button data-dcn="1">›</button></div>`
+      + days.map(v => docDayRow(v, docOn(v))).join('');
+    return;
+  }
+  const y = a.getFullYear(), m = a.getMonth(), first = new Date(y, m, 1).getDay(), n = new Date(y, m + 1, 0).getDate();
+  let cells = [...DOW].map((w, k) => `<span class="mdow${k === 0 ? ' red' : k === 6 ? ' sat' : ''}">${w}</span>`).join('') + '<span></span>'.repeat(first);
+  for (let d = 1; d <= n; d++) {
+    const v = `${y}-${pad(m + 1)}-${pad(d)}`, evs = docOn(v);
+    cells += `<button type="button" class="mc${v === D.today ? ' today' : ''}${v === dSel ? ' sel' : ''}" data-dcd="${v}"><span class="dn ${dayCls(v)}">${d}</span>`
+      + `${evs.slice(0, 2).map(e => `<i>${esc(docShort(e))}</i>`).join('')}${evs.length > 2 ? `<i class="more">+${evs.length - 2}</i>` : ''}</button>`;
+  }
+  const sel = dSel.slice(0, 7) === `${y}-${pad(m + 1)}` ? dSel : '';
+  $('#dList').innerHTML = `<div class="cnav"><button data-dcn="-1">‹</button><b>${y}년 ${m + 1}월</b><button data-dcn="1">›</button></div><div class="mgrid">${cells}</div>`
+    + (sel ? `<div class="msel">${dTap === sel ? '<div class="mhint">한 번 더 누르면 이 날에 교수 일정 추가</div>' : ''}${docDayRow(sel, docOn(sel))}</div>` : '');
+}
+function moveDocCal(n) {
+  const a = new Date(dAnchor + 'T00:00');
+  if (dView === 'week') dAnchor = addDays(dAnchor, 7 * n);
+  else { const d = new Date(a.getFullYear(), a.getMonth() + n, 1); dAnchor = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`; }
+  renderDocCal();
+}
+swipe($('#dList'), n => { if (dView !== 'list') moveDocCal(n); });
+// 교수 일정 추가·수정: 교수가 급하게 휴가를 쓰면 담당 플래너가 넣는다. 근태계획서에서 온 일정은 고칠 수 없고 앱에서 넣은 것만
+const DOC_KINDS = ['휴가', '학회', '심평원', '연구월', '기타'], DOC_TIMES = ['종일', '오전', '오후'];
+let dEdit = null, dKind = '', dTime = '종일', dPicked = new Set();
+function drawDocForm() {
+  $('#dKinds').innerHTML = DOC_KINDS.map(k => `<button type="button" data-dk="${k}"${k === dKind ? ' class="on"' : ''}>${k}</button>`).join('');
+  $('#dTimes').innerHTML = DOC_TIMES.map(t => `<button type="button" data-dt="${t}"${t === dTime ? ' class="on"' : ''}>${t}</button>`).join('');
+  $('#dWhoList').innerHTML = (D.doc ? D.doc.names : []).map(n => `<button type="button" class="dchk${dPicked.has(n) ? ' on' : ''}" data-dwho="${esc(n)}">${esc(n)}</button>`).join('');
+  $('#dTitle').textContent = dEdit ? '교수 일정 수정' : '교수 일정 추가';
+  $('#dSave').textContent = dEdit ? '수정 저장' : '저장';
+  $('#dEditBtns').hidden = !dEdit;
+}
+function openDocForm(on) { $('#dBody').hidden = !on; $('#dToggle').classList.toggle('open', on); drawDocForm(); }   // 닫을 때도 제목을 '추가'로 되돌린다
+function resetDocForm(day) {                                           // 담당 교수가 한 명이면 미리 체크
+  dEdit = null; dKind = ''; dTime = '종일'; dPicked = new Set(docSel.length === 1 ? docSel : []);
+  setD('dStart', day || (addDays(D.today, dayOff) > D.today ? addDays(D.today, dayOff) : D.today)); setD('dEnd', ''); $('#dMemo').value = '';
+  openDocForm(!!day);
+}
+function startDocEdit(row) {
+  const e = ((D.doc || {}).extra || []).find(x => x.row === row);
+  if (!e) return;
+  dEdit = e; dKind = e.kind; dTime = DOC_TIMES.includes(e.time) ? e.time : '종일'; dPicked = new Set(e.who);
+  setD('dStart', e.start); setD('dEnd', e.end !== e.start ? e.end : ''); $('#dMemo').value = e.title || '';
+  openDocForm(true);
+  $('#dTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function saveDocForm() {
+  const f = { start: getD('dStart'), end: getD('dEnd'), kind: dKind, who: (D.doc ? D.doc.names : []).filter(n => dPicked.has(n)),
+    time: dTime === '종일' ? '' : dTime, title: $('#dMemo').value.trim() };
+  if (!f.kind) return toast('구분을 골라 주세요');
+  if (!f.who.length) return toast('교수를 골라 주세요');
+  if (!f.start) return toast('시작일을 골라 주세요');
+  if (f.end && f.end <= f.start) f.end = '';
+  if (dEdit) run('updateDoc', [dEdit.row, dEdit.sig, f], '교수 일정 수정됨');
+  else run('addDoc', [f], '교수 일정 저장됨');
+  resetDocForm();
+}
+$('#dMemo').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 function renderDocsList() {
   $('#docsList').innerHTML = (D.doc ? D.doc.names : []).map(n => `<button type="button" class="dchk${docSel.includes(n) ? ' on' : ''}" data-doc="${esc(n)}">${esc(n)}</button>`).join('');
 }
-$('#dList').addEventListener('click', e => {                           // 목록의 날을 누르면 위 카드가 그날로
+$('#dList').addEventListener('click', e => {                           // 목록의 날을 누르면 위 카드가 그날로 (앱에서 넣은 일정은 고치기)
+  if (e.target.closest('[data-dedit], .cnav, .mc')) return;
   const r = e.target.closest('[data-dv]');
   if (r) { goDay(r.dataset.dv); scrollTo({ top: 0, behavior: 'smooth' }); }
 });
@@ -1514,9 +1625,9 @@ function setD(id, v) {
 }
 let pick = {};
 function openPicker(id) {
-  const v = getD(id) || getD('fStart') || D.today;
+  const v = getD(id) || getD(id === 'dEnd' ? 'dStart' : 'fStart') || D.today;
   pick = { id, y: +v.slice(0, 4), m: +v.slice(5, 7) - 1 };
-  $('#pClear').hidden = id === 'fStart' || id === 'dayPick';
+  $('#pClear').hidden = id === 'fStart' || id === 'dStart' || id === 'dayPick';
   drawPicker(); $('#picker').hidden = false;
 }
 function drawPicker() {
@@ -1710,6 +1821,8 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', async e => {
   const so = e.target.closest('[data-subopen]');
   if (so) { openSub = +so.dataset.subopen; render(); return; }
+  const de = e.target.closest('[data-dedit]');
+  if (de) return startDocEdit(+de.dataset.dedit);
   const ed = e.target.closest('[data-edit]');
   if (ed) {                                                          // 수정 중인 일정을 한 번 더 누르면 수정 취소
     const l = D.leaves[ed.dataset.edit];
@@ -1821,6 +1934,7 @@ document.addEventListener('click', async e => {
   } else if (b.dataset.pick) {
     setD(pick.id, b.dataset.pick);
     if (pick.id === 'fStart' && getD('fEnd') && getD('fEnd') < b.dataset.pick) setD('fEnd', '');   // 종료일이 시작일보다 앞이면 비움
+    if (pick.id === 'dStart' && getD('dEnd') && getD('dEnd') < b.dataset.pick) setD('dEnd', '');
     closePicker();
   } else if (b.id === 'pClear') {
     setD(pick.id, ''); closePicker();
@@ -1836,6 +1950,30 @@ document.addEventListener('click', async e => {
     setScreen(b.dataset.screen);
   } else if (b.dataset.tw) {
     moveDay(7 * b.dataset.tw);
+  } else if (b.id === 'dToggle') {
+    if ($('#dBody').hidden) { resetDocForm(); openDocForm(true); } else resetDocForm();
+  } else if (b.dataset.dk) {
+    dKind = b.dataset.dk; drawDocForm();
+  } else if (b.dataset.dt) {
+    dTime = b.dataset.dt; drawDocForm();
+  } else if (b.dataset.dwho) {
+    const n = b.dataset.dwho; dPicked.has(n) ? dPicked.delete(n) : dPicked.add(n); drawDocForm();
+  } else if (b.id === 'dSave') {
+    saveDocForm();
+  } else if (b.id === 'dCancel') {
+    resetDocForm();
+  } else if (b.id === 'dDel') {
+    const e = dEdit;
+    if (e && await ask('교수 일정 삭제', `${esc(e.who.join(' · '))} ${esc(e.kind)}<small>${span(e.start, e.end)}</small>`, '삭제')) { run('deleteDoc', [e.row, e.sig], '교수 일정 삭제됨'); resetDocForm(); }
+  } else if (b.dataset.dcv) {
+    dView = b.dataset.dcv; dAnchor = dSel = D.today;
+    try { localStorage.setItem('docView', dView); } catch (e) {}
+    renderDocCal();
+  } else if (b.dataset.dcn) {
+    moveDocCal(+b.dataset.dcn);
+  } else if (b.dataset.dcd) {                                           // 월 보기: 한 번 = 고르기, 고른 날을 한 번 더 = 그날 교수 일정 추가
+    if (dTap === b.dataset.dcd) { dTap = ''; renderDocCal(); resetDocForm(b.dataset.dcd); $('#dTitle').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else { dSel = dTap = b.dataset.dcd; renderDocCal(); }
   } else if (b.dataset.docpick) {
     renderDocsList(); $('#docs').hidden = false; document.body.classList.add('modal-open');
   } else if (b.dataset.doc) {
@@ -1979,6 +2117,7 @@ $('#gate').addEventListener('click', e => {
 });
 
 function initForm() {
+  if (!getD('dStart')) resetDocForm();                                 // 교수 일정 추가 칸 날짜도
   if (!getD('fStart')) setD('fStart', D.today);
   setD('fEnd', getD('fEnd'));
 }
