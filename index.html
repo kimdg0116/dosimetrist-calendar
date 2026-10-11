@@ -670,6 +670,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
   </ol>
   <h4>알아 두기</h4>
   <p class="wnote" style="margin-top:0">위젯을 누르면 이 앱이 열립니다. A·B나 접근 코드는 위젯을 길게 눌러 <b>설정</b>에서 바꿉니다. 위젯은 30분마다 새로 그려지고 폰의 라이트·다크를 따라갑니다. 위젯 전용이라 앱 목록에 아이콘은 생기지 않습니다.</p>
+  <p class="wnote">새 버전은 위젯이 몇 시간마다 확인해 <b>스스로 설치</b>합니다. 처음 한 번은 위젯에 "새 버전이 있습니다 · 눌러서 설치"가 뜨는데, 누르고 <b>이 출처 허용</b>을 켜 주면 그다음부터는 손댈 필요가 없습니다. (버전 7부터, 그 전 버전은 위 받기로 한 번 더 설치)</p>
   </div>
   <div class="ios-only">
   <ol>
@@ -727,7 +728,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-10';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-11';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
