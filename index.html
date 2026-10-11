@@ -25,6 +25,19 @@
 <script>if (/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('android');
 // 세로 고정: 설치한 갤럭시 앱은 여기서 바로 잠근다 (manifest portrait 는 크롬이 앱 정보를 새로 받아야 적용돼 하루쯤 늦다). 아이폰·일반 브라우저는 실패 → 무시
 try { screen.orientation.lock('portrait').catch(() => {}); } catch (e) {}
+// 그래도 화면이 가로로 돌아가면(아이폰은 앱이 회전을 못 막는다) 앱 전체를 반대로 돌려 폰에 붙여 둔다 = 세로 화면 그대로.
+// html 을 세로 크기(폭 393 이상)로 만들어 돌리고, 내용은 body 안에서 스크롤한다. 터치 좌표는 pagePoint() 로 되돌려 쓴다
+{ const h = document.documentElement;
+  const turn = () => {
+    const W = innerWidth, H = innerHeight, on = W > H * 1.44 && H <= 500;      // 눕힌 폰 (펼친 폴드·태블릿·키보드 올라온 세로는 아님)
+    const a = screen.orientation ? screen.orientation.angle : window.orientation, r = a === 270 || a === -90;
+    h.classList.toggle('turn', on); h.classList.toggle('turnr', on && r);
+    if (!on) return;
+    const P = Math.max(H, 393), k = H / P;                                     // 세로일 때와 같은 393 폭으로 그려 줄인다
+    h.style.setProperty('--tw', P + 'px'); h.style.setProperty('--th', W / k + 'px');
+    h.style.setProperty('--turn', r ? `translateX(${W}px) rotate(90deg) scale(${k})` : `translateY(${H}px) rotate(-90deg) scale(${k})`);
+  };
+  turn(); addEventListener('resize', turn); addEventListener('orientationchange', () => setTimeout(turn, 60)); }
 // 폭이 393보다 좁은 폰(갤럭시 대부분 360·384)은 393 폭으로 그린 뒤 화면에 맞춰 줄인다 → 아이폰과 같은 배치·같은 줄바꿈.
 // 갤럭시는 화면 1칸(CSS px)이 아이폰보다 실제로 커서, 줄여도 손에 보이는 글자 크기는 아이폰과 비슷하다. 더 넓은 폰·태블릿은 그대로
 // 접는 폰은 접고 펼 때(화면 폭이 바뀔 때)마다 다시 맞춘다
@@ -133,7 +146,7 @@ button { font-family:inherit; cursor:pointer; }
 
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
 .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
-  margin:0 calc(-1 * var(--gut)) 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) var(--gut) 12px;
+  margin:0 calc(-1 * var(--gut)) 14px; padding:calc(12px + var(--sa-t)) var(--gut) 12px;
   background:var(--bg-top); color:var(--bar-fg); }
 .brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; }
 @media (max-width:390px) { .top .brand { font-size:16px; letter-spacing:.04em; white-space:normal; line-height:1.05; } }
@@ -213,7 +226,7 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px color-mi
 #periods #addPeriod, #periods .padd { margin-top:14px; }
 #periods .padd #addPeriod { margin-top:0; }
 #allRot { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; background:color-mix(in srgb, color-mix(in srgb, var(--deep) 25%, #000) 40%, transparent); }
-#allRot .sheet { width:100%; max-width:480px; margin-inline:auto; max-height:86vh; display:flex; flex-direction:column; padding:16px 0 calc(14px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#allRot .sheet { width:100%; max-width:480px; margin-inline:auto; max-height:calc(86 * var(--vh)); display:flex; flex-direction:column; padding:16px 0 calc(14px + var(--sa-b)); border-radius:20px 20px 0 0; background:var(--card); }
 #allRot .hd { display:flex; align-items:center; padding:0 16px 10px; }
 #allRot .hd b { flex:1; font-size:18px; font-weight:800; color:var(--deep); }
 #allRot .hd button { height:32px; padding:0 12px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); font-weight:600; }
@@ -259,7 +272,7 @@ details.dd summary b { flex:1; text-align:left; }
 #lHours .chip { font-size:15px; }
 /* 펼친 목록은 아래 칸을 밀지 않고 위에 겹쳐 뜬다 */
 :is(.pick details, details.dd)[open] { z-index:15; }
-:is(.pick details, details.dd) .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:15; max-height:55vh; overflow-y:auto; overflow-x:hidden;
+:is(.pick details, details.dd) .chips { position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:15; max-height:calc(55 * var(--vh)); overflow-y:auto; overflow-x:hidden;
   padding:4px 6px; border:1px solid var(--line); border-radius:12px; background:var(--card); box-shadow:0 10px 30px color-mix(in srgb, var(--acc) 18%, transparent); }
 :is(.pick details, details.dd) .chip { position:relative; justify-content:center; text-align:center; }      /* 가운데 정렬 */
 :is(.pick details, details.dd) .chip.on::after { position:absolute; right:10px; }
@@ -281,7 +294,7 @@ details .chip { display:flex; justify-content:space-between; align-items:center;
 details .chip:first-child { border-top:0; }
 details .chip.on { background:none; border-color:var(--line); color:var(--acc); font-weight:700; }
 details .chip.on::after { content:'✓'; }
-#fNames { max-height:50vh; overflow-x:hidden; overflow-y:auto; }
+#fNames { max-height:calc(50 * var(--vh)); overflow-x:hidden; overflow-y:auto; }
 .seg { display:flex; gap:4px; margin-top:8px; padding:3px; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
 .seg button { flex:1; padding:8px; font-size:15px; border:0; border-radius:8px; background:none; color:var(--mute); }
 .seg button.on { background:var(--card); color:var(--acc); font-weight:700; box-shadow:0 1px 4px color-mix(in srgb, var(--acc) 15%, transparent); }
@@ -337,7 +350,7 @@ details .chip.on::after { content:'✓'; }
 /* 업데이트 안내 (웬들러와 같은 방식) */
 footer { margin-top:28px; }
 .ver { margin:0; text-align:right; font-family:Oswald, sans-serif; font-size:11px; letter-spacing:.06em; color:var(--mute); font-variant-numeric:tabular-nums; }
-.upd { position:fixed; left:var(--gut); right:var(--gut); bottom:calc(20px + env(safe-area-inset-bottom, 0px)); z-index:35; padding:13px; font-size:15px; font-weight:700;
+.upd { position:fixed; left:var(--gut); right:var(--gut); bottom:calc(20px + var(--sa-b)); z-index:35; padding:13px; font-size:15px; font-weight:700;
   border:0; border-radius:12px; background:var(--acc); color:#fff; box-shadow:0 6px 20px color-mix(in srgb, var(--acc) 35%, transparent); }
 .item.editing { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
 [data-edit] { cursor:pointer; }
@@ -377,7 +390,7 @@ footer { margin-top:28px; }
   .subst.closed .orig { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 }
 
-#toast { position:fixed; left:var(--gut); right:var(--gut); bottom:calc(20px + env(safe-area-inset-bottom, 0px)); padding:13px; border-radius:12px; background:var(--toast); color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px color-mix(in srgb, var(--acc) 30%, transparent); }
+#toast { position:fixed; left:var(--gut); right:var(--gut); bottom:calc(20px + var(--sa-b)); padding:13px; border-radius:12px; background:var(--toast); color:#fff; font-weight:600; text-align:center; opacity:0; transition:opacity .2s; pointer-events:none; box-shadow:0 6px 20px color-mix(in srgb, var(--acc) 30%, transparent); }
 #toast.show { opacity:.97; }
 #gate { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; padding:24px 16px;
   background:linear-gradient(180deg, var(--bg-top), var(--bg)); overflow-y:auto; }
@@ -386,7 +399,7 @@ footer { margin-top:28px; }
 #gate .gsub { margin-bottom:6px; text-align:center; font-size:13px; color:var(--mute); }
 #gCode { text-align:center; font-size:22px; letter-spacing:.3em; }
 #gCode::placeholder { font-size:16px; letter-spacing:0; }
-#gNames { display:flex; flex-direction:column; max-height:55vh; overflow-y:auto; border:1px solid var(--line); border-radius:10px; background:var(--bg); padding:0 6px; }
+#gNames { display:flex; flex-direction:column; max-height:calc(55 * var(--vh)); overflow-y:auto; border:1px solid var(--line); border-radius:10px; background:var(--bg); padding:0 6px; }
 #gNames button { display:flex; justify-content:space-between; padding:12px 8px; font-size:16px; text-align:left; border:0; border-top:1px solid var(--line); background:none; color:var(--fg); }
 #gNames button:first-child { border-top:0; }
 #gNames button.on { color:var(--acc); font-weight:700; } #gNames button.on::after { content:'✓'; }
@@ -422,20 +435,20 @@ footer { margin-top:28px; }
 
 body.modal-open { overflow:hidden; }
 .panel { position:fixed; inset:0; z-index:35; display:flex; align-items:flex-end; justify-content:center; background:color-mix(in srgb, color-mix(in srgb, var(--deep) 25%, #000) 48%, transparent); }
-.panel .sheet { width:100%; max-width:480px; max-height:calc(100dvh - 24px - env(safe-area-inset-top, 0px)); overflow-y:auto; padding:18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); box-shadow:var(--shadow); }
+.panel .sheet { width:100%; max-width:480px; max-height:calc(100 * var(--dvh) - 24px - var(--sa-t)); overflow-y:auto; padding:18px 16px calc(18px + var(--sa-b)); border-radius:20px 20px 0 0; background:var(--card); box-shadow:var(--shadow); }
 .panel .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .panel .head h3 { margin:0; font-size:18px; color:var(--fg); }
 .panel .head button, .change-pager button { min-width:38px; height:34px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); font-size:15px; }
 .change-pager { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:12px; border-top:1px solid var(--line); }
 .change-pager span { font-size:14px; font-weight:700; color:var(--mute); }
 .change-pager button:disabled { opacity:.3; }
-#changeList { min-height:min(45dvh, 330px); touch-action:pan-y; }
-@media (min-width:600px) { .panel { align-items:center; } .panel .sheet { border-radius:20px; } }
+#changeList { min-height:min(calc(45 * var(--dvh)), 330px); touch-action:pan-y; }
+@media (min-width:600px) { html:not(.turn) .panel { align-items:center; } html:not(.turn) .panel .sheet { border-radius:20px; } }
 #gWarn { margin:10px 0 0; font-size:13px; text-align:center; color:var(--mute); }
 
 /* 날짜 고르기: 공휴일·일요일 빨강, 토요일 파랑 */
 #picker { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; justify-content:center; background:color-mix(in srgb, color-mix(in srgb, var(--deep) 25%, #000) 40%, transparent); }
-#picker .sheet { width:100%; max-width:420px; padding:16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#picker .sheet { width:100%; max-width:420px; padding:16px 16px calc(16px + var(--sa-b)); border-radius:20px 20px 0 0; background:var(--card); }
 #picker .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
 #picker .head b { font-size:17px; font-weight:900; }
 #picker .head button, #picker .foot button { padding:7px 14px; font-size:15px; font-weight:600; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
@@ -469,7 +482,7 @@ nav button { font-weight:700; }
 .ar { width:.95em; height:.95em; margin-right:1px; vertical-align:-.12em; }
 /* 확인 창 (업무 담당 바꾸기 전) */
 #ask { position:fixed; inset:0; z-index:40; display:flex; align-items:flex-end; background:color-mix(in srgb, color-mix(in srgb, var(--deep) 25%, #000) 40%, transparent); }
-#ask .sheet { width:100%; max-width:480px; margin-inline:auto; padding:20px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
+#ask .sheet { width:100%; max-width:480px; margin-inline:auto; padding:20px 16px calc(16px + var(--sa-b)); border-radius:20px 20px 0 0; background:var(--card); }
 #askT { display:block; font-size:15px; font-weight:700; color:var(--mute); }
 #askM { margin:8px 0 18px; font-size:19px; font-weight:800; line-height:1.5; }
 #askM small { display:block; font-size:15px; font-weight:600; color:var(--mute); }
@@ -511,13 +524,12 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 #tUp { margin-top:2px; }
 #tSrc { margin:8px 0 0; font-size:13px; text-align:center; color:var(--mute); }
 #askM small.red { color:var(--red); }
-/* 가로모드 막기: 갤럭시(설치 앱)는 manifest 의 portrait 로 잠기고, 아이폰은 잠글 방법이 없어 폰을 눕히면 이 안내로 덮는다.
-   높이 500 이하 + 가로가 훨씬 긴 화면만 = 눕힌 폰. 키보드가 올라온 세로 화면·펼친 폴드·태블릿은 해당 없음 */
-#rotate { display:none; }
-@media (orientation:landscape) and (max-height:500px) and (min-aspect-ratio:13/9) {
-  html:not(.android) #rotate { position:fixed; inset:0; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--bg); color:var(--fg); font-size:17px; font-weight:700; }
-  #rotate svg { width:44px; height:44px; color:var(--acc); }
-}
+/* 폰을 눕혀도 세로 화면 그대로 (머리 스크립트 turn): html 을 세로 크기로 돌려 붙이고 body 가 스크롤.
+   vh·안전 여백은 돌린 틀 기준으로 바꿔 쓴다 (--vh, --sa-t, --sa-b). 노치는 돌린 화면의 위·아래로 온다 */
+:root { --vh:1vh; --dvh:1dvh; --sa-t:env(safe-area-inset-top, 0px); --sa-b:env(safe-area-inset-bottom, 0px); }
+html.turn { width:var(--tw); height:var(--th); overflow:hidden; transform-origin:0 0; transform:var(--turn); --gut:16px;
+  --vh:calc(var(--th) / 100); --dvh:var(--vh); --sa-t:max(env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); --sa-b:var(--sa-t); }
+html.turn body { height:100%; overflow-y:auto; }
 .wlink { font-family:var(--font-body); font-size:13px; font-weight:700; letter-spacing:0; color:var(--acc); text-decoration:none; }
 </style>
 </head>
@@ -607,7 +619,6 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
   <div class="settings-row"><div><b>화면 모드</b><p id="themeMode"></p></div><button type="button" id="theme" class="icon-btn" aria-label="화면 모드 변경"></button></div>
   <div class="settings-row colors"><div><b>테마 색</b><p id="colorName"></p></div><div class="swatches" id="colorPick"></div></div>
 </div></div>
-<div id="rotate" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>세로로 돌려서 써 주세요</div>
 <footer><p class="ver"><a class="wlink" href="widget-setup.html">아이폰 위젯 설치 ›</a></p><p class="ver" id="ver"></p><p class="ver">© Dongkyu Kim</p></footer>
 <div id="toast"></div>
 <button type="button" id="upd" class="upd" hidden>새 버전이 있습니다 · 눌러서 새로고침</button>
@@ -636,7 +647,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-17';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-18';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1059,7 +1070,7 @@ function setScreen(id) {
   curScreen = id; document.body.dataset.screen = id;
   $('#brand').innerHTML = SCREENS.find(x => x.id === id).title + DOWN;
   showScreens(false);
-  scrollTo({ top: 0, behavior: 'instant' });
+  scrollTo({ top: 0, behavior: 'instant' }); document.body.scrollTop = 0;   // 눕혀 둔 화면은 body 가 스크롤
 }
 // ── 의학물리팀 근무표 ──
 // 월말에 나오는 엑셀을 누구든 '근무표 올리기'로 올린다 (폰에서 읽어 확인 → 서버 '의학물리팀' 탭). 클로드에게 맡긴 달은 서버 코드로 들어온다
@@ -1107,7 +1118,9 @@ function renderTeam() {
 $('#tWeek').addEventListener('click', e => {                           // 주간 표에서 날을 누르면 위 카드가 그날로
   const g = e.target.closest('.tgrid');
   if (!g) return;
-  const r = g.getBoundingClientRect(), k = Math.floor((e.clientX - r.left - 28) / ((r.width - 28) / 7));
+  let left = 0;                                                         // 돌려 붙인 화면에서도 맞게: 앱 안 좌표로 계산
+  for (let n = g; n; n = n.offsetParent) left += n.offsetLeft;
+  const k = Math.floor((pagePoint(e.clientX, e.clientY)[0] - left - 28) / ((g.offsetWidth - 28) / 7));
   if (k >= 0 && k < 7) goDay(addDays(g.dataset.sun, k));
 });
 swipe($('#tDay'), moveDay);
@@ -1153,15 +1166,22 @@ function moveDay(n) {
   dayOff = n === 0 ? 0 : dayOff + n;
   renderDay();
 }
+// 화면 좌표 → 앱 안 좌표 (폰을 눕혀 앱을 돌려 붙였을 때도 손가락 방향이 맞게)
+const pagePoint = (x, y) => {
+  const h = document.documentElement;
+  if (!h.classList.contains('turn')) return [x, y];
+  const p = new DOMMatrix(getComputedStyle(h).transform).inverse().transformPoint(new DOMPoint(x, y));
+  return [p.x, p.y];
+};
 // 옆으로 밀어 넘기기 (맨 위 블록·업무 기간·일정 주/월 공통)
 // 세로 스크롤 중 손가락이 옆으로 조금 휘는 건 넘기기가 아니다 → 가로로 확실히 밀었을 때만. 왼쪽으로 밀면 다음
 function swipe(el, go) {
   let t = null;
-  el.addEventListener('touchstart', e => { t = e.touches.length === 1 && !e.target.closest('details[open]') ? [e.touches[0].clientX, e.touches[0].clientY] : null; }, { passive: true });
+  el.addEventListener('touchstart', e => { t = e.touches.length === 1 && !e.target.closest('details[open]') ? pagePoint(e.touches[0].clientX, e.touches[0].clientY) : null; }, { passive: true });
   el.addEventListener('touchcancel', () => { t = null; });
   el.addEventListener('touchend', e => {
     if (!t) return;
-    const dx = e.changedTouches[0].clientX - t[0], dy = e.changedTouches[0].clientY - t[1];
+    const [x, y] = pagePoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY), dx = x - t[0], dy = y - t[1];
     t = null;
     if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) go(dx < 0 ? 1 : -1);
   });
@@ -1636,10 +1656,10 @@ function selectTab(tab) {
   $('#rot').hidden = tab !== 'rot'; $('#leave').hidden = tab !== 'leave';
 }
 let changeTouch = null;
-$('#changeList').addEventListener('touchstart', e => { if (e.touches.length === 1) changeTouch = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+$('#changeList').addEventListener('touchstart', e => { if (e.touches.length === 1) changeTouch = pagePoint(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
 $('#changeList').addEventListener('touchend', e => {
   if (!changeTouch) return;
-  const dx = e.changedTouches[0].clientX - changeTouch[0], dy = e.changedTouches[0].clientY - changeTouch[1];
+  const [x, y] = pagePoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY), dx = x - changeTouch[0], dy = y - changeTouch[1];
   changeTouch = null;
   if (Math.abs(dx) > 55 && Math.abs(dx) > 2 * Math.abs(dy)) moveChanges(dx < 0 ? 1 : -1);
 }, { passive: true });
