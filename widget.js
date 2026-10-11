@@ -35,10 +35,12 @@ function text(stack, s, font, color, lines = 1) {
   t.font = font; t.textColor = color; t.lineLimit = lines; t.minimumScaleFactor = 0.75;
   return t;
 }
+// 구분 알약은 폭을 고정(앱의 구분 칸처럼) → 일정 내용·참석 인원이 모두 같은 세로줄에서 시작한다
+const PILL_W = 31;
 function pill(stack, s) {
   const p = stack.addStack();
-  p.backgroundGradient = fill(C.pill); p.cornerRadius = 7; p.setPadding(1, 5, 1, 5);
-  text(p, s, F.pill, C.pillFg);
+  p.backgroundGradient = fill(C.pill); p.cornerRadius = 7; p.setPadding(1, 0, 1, 0); p.size = new Size(PILL_W, 0);
+  p.addSpacer(); text(p, s, F.pill, C.pillFg); p.addSpacer();          // 가운데
   return p;
 }
 function header(w, left, hol, right) {
@@ -56,7 +58,10 @@ function eventLine(stack, e, withNames) {
   const main = e.memo || e.names.join(' ') || '-';
   text(row, main, F.ev, C.fg);
   if (e.time) text(row, e.time, F.sub, C.mute);
-  if (withNames && e.memo && e.names.length) text(box, e.names.join(' '), F.sub, C.mute);
+  if (withNames && e.memo && e.names.length) {                       // 참석 인원: 알약 다음, 내용과 같은 줄에서 시작
+    const n = box.addStack(); n.layoutHorizontally(); n.addSpacer(PILL_W + 4);
+    text(n, e.names.join(' '), F.sub, C.mute);
+  }
   return withNames && e.memo && e.names.length ? 2 : 1;               // 차지한 줄 수
 }
 function events(stack, list, room, withNames) {
