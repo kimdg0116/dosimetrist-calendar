@@ -120,23 +120,24 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .line small.red { color:var(--red); font-weight:700; }
 .day .empty { font-size:16px; }
 /* 오늘/내일 일정: 이름이 많아도 읽히게 */
-.ev { padding:10px 0; border-top:1px solid var(--line); cursor:pointer; text-align:center; }
-.ev:first-of-type { border-top:0; padding-top:4px; }
-.ev-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.ev-top .ttl-line { flex:1; flex-wrap:wrap; justify-content:flex-start; }
-.ev-top .tm { flex:none; white-space:nowrap; }
-@media (max-width:360px) { .ev-top { flex-wrap:wrap; } .ev-top .ttl-line { flex-basis:100%; } .ev-top .tm { margin-left:auto; } }
 .kind { flex:none; padding:3px 10px; font-size:14px; font-weight:700; border-radius:999px; background:var(--soft); color:var(--acc); }
-.ttl-line { display:flex; align-items:center; gap:8px; min-width:0; }
-.ttl-line .memo { min-width:0; font-size:15px; font-weight:600; line-height:1.4; white-space:normal; word-break:keep-all; overflow-wrap:anywhere; }
-
 .names { display:flex; flex-wrap:wrap; gap:2px 10px; font-weight:700; }
-
-.ev .tm { font-size:15px; font-weight:600; color:var(--fg); }
-.ev-names { justify-content:flex-start; padding-left:53px; margin-top:7px; font-size:18px; }
-.ev-names.some { font-size:16px; } .ev-names.many { font-size:15px; gap:2px 8px; }   /* 4~6명, 7명 이상 */
-.ev-sub { position:relative; padding-left:53px; margin-top:5px; color:var(--mute); text-align:left; }
-.ev-sub .pin { position:absolute; left:36px; top:4px; }
+/* 일정 한 줄 — 맨 위 카드·다가오는 일정·주/월·이름 추가 찾기 모두 같은 틀.
+   [구분 칩] 첫 줄(내용, 없으면 이름) [시간] / 아래 줄(.ln: 참석자·장소)은 첫 줄과 같은 세로선에서 시작.
+   강약: 첫 줄 진하게 > 참석자 > 장소 흐리게, '종일'은 작고 흐리게 (시간 있는 일정만 눈에 띄게) */
+.evi { display:grid; grid-template-columns:50px minmax(0, 1fr) auto; column-gap:10px; row-gap:3px; align-items:baseline; padding:10px 0; border-top:1px solid var(--line); text-align:left; cursor:pointer; }
+.evi:first-of-type { border-top:0; padding-top:4px; }
+.evi .kind { padding:3px 0; text-align:center; white-space:nowrap; }
+.evi .t1 { min-width:0; font-size:16px; font-weight:800; line-height:1.4; word-break:keep-all; overflow-wrap:anywhere; }
+.evi .t1 .names { display:inline-flex; gap:2px 8px; font-weight:inherit; }
+.evi .tm { white-space:nowrap; font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; font-size:16px; font-weight:600; color:var(--fg); }
+.evi .tm.q { font-family:var(--font-body); font-size:13px; font-weight:500; letter-spacing:0; color:var(--mute); }
+.evi .ln { grid-column:2 / -1; min-width:0; line-height:1.4; }
+.evi .ln .names { gap:2px 8px; font-size:15px; }
+.evi .ln.when { font-family:Oswald, Paperlogy, var(--font-body); font-size:14px; font-weight:500; color:var(--mute); }
+.evi .ln.pl { font-size:14px; font-weight:500; color:var(--mute); overflow-wrap:anywhere; }
+.evi.editing { margin:0 -8px; padding-inline:8px; border-radius:8px; background:var(--soft); }
+@media (max-width:360px) { .evi { grid-template-columns:50px minmax(0, 1fr); } .evi .tm { grid-column:2; } }   /* 아주 좁으면 시간은 첫 줄 아래로 */
 .pin { display:inline-block; width:12px; height:12px; margin-right:2px; vertical-align:-.05em; fill:none; stroke:currentColor; stroke-width:1.3; stroke-linecap:round; stroke-linejoin:round; opacity:.7; }
 #dayView { touch-action:pan-y; }
 /* 업무 탭: 기간 한 장씩 (옆으로 밀거나 ‹ ›), 표 아이콘은 전체 보기 */
@@ -255,23 +256,12 @@ details .chip.on::after { content:'✓'; }
 .wrow:first-of-type { border-top:0; }
 .wrow.today { margin:0 -8px; padding-inline:8px; border-radius:10px; background:var(--soft); }
 .wrow.today .kind { background:var(--card); }
-.wrow.today .ev2.editing { background:var(--card); }
+.wrow.today .evi.editing { background:var(--card); }
 .wd { flex:0 0 66px; font-weight:700; }
 .wd small { display:block; font-size:12px; font-weight:500; }
 .wevs { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
-.ev2 { cursor:pointer; text-align:center; }
-.ev2 .ttl-line, .ev2 .names { justify-content:center; }
-.ev2-meta { display:flex; justify-content:center; align-items:baseline; flex-wrap:wrap; gap:2px 8px; margin-top:4px; }
-.ev2-meta .names, .ev2-meta small { margin-top:0; }
-#leaves .ev2 { text-align:left; }
-#leaves .ev2 .ttl-line, #leaves .ev2 .names, #leaves .ev2 .ev2-meta { justify-content:flex-start; }
-.ev2 .ttl-line { flex-wrap:wrap; gap:3px 8px; }
-.ev2 .names { margin-top:0; font-size:16px; }
-.ev2 .names.some { font-size:15px; } .ev2 .names.many { font-size:14px; gap:2px 8px; }
-.ev2 small { display:block; margin-top:3px; font-size:13px; color:var(--mute); }
-.ev2 .ev2-meta small { margin-top:0; }
-.ev2.no-name .ev2-meta { padding-left:53px; }
-.ev2.editing { margin:-4px -6px; padding:4px 6px; border-radius:8px; background:var(--soft); }
+.wevs .evi { grid-template-columns:44px minmax(0, 1fr) auto; column-gap:8px; padding:2px 0 4px; border-top:0; }   /* 날짜 줄 안에선 칸선 없이, 날짜 칸이 있어 조금 촘촘하게 */
+.wevs .evi .tm { font-size:15px; }
 .mgrid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:2px; }
 .mdow { padding:2px 0 6px; text-align:center; font-size:12px; font-weight:600; color:var(--mute); }
 .mc { display:flex; flex-direction:column; align-items:stretch; gap:2px; min-height:62px; padding:4px 2px; border:0; border-radius:8px; background:none; color:var(--fg); text-align:center; overflow:hidden; }
@@ -362,9 +352,7 @@ footer { margin-top:28px; }
 .match-item { padding:12px 0; border-top:1px solid var(--line); }
 .match-item:first-of-type { border-top:0; }
 .match-date { margin:0 4px 5px 12px; color:var(--mute); font-size:13px; font-weight:700; text-align:left; }
-.match-item .ev2 { cursor:default; padding:0 4px 0 12px; text-align:left; }
-.match-item .ev2 .ttl-line, .match-item .ev2 .names, .match-item .ev2 .ev2-meta { justify-content:flex-start; }
-.match-item .ev2 .memo { white-space:normal; overflow:visible; text-overflow:clip; }
+.match-item .evi { cursor:default; padding:4px 0 0; border-top:0; }
 .match-item button { width:100%; margin-top:10px; padding:10px; border:1px solid var(--acc); border-radius:9px; background:var(--card); color:var(--acc); font-size:14px; font-weight:700; }
 .match-item button:disabled { opacity:.5; }
 .match-note { margin:8px 0 0; color:var(--mute); font-size:12px; line-height:1.4; }
@@ -397,9 +385,9 @@ body.modal-open { overflow:hidden; }
 #picker .hols { min-height:20px; margin:8px 0; font-size:13px; font-weight:750; line-height:1.6; color:var(--red); }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
-.day h3 .dt, .ev .tm, #pnav .dt, .ev2 small, .wd, .mc .dn { font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
-.day h3 .dt, .ev .tm { font-size:clamp(16px, 4.5vw, 18px); font-weight:700; line-height:1.3; color:var(--fg); }              /* 맨 위 블록: 크게 */
-#pnav .dt, .ev2 small { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
+.day h3 .dt, #pnav .dt, .wd, .mc .dn { font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.day h3 .dt { font-size:clamp(16px, 4.5vw, 18px); font-weight:700; line-height:1.3; color:var(--fg); }              /* 맨 위 블록: 크게 */
+#pnav .dt { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
 @font-face { font-family:Oswald; src:url(https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2) format("woff2-variations"); font-weight:200 700; font-display:block; }   /* 구글 폰트 CSS 를 거치지 않아 첫 화면이 안 막힌다 */
@@ -409,7 +397,6 @@ body.modal-open { overflow:hidden; }
 .day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-weight:800; letter-spacing:-.02em; }
 #fTitle, .lhead h3 { font-size:17px; color:var(--deep); }
 nav button { font-weight:700; }
-.ev2 small.pl { font-family:var(--font-body); font-weight:500; letter-spacing:0; overflow-wrap:anywhere; }                       /* 장소는 직접 쓴 글이라 날짜·시간과 다른 글꼴 */
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-weight:600; }
 .rl.en { font-family:Oswald, Paperlogy, var(--font-body); letter-spacing:.04em; } .rl.ko { font-family:Paperlogy, var(--font-body); }
 .day .line-dd summary > b, .role span { font-size:17px; }
@@ -417,9 +404,6 @@ nav button { font-weight:700; }
 .kind, .names, .day .line-dd summary > span, .role details.dd summary b, .clash details.dd summary b, .subst .who, #allRot td:not(.past) { font-weight:800; }
 .day .line-dd summary > span small { font-weight:500; }
 .ar { width:.95em; height:.95em; margin-right:1px; vertical-align:-.12em; }
-.ttl-line .memo { font-weight:800; }                                   /* 내용 */
-.ev-sub, .ev2 small.pl { font-size:14px; font-weight:500; line-height:1.4; }    /* 장소 */
-.ev2 small.pl { margin-top:5px; }
 /* 확인 창 (업무 담당 바꾸기 전) */
 #ask { position:fixed; inset:0; z-index:40; display:flex; align-items:flex-end; background:rgba(10,20,60,.4); }
 #ask .sheet { width:100%; padding:20px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
@@ -542,7 +526,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.09-12';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -878,14 +862,7 @@ function renderDay() {
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
   const list = arrange(evOn(day));
   $('#todayLeave').innerHTML = head('일정') + (list.length
-    ? list.map(({ l, i, eds }) => {
-      const who = l.name.split(/,\s*/).filter(Boolean);
-      const when = l.time ? fmtTime(l.time) : l.start !== l.end ? `${md(l.start)} ~ ${md(l.end)}` : '종일';
-      return `<div class="ev"${i !== null ? ` data-edit="${i}"` : ''}>
-        <div class="ev-top"><span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span><span class="tm">${when}</span></div>
-        ${namesHtml(who, 'ev-names', eds)}
-        ${l.place ? `<div class="ev-sub">${PIN}<span>${esc(l.place)}</span></div>` : ''}</div>`;
-    }).join('')
+    ? list.map(({ l, i, eds }) => evHtml(l, i, eds)).join('')
     : '<span class="empty">없음</span>');
 }
 // 달력에서 고른 날로 바로
@@ -986,12 +963,19 @@ $('#allRot').addEventListener('click', e => { if (e.target.id === 'allRot') $('#
 let calView = 'list', calAnchor = '', calSel = '', calTap = '';     // calTap: 직접 누른 날 (한 번 더 누르면 그날 일정 추가)
 try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
+// 일정 한 줄 (모든 곳 같은 틀). 첫 줄 = 내용, 내용이 없으면 이름 (연차는 한 줄로 끝난다) · 오른쪽 = 시간, 종일은 흐리게
+// 내용이 있으면 이름은 아래 줄. 여러 날이면서 시간도 있으면 날짜는 아래 줄. 이름마다 data-edit 가 붙어 있으면 그 사람 것만 수정
 const evHtml = (l, i, eds) => {
-  const info = [l.start !== l.end && `${mdh(l.start)} ~ ${mdh(l.end)}`, l.time && fmtTime(l.time)].filter(Boolean);   // 장소는 아래 줄에 따로 (길면 줄바꿈)
   const who = l.name.split(/,\s*/).filter(Boolean);
-  return `<div class="ev2${who.length ? '' : ' no-name'}${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
-    <span class="ttl-line"><span class="kind">${esc(l.kind)}</span>${l.memo ? `<span class="memo">${esc(l.memo)}</span>` : ''}</span>
-    <div class="ev2-meta">${namesHtml(who, '', eds)}${info.length ? `<small>${info.join(' · ')}</small>` : ''}</div>${l.place ? `<small class="pl">${PIN} ${esc(l.place)}</small>` : ''}</div>`;
+  const range = l.start !== l.end ? `${mdh(l.start)}~${mdh(l.end)}` : '';
+  const time = l.time ? fmtTime(l.time).replace(' ~ ', '~') : '';
+  return `<div class="evi${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
+    <span class="kind">${esc(l.kind)}</span>
+    <span class="t1">${l.memo ? esc(l.memo) : namesHtml(who, '', eds) || '-'}</span>
+    <span class="tm${time || range ? '' : ' q'}">${time || range || '종일'}</span>
+    ${l.memo && who.length ? `<div class="ln">${namesHtml(who, '', eds)}</div>` : ''}
+    ${time && range ? `<div class="ln when">${range}</div>` : ''}
+    ${l.place ? `<div class="ln pl">${PIN}${esc(l.place)}</div>` : ''}</div>`;
 };
 // 날짜 한 줄: 왼쪽 날짜, 오른쪽에 그날 일정들
 const dayRow = (v, evs) => `<div class="wrow${v === D.today ? ' today' : ''}"><div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div>
