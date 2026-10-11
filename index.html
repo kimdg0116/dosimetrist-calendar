@@ -618,7 +618,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-12';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-13';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1054,7 +1054,7 @@ function renderTeam() {
   let g = '';
   const rows = t ? t.roles.flatMap(r => list.filter(([c]) => c === r.code).map(([, w]) =>
     (r.group && r.group !== g ? `<div class="grp">${esc(g = r.group)}</div>` : '')
-    + `<div class="evi"><span class="kind">${esc(r.code)}</span><span class="t1">${whoHtml(w)}</span><span class="tm">${esc(r.time || (r.weekly ? '이번 주' : ''))}</span>`
+    + `<div class="evi"><span class="kind">${esc(r.code)}</span><span class="t1">${whoHtml(w)}</span><span class="tm">${esc(r.time)}</span>`
     + `${r.desc ? `<div class="ln pl">${esc(r.desc)}</div>` : ''}</div>`)) : [];
   const note = t && t.notes[day] && !D.holidays[day] ? ' · ' + esc(t.notes[day]) : '';   // 'QA Day' (공휴일 이름은 이미 나옴)
   $('#tDay').innerHTML = dayHead('근무', day, note) + (rows.join('') || `<span class="empty">${t ? '근무 없음' : `${+day.slice(5, 7)}월 근무표가 아직 없습니다`}</span>`);
