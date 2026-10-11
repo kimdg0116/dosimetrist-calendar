@@ -29,7 +29,7 @@ self.addEventListener('push', event => {
   try { message = event.data ? event.data.json() : {}; } catch (e) {}
   let title = '파트 일정 변경', body = typeof message.body === 'string' ? message.body.slice(0, 160) : '파트 일정이 바뀌었어요. 앱에서 확인해 주세요.';
   const [head, ...rest] = body.split('\n');
-  if (rest.length && /^(파트 일정|일정 알림)/.test(head)) { title = head; body = rest.join('\n'); }
+  if (rest.length && /^(파트 일정|일정 알림|의학물리팀)/.test(head)) { title = head; body = rest.join('\n'); }
   event.waitUntil(Promise.all([
     self.registration.showNotification(title, {
       body, icon: './icon-192.png', badge: './icon-192.png', data: { url: self.registration.scope },

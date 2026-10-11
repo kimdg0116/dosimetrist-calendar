@@ -189,11 +189,11 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px color-mi
 @media (max-width:360px) { .evi { grid-template-columns:50px minmax(0, 1fr); } .evi .tm { grid-column:2; } }   /* 아주 좁으면 시간은 첫 줄 아래로 */
 #dayView { touch-action:pan-y; }
 /* 업무 탭: 기간 한 장씩 (옆으로 밀거나 ‹ ›), 표 아이콘은 전체 보기 */
-#pnav { display:flex; align-items:center; gap:6px; margin:0 2px 10px; scroll-margin-top:70px; }
-#pnav .t { flex:1; min-width:0; }
-#pnav .ttl { display:block; font-size:20px; font-weight:800; color:var(--deep); letter-spacing:-.02em; }
-#pnav .dt { color:var(--mute); font-size:13px; font-weight:600; }
-#pnav button { min-width:34px; height:32px; padding:0 10px; font-size:17px; line-height:1; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
+#pnav, #tnav { display:flex; align-items:center; gap:6px; margin:0 2px 10px; scroll-margin-top:70px; }
+#pnav .t, #tnav .t { flex:1; min-width:0; }
+#pnav .ttl, #tnav .ttl { display:block; font-size:20px; font-weight:800; color:var(--deep); letter-spacing:-.02em; }
+#pnav .dt, #tnav .dt { color:var(--mute); font-size:13px; font-weight:600; }
+#pnav button, #tnav button { min-width:34px; height:32px; padding:0 10px; font-size:17px; line-height:1; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--fg); }
 #pnav button:disabled { opacity:.3; }
 #pnav button svg { display:block; width:17px; height:17px; }
 #periods { touch-action:pan-y; }
@@ -438,16 +438,16 @@ body.modal-open { overflow:hidden; }
 #picker .hols { min-height:20px; margin:8px 0; font-size:13px; font-weight:750; line-height:1.6; color:var(--red); }
 #picker .foot { display:flex; gap:8px; justify-content:flex-end; }
 /* 숫자는 Oswald (웬들러처럼). 한글 요일은 본문 글꼴로 이어진다 */
-.day h3 .dt, #pnav .dt, .wd, .mc .dn { font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.day h3 .dt, #pnav .dt, #tnav .dt, .wd, .mc .dn { font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; }
 .day h3 .dt { font-size:clamp(16px, 4.5vw, 18px); font-weight:700; line-height:1.3; color:var(--fg); }              /* 맨 위 블록: 크게 */
-#pnav .dt { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
+#pnav .dt, #tnav .dt { font-size:15px; font-weight:600; }                                /* 업무 탭 기간·다가오는 일정: 크기 그대로 */
 .wd { font-size:16px; font-weight:600; }
 /* 업무명(온콜·당직·TOMO HD…): 영문 Oswald + 한글 페이퍼로지. 맨 위 블록·업무 탭·백업 지정 칸·전체 보기 모두 같게 */
 @font-face { font-family:Oswald; src:url(https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5.1.1/files/oswald-latin-wght-normal.woff2) format("woff2-variations"); font-weight:200 700; font-display:block; }   /* 구글 폰트 CSS 를 거치지 않아 첫 화면이 안 막힌다 */
 @font-face { font-family:"SUIT Variable"; src:url(https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2.0.5/fonts/variable/woff2/SUIT-Variable.woff2) format("woff2-variations"); font-weight:100 900; font-display:block; }
 @font-face { font-family:Paperlogy; src:url(https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2) format("woff2"); font-weight:600; font-display:block; }   /* block: 기본 글꼴로 먼저 그렸다가 바뀌는 깜빡임 대신, 받을 때까지(최대 3초) 글자를 잠깐 비워 둔다 */
 /* 제목: 페이퍼로지 */
-.day h3 .ttl, #pnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-weight:800; letter-spacing:-.02em; }
+.day h3 .ttl, #pnav .ttl, #tnav .ttl, #allRot .hd b, #fTitle, .lhead h3 { font-weight:800; letter-spacing:-.02em; }
 #fTitle, .lhead h3 { font-size:17px; color:var(--deep); }
 nav button { font-weight:700; }
 .day .line-dd summary > b, .role span, .clash .msg b, .subst .msg b:not(.who), #allRot tbody th { font-weight:600; }
@@ -472,16 +472,47 @@ nav button { font-weight:700; }
 #fBody { margin-top:14px; }
 .mhint { margin:2px 0 6px; font-size:13px; font-weight:600; color:var(--acc); text-align:center; }
 #fToggle { scroll-margin-top:70px; }
+/* 제목 = 화면 바꾸기 단추 (파트 ↔ 의학물리팀) */
+button.brand { padding:0; border:0; background:none; color:inherit; text-align:left; }
+.brand svg { width:.72em; height:.72em; margin-left:7px; vertical-align:.02em; opacity:.55; }
+/* 의학물리팀 근무표 화면: 제목을 누르면 파트 화면 대신 보인다 (앱을 새로 열면 늘 파트 화면) */
+body:not(.team) #team, body.team #dayView, body.team nav, body.team #rot, body.team #leave { display:none !important; }
+#team .evi { padding:8px 0; row-gap:1px; cursor:default; }   /* 역할이 9~10줄이라 일정보다 조금 촘촘히 */
+#team .evi .ln.pl { font-size:13px; }
+#team .grp { margin-top:10px; font-family:Oswald, var(--font-body); font-size:13px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); }
+#team .grp:first-of-type { margin-top:0; }
+#team .grp + .evi { border-top:0; padding-top:4px; }
+.card.tw { padding:12px 8px; }
+.tgrid { display:grid; grid-template-columns:26px repeat(7, minmax(0, 1fr)); gap:4px 2px; }
+.tgrid .th { grid-row:1; padding:2px 0 4px; text-align:center; font-size:12px; font-weight:600; line-height:1.3; color:var(--mute); }
+.tgrid .th b { display:block; font-family:Oswald, var(--font-body); font-size:16px; font-weight:600; color:var(--fg); }
+.tgrid .th.red, .tgrid .th.red b { color:var(--red); } .tgrid .th.sat b { color:var(--blue); }
+.tgrid .th.today b { color:var(--acc); text-decoration:underline; text-underline-offset:3px; }
+.tgrid .tsel { border-radius:10px; background:color-mix(in srgb, var(--acc) 9%, transparent); }   /* 고른 날 세로줄 */
+.tgrid .tl { grid-column:1; align-self:center; font-family:Oswald, Paperlogy, var(--font-body); font-size:14px; font-weight:600; text-align:center; color:var(--mute); }
+.tgrid .tbar { display:flex; align-items:center; justify-content:center; min-width:0; min-height:30px; padding:4px 1px; font-size:13px; font-weight:800; line-height:1.25; text-align:center; word-break:keep-all; border-radius:8px; background:var(--soft); color:var(--badge, var(--acc)); }
+.tgrid .tsep { grid-column:1 / -1; height:1px; margin:2px 0; background:var(--line); }
+#tUp { margin-top:2px; }
+#tSrc { margin:8px 0 0; font-size:13px; text-align:center; color:var(--mute); }
+#askM small.red { color:var(--red); }
 .wlink { font-family:var(--font-body); font-size:13px; font-weight:700; letter-spacing:0; color:var(--acc); text-decoration:none; }
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="brand">DOSIMETRIST CALENDAR</div>
+  <button type="button" class="brand" id="brand" aria-label="의학물리팀 근무표로">DOSIMETRIST CALENDAR<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4 4-4-4 4-4"/></svg></button>
   <div class="btns">
     <button type="button" id="changesBtn" class="icon-btn" aria-label="최근 변경 보기" title="최근 변경" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
     <button type="button" id="meName" class="me-tag" aria-label="개인 설정 열기" hidden></button>
   </div>
+</div>
+<div id="team">
+  <div id="tDay" class="card day"></div>
+  <div id="tnav"></div>
+  <div class="card tw"><div id="tWeek"></div></div>
+  <button type="button" class="sub" id="tUp">근무표 올리기 (엑셀 파일)</button>
+  <p id="tSrc"></p>
+  <input type="file" id="tFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
 </div>
 <div id="dayView">
   <div id="todayWork" class="card day"><span class="empty">불러오는 중…</span></div>
@@ -580,7 +611,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-07';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-08';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -820,6 +851,7 @@ function apply_(op) {                                                  // 저장
     if (!p || ri < 0) return false;
     p.who[ri] = args[2];
   }
+  else if (fn === 'saveTeam') (D.team = D.team || {})[f.month] = { ...f, at: new Date().toISOString(), by: auth.me || '' };
   else if (fn === 'deletePeriod') { const k = D.periods.findIndex(p => p.col === args[0]); if (k < 0) return false; D.periods.splice(k, 1); }
   else if (fn === 'addLeave') { const i = L.findIndex(l => l.start > f.start); L.splice(i < 0 ? L.length : i, 0, item()); }
   else return false;
@@ -893,14 +925,15 @@ const localToday = () => { const d = new Date(); return `${d.getFullYear()}-${pa
 // 맨 위 두 카드: 옆으로 넘겨 다른 날 보기 (기한 없음)
 let dayOff = 0;
 const DAY_WORD = { '-1': '어제', 0: '오늘', 1: '내일', 2: '모레' };
-function renderDay() {
-  const day = addDays(D.today, dayOff);
-  const word = DAY_WORD[dayOff] || '';
-  const hol = D.holidays[day];
-  const head = what => `<h3><span class="t"><span class="ttl">${word ? word + ' ' : ''}${what}</span><span class="dt">${mdh(day)}${hol ? ` <span class="red">${esc(hol)}</span>` : ''}</span></span>`
+const dayHead = (what, day, extra = '') => {
+  const word = DAY_WORD[dayOff] || '', hol = D.holidays[day];
+  return `<h3><span class="t"><span class="ttl">${word ? word + ' ' : ''}${what}</span><span class="dt">${mdh(day)}${hol ? ` <span class="red">${esc(hol)}</span>` : ''}${extra}</span></span>`
     + (dayOff ? '<button class="back" data-day="0">오늘</button>' : '')
     + '<button class="cal" data-daycal="1" aria-label="날짜 고르기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>'
     + '<button data-day="-1">‹</button><button data-day="1">›</button></h3>';
+};
+function renderDay() {
+  const day = addDays(D.today, dayOff), head = what => dayHead(what, day);
   const cur = D.periods.find(p => p.start <= day && day <= p.end);
   $('#todayWork').innerHTML = head('업무') + (cur ? D.roles.map((r, i) => {
     const s = subFor(r.name, day);
@@ -918,7 +951,161 @@ function renderDay() {
   $('#todayLeave').innerHTML = head('일정') + (list.length
     ? list.map(({ l, i, eds }) => evHtml(l, i, eds)).join('')
     : '<span class="empty">없음</span>');
+  renderTeam();                                                        // 팀 화면도 같은 날짜
 }
+// <team-parse> 의학물리팀 근무표 엑셀(칸 배열) → { month, roles, days, notes }. 칸 위치를 외우지 않고
+// '요일 줄'·'날짜 줄'·'역할 기호'를 찾아 읽는다 (달마다 칸이 조금 밀려도 되게). 서버 폴더 tools/team-import.mjs 도 이 함수를 꺼내 쓴다
+function parseTeam(g) {
+  const W = '일월화수목금토', S = v => String(v ?? '').replace(/\s+/g, ' ').trim(), pad = n => String(n).padStart(2, '0');
+  const SKIP = ['선'];                                                    // 선량설계파트 당직: 파트 화면이 기준이라 안 넣는다
+  const at = (r, c) => S((g[r] || [])[c]);
+  const ym = g.flat().map(v => S(v).match(/(\d{4})\s*년\s*(\d{1,2})\s*월/)).find(Boolean);
+  if (!ym) throw new Error("'2026년 10월' 같은 제목을 찾지 못했습니다");
+  const month = `${ym[1]}-${pad(ym[2])}`;
+  const hr = g.findIndex(row => [...W].every(w => row.some(v => S(v) === w)));
+  if (hr < 0) throw new Error('요일 줄(일 월 화 …)을 찾지 못했습니다');
+  const cols = [...W].map(w => g[hr].findIndex(v => S(v) === w));
+  // 범례 (요일 줄 위): '일: 일반치료 chart QA (08:00~17:00)'. 같은 세로줄 위쪽의 'X-ray'·'Proton' 이 묶음
+  const roles = [], heads = [];
+  g.slice(0, hr).forEach((row, r) => row.forEach((v, c) => {
+    const s = S(v), m = s.match(/^(\S{1,3})\s*:\s*(.+)$/);
+    if (/^(x-?ray|proton)$/i.test(s)) heads.push({ r, c, name: s });
+    if (!m) return;
+    const tm = m[2].match(/\(?\s*(\d{1,2}:\d{2})\s*[~-]\s*(\d{1,2}:\d{2})\s*\)?/), head = heads.filter(h => h.c === c && h.r < r).pop();
+    roles.push({ code: m[1], desc: (tm ? m[2].replace(tm[0], '') : m[2]).trim(), time: tm ? `${tm[1]}~${tm[2]}` : '', group: head ? head.name : '' });
+  }));
+  const role = (code, extra) => roles.find(x => x.code === code) || roles[roles.push({ code, desc: '', time: '', group: '', ...extra }) - 1];
+  // 날짜 줄: 요일 칸에 1씩 커지는 날짜 숫자
+  const dateRows = [];
+  for (let r = hr + 1; r < g.length; r++) {
+    const ds = cols.map(c => { const v = (g[r] || [])[c], n = typeof v === 'number' ? v : /^\d{1,2}$/.test(S(v)) ? +S(v) : 0; return n >= 1 && n <= 31 ? n : 0; });
+    const got = ds.filter(Boolean);
+    if (got.length && got.every((n, i) => !i || n === got[i - 1] + 1)) dateRows.push([r, ds.map(n => n && `${month}-${pad(n)}`)]);
+  }
+  if (!dateRows.length) throw new Error('날짜 줄을 찾지 못했습니다');
+  const days = {}, notes = {}, warn = [], md = d => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+  const add = (date, code, who) => { if (!SKIP.includes(code)) (days[date] = days[date] || []).push([role(code).code, who.replace(/\s*\/\s*/g, '/')]); };
+  dateRows.forEach(([r0, dated], bi) => {
+    const r1 = bi + 1 < dateRows.length ? dateRows[bi + 1][0] : g.length, wk = [];
+    cols.forEach((c, k) => {
+      for (let r = r0 + 1; r < r1; r++) {
+        const a = at(r, c), b = at(r, c + 1), date = dated[k];
+        let m;
+        if (!a && !b) continue;
+        if (!b && (m = a.match(/^(.+?)\s*:\s*(.+)$/))) wk.push(m);              // 'X-ray 셀조사: 정은아' = 그 주 담당
+        else if (!date) continue;                                             // 지난달·다음 달 칸
+        else if (/^\S{1,3}$/.test(a)) { if (b) add(date, a, b); }             // 역할 기호 + 이름
+        else if (!a && (m = b.match(/^([A-Za-z]{1,2}\d)\s*\/\s*(.+)$/))) add(date, m[1], m[2]);   // 'G1/조성구'
+        else if (!a) notes[date] = notes[date] ? notes[date] + ' · ' + b : b;  // '한글날', 'QA Day'
+        else warn.push(`${md(date)} 못 읽은 칸 '${a}${b ? ' ' + b : ''}'`);
+      }
+    });
+    wk.forEach(([, label, who]) => {                                          // 그 주에 같은 묶음(X-ray) 근무가 있는 날에만
+      const name = S(label), head = heads.find(h => name.toLowerCase().startsWith(h.name.toLowerCase()));
+      const x = role(name.split(' ').pop()[0], { desc: name, group: head ? head.name : '', weekly: true });
+      dated.filter(d => d && (days[d] || []).some(([c]) => role(c).group === x.group)).forEach(d => add(d, x.code, who));
+    });
+  });
+  const cnt = {};
+  Object.values(days).forEach(l => l.forEach(([, w]) => w.split('/').forEach(n => { cnt[n] = (cnt[n] || 0) + 1; })));
+  Object.keys(days).sort().forEach(d => days[d].forEach(([c, w]) => w.split('/').forEach(n => {
+    if (cnt[n] === 1) warn.push(`${md(d)} ${c} '${n}' - 이번 달에 한 번만 나오는 이름 (오타인지 확인)`);
+  })));
+  const gi = x => { const i = heads.findIndex(h => h.name === x.group); return i < 0 ? heads.length : i; };
+  const used = roles.filter(x => Object.values(days).some(l => l.some(([c]) => c === x.code)));
+  return { t: { month, roles: used.map((x, i) => [x, i]).sort((a, b) => gi(a[0]) - gi(b[0]) || a[1] - b[1]).map(([x]) => x), days, notes }, warn };
+}
+// </team-parse>
+
+// ── 의학물리팀 근무표: 제목을 누르면 파트 화면 ↔ 팀 화면 (앱을 새로 열면 늘 파트 화면, 파트 캘린더라서) ──
+// 월말에 나오는 엑셀을 누구든 '근무표 올리기'로 올린다 (폰에서 읽어 확인 → 서버 '의학물리팀' 탭). 클로드에게 맡긴 달은 서버 코드로 들어온다
+const SWAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15m-4-4 4 4-4 4M20 16H5m4 4-4-4 4-4"/></svg>';
+function setTeam(on) {
+  document.body.classList.toggle('team', on);
+  $('#brand').innerHTML = (on ? 'MEDICAL PHYSICS TEAM' : 'DOSIMETRIST CALENDAR') + SWAP;
+  $('#brand').setAttribute('aria-label', on ? '파트 화면으로' : '의학물리팀 근무표로');
+  scrollTo({ top: 0, behavior: 'instant' });
+}
+const teamOf = v => (D.team || {})[v.slice(0, 7)];
+const teamDay = v => { const t = teamOf(v); return t ? t.days[v] || [] : null; };
+const whoHtml = (w, br) => w.split('/').map(esc).join(br ? '<br>' : ' · ');   // '김태형/신정석'
+const weekOf = v => addDays(v, -new Date(v + 'T00:00').getDay());
+function renderTeam() {
+  const day = addDays(D.today, dayOff), t = teamOf(day), list = teamDay(day) || [];
+  let g = '';
+  const rows = t ? t.roles.flatMap(r => list.filter(([c]) => c === r.code).map(([, w]) =>
+    (r.group && r.group !== g ? `<div class="grp">${esc(g = r.group)}</div>` : '')
+    + `<div class="evi"><span class="kind">${esc(r.code)}</span><span class="t1">${whoHtml(w)}</span><span class="tm">${esc(r.time || (r.weekly ? '이번 주' : ''))}</span>`
+    + `${r.desc ? `<div class="ln pl">${esc(r.desc)}</div>` : ''}</div>`)) : [];
+  const note = t && t.notes[day] && !D.holidays[day] ? ' · ' + esc(t.notes[day]) : '';   // 'QA Day' (공휴일 이름은 이미 나옴)
+  $('#tDay').innerHTML = dayHead('근무', day, note) + (rows.join('') || `<span class="empty">${t ? '근무 없음' : `${+day.slice(5, 7)}월 근무표가 아직 없습니다`}</span>`);
+  // 주간 표: 역할마다 한 줄, 같은 사람이 이어지면 막대 하나로
+  const sun = weekOf(day), ds = [...Array(7)].map((_, k) => addDays(sun, k)), ts = weekOf(D.today);
+  const word = { [ts]: '이번 주', [addDays(ts, -7)]: '지난주', [addDays(ts, 7)]: '다음 주' }[sun] || '';
+  $('#tnav').innerHTML = `<span class="t"><span class="ttl">${word || '주간'} 근무</span><span class="dt">${mdNum(ds[0])} ~ ${mdNum(ds[6])}</span></span>`
+    + '<button data-tw="-1" aria-label="지난주">‹</button><button data-tw="1" aria-label="다음 주">›</button>';
+  const roles = [];
+  ds.forEach(v => ((teamOf(v) || {}).roles || []).forEach(r => { if (!roles.some(x => x.code === r.code)) roles.push(r); }));
+  let row = 2, prev = '';
+  const cells = roles.map(r => {
+    const who = ds.map(v => (teamDay(v) || []).filter(([c]) => c === r.code).map(([, w]) => w).join('/'));
+    if (!who.some(Boolean)) return '';
+    let out = r.group && prev && r.group !== prev ? `<i class="tsep" style="grid-row:${row++}"></i>` : '';
+    prev = r.group || prev;
+    out += `<span class="tl" style="grid-row:${row}">${esc(r.code)}</span>`;
+    for (let k = 0, n; k < 7; k += n) {
+      for (n = 1; who[k] && k + n < 7 && who[k + n] === who[k]; n++);
+      if (who[k]) out += `<span class="tbar" style="grid-row:${row};grid-column:${k + 2} / span ${n}">${whoHtml(who[k], n === 1)}</span>`;
+    }
+    row++;
+    return out;
+  }).join('');
+  $('#tWeek').innerHTML = cells ? `<div class="tgrid" data-sun="${sun}"><i class="tsel" style="grid-column:${ds.indexOf(day) + 2};grid-row:1 / ${row}"></i>`
+    + ds.map((v, k) => `<span class="th ${dayCls(v)}${v === D.today ? ' today' : ''}" style="grid-column:${k + 2}">${DOW[k]}<b>${+v.slice(8)}</b></span>`).join('')
+    + cells + '</div>' : '<span class="empty">이 주 근무표가 없습니다</span>';
+  const at = t && new Date(t.at);
+  $('#tSrc').textContent = t ? `${+t.month.slice(5)}월 근무표 · ${at.getMonth() + 1}/${at.getDate()} ${pad(at.getHours())}:${pad(at.getMinutes())} ${t.by || ''} 올림` : '';
+}
+$('#tWeek').addEventListener('click', e => {                           // 주간 표에서 날을 누르면 위 카드가 그날로
+  const g = e.target.closest('.tgrid');
+  if (!g) return;
+  const r = g.getBoundingClientRect(), k = Math.floor((e.clientX - r.left - 28) / ((r.width - 28) / 7));
+  if (k >= 0 && k < 7) goDay(addDays(g.dataset.sun, k));
+});
+swipe($('#tDay'), moveDay);
+swipe($('#tWeek'), n => moveDay(7 * n));
+let xlsxLib = null;                                                    // 엑셀 읽기 도구는 올릴 때만 받는다
+const loadXLSX = () => xlsxLib || (xlsxLib = new Promise((res, rej) => {
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.mini.min.js';
+  s.onload = () => res(window.XLSX);
+  s.onerror = () => { xlsxLib = null; s.remove(); rej(new Error('엑셀 읽기 도구를 받지 못했습니다')); };
+  document.head.append(s);
+}));
+async function importTeam(file) {
+  toast('근무표 읽는 중…');
+  const X = await loadXLSX(), wb = X.read(await file.arrayBuffer());
+  let p = null, err = null;
+  for (const n of wb.SheetNames) {                                     // 근무표가 있는 시트를 찾는다
+    try { p = parseTeam(X.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '' })); break; } catch (e) { err = err || e; }
+  }
+  if (!p) throw err;
+  const { t, warn } = p, M = +t.month.slice(5), old = (D.team || {})[t.month], ds = Object.keys(t.days).sort();
+  if (!ds.length) throw new Error('근무 칸을 하나도 읽지 못했습니다');
+  const ok = await ask(`${t.month.slice(0, 4)}년 ${M}월 근무표`, `${md(ds[0])} ~ ${md(ds[ds.length - 1])}<small>${esc(t.roles.map(r => r.code).join(' · '))}</small>`
+    + (old ? `<small>지금 있는 ${M}월 근무표(${esc(old.by || '')} 올림)를 이 파일로 바꿉니다</small>` : '')
+    + (warn.length ? `<small class="red">${warn.slice(0, 5).map(esc).join('<br>')}${warn.length > 5 ? `<br>외 ${warn.length - 5}건` : ''}</small>` : '')
+    + '<small>선(선량설계파트 당직)은 파트 화면 기준이라 넣지 않습니다</small>', '저장');
+  if (!ok) return;
+  t.file = file.name;
+  run('saveTeam', [t], `${M}월 근무표 저장됨`);
+  if (addDays(D.today, dayOff).slice(0, 7) !== t.month) goDay(ds[0]);  // 다음 달 근무표면 그 달로
+}
+$('#tFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  e.target.value = '';                                                 // 같은 파일을 다시 골라도 되게
+  if (f) importTeam(f).catch(err => toast('근무표를 못 읽었습니다: ' + err.message));
+});
 // 달력에서 고른 날로 바로
 function goDay(v) {
   const n = Math.round((new Date(v + 'T00:00') - new Date(D.today + 'T00:00')) / 864e5);
@@ -1546,6 +1733,12 @@ document.addEventListener('click', async e => {
     closePicker();
   } else if (b.id === 'theme') {
     setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]);
+  } else if (b.id === 'brand') {
+    setTeam(!document.body.classList.contains('team'));
+  } else if (b.dataset.tw) {
+    moveDay(7 * b.dataset.tw);
+  } else if (b.id === 'tUp') {
+    $('#tFile').click();
   } else if (b.dataset.pickcolor) {
     setColor(b.dataset.pickcolor);
   } else if (b.dataset.daycal) {
