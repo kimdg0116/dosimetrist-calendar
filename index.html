@@ -490,7 +490,7 @@ button.brand { padding:0; border:0; background:none; color:inherit; text-align:l
 #screens button small { display:block; margin-top:1px; font-size:13px; font-weight:600; color:var(--mute); }
 #screens button.on { background:var(--soft); }
 #screens button.on::after { content:'✓'; position:absolute; right:14px; top:50%; transform:translateY(-50%); font-weight:800; color:var(--acc); }
-body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]) :is(#dayView, nav, #rot, #leave) { display:none !important; }
+body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[data-screen]:not([data-screen="part"]) :is(#dayView, nav, #rot, #leave) { display:none !important; }
 #team .evi { padding:8px 0; row-gap:1px; cursor:default; }   /* 역할이 9~10줄이라 일정보다 조금 촘촘히 */
 #team .evi .ln.pl { font-size:13px; }
 #team .grp { margin-top:10px; font-family:Oswald, var(--font-body); font-size:13px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--mute); }
@@ -509,6 +509,21 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 #tUp { margin-top:2px; }
 #tSrc { margin:8px 0 0; font-size:13px; text-align:center; color:var(--mute); }
 #askM small.red { color:var(--red); }
+/* 교수 일정 (Physician calendar): 위에 담당 교수, 하루 카드, 다가오는 교수 일정 */
+.dpick { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 2px 12px; }
+.dpick > b { margin-right:2px; font-size:14px; font-weight:700; color:var(--mute); }
+.dpick .dtag { padding:4px 11px; font-size:14px; font-weight:800; border-radius:999px; background:var(--soft); color:var(--badge, var(--acc)); }
+.dpick .dnone { font-size:14px; font-weight:600; color:var(--mute); }
+.dpick .dset { margin-left:auto; padding:5px 12px; font-size:13px; font-weight:700; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
+#doc .evi { cursor:default; }
+#dList .wrow { cursor:pointer; }
+.dmore { display:block; width:100%; margin-top:8px; padding:9px; font-size:14px; font-weight:600; border:0; border-radius:10px; background:var(--bg); color:var(--mute); }
+.dhint { margin:0 0 8px; font-size:14px; font-weight:500; color:var(--mute); }
+#docsList { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+.dchk { position:relative; padding:12px 10px 12px 40px; font-size:16px; font-weight:700; text-align:left; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--fg); }
+.dchk::before { content:''; position:absolute; left:12px; top:50%; width:18px; height:18px; margin-top:-9px; border:2px solid var(--line); border-radius:5px; box-sizing:border-box; }
+.dchk.on { border-color:var(--acc); background:var(--soft); }
+.dchk.on::before { content:'✓'; display:grid; place-items:center; font-size:12px; font-weight:800; color:#fff; border-color:var(--acc); background:var(--acc); }
 .wlink { font-family:var(--font-body); font-size:13px; font-weight:700; letter-spacing:0; color:var(--acc); text-decoration:none; }
 </style>
 </head>
@@ -528,6 +543,11 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
   <button type="button" class="sub" id="tUp">근무표 올리기 (엑셀 파일)</button>
   <p id="tSrc"></p>
   <input type="file" id="tFile" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+</div>
+<div id="doc">
+  <div id="dPick" class="dpick"></div>
+  <div id="dDay" class="card day"></div>
+  <div class="card"><div class="lhead"><h3>다가오는 교수 일정</h3></div><div id="dList"></div></div>
 </div>
 <div id="dayView">
   <div id="todayWork" class="card day"><span class="empty">불러오는 중…</span></div>
@@ -591,6 +611,12 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
   <div id="changeStatus" role="status"></div>
   <div class="change-pager"><button type="button" id="changePrev" aria-label="최신 기록" disabled>‹</button><span id="changePageLabel">1–5건</span><button type="button" id="changeNext" aria-label="이전 기록" disabled>›</button></div>
 </div></div>
+<div id="docs" class="panel" role="dialog" aria-modal="true" aria-labelledby="docsTitle" hidden><div class="sheet">
+  <div class="head"><h3 id="docsTitle">담당 교수</h3><button type="button" id="docsClose" aria-label="담당 교수 닫기">닫기</button></div>
+  <p class="dhint">체크한 교수 일정만 보입니다. 과 일정(스탭회의·워크샵 등)은 늘 보입니다.</p>
+  <div id="docsList"></div>
+  <button type="button" class="sub" id="docsAll">모든 교수 보기 (체크 모두 풀기)</button>
+</div></div>
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="settingsTitle">개인 설정</h3><button type="button" id="settingsClose" aria-label="개인 설정 닫기">닫기</button></div>
   <div class="settings-row"><div><b>사용자</b><p id="settingName"></p></div></div>
@@ -626,7 +652,7 @@ body:not([data-screen="team"]) #team, body[data-screen]:not([data-screen="part"]
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-19';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -967,6 +993,7 @@ function renderDay() {
     ? list.map(({ l, i, eds }) => evHtml(l, i, eds)).join('')
     : '<span class="empty">없음</span>');
   renderTeam();                                                        // 팀 화면도 같은 날짜
+  renderDoc();
 }
 // <team-parse> 의학물리팀 근무표 엑셀(칸 배열) → { month, roles, days, notes }. 칸 위치를 외우지 않고
 // '요일 줄'·'날짜 줄'·'역할 기호'를 찾아 읽는다 (달마다 칸이 조금 밀려도 되게). 서버 폴더 tools/team-import.mjs 도 이 함수를 꺼내 쓴다
@@ -1037,6 +1064,7 @@ function parseTeam(g) {
 const SCREENS = [
   { id: 'part', title: 'DOSIMETRIST CALENDAR', sub: '선량설계파트 업무 · 일정' },
   { id: 'team', title: 'MEDICAL PHYSICS TEAM', sub: '의학물리팀 근무표' },
+  { id: 'doc', title: 'PHYSICIAN CALENDAR', sub: '교수 일정' },
 ];
 const DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 let curScreen = 'part';
@@ -1102,6 +1130,46 @@ $('#tWeek').addEventListener('click', e => {                           // 주간
 });
 swipe($('#tDay'), moveDay);
 swipe($('#tWeek'), n => moveDay(7 * n));
+// ── 교수 일정 (Physician calendar): 서버 DoctorData.js (근태계획서에서 클로드가 뽑아 넣는다). 교수 명단도 서버에만 ──
+// 담당 교수는 폰마다 저장. 아무도 체크 안 하면 모든 교수. 과 일정(kind '과')은 늘 보인다
+let docSel = [], docAll = false;                                       // docAll: 하루 카드에서 '담당 외 교수도 보기'
+try { docSel = JSON.parse(localStorage.getItem('docs') || '[]'); } catch (e) {}
+const saveDocSel = () => { try { localStorage.setItem('docs', JSON.stringify(docSel)); } catch (e) {} };
+const docEvents = () => Object.values((D.doc || {}).months || {}).flatMap(m => m.events || []);
+const docWho = e => docAll || !docSel.length ? e.who : e.who.filter(n => docSel.includes(n));
+const docVisible = e => e.kind === '과' || docWho(e).length > 0;
+const docRow = e => {
+  const range = e.start !== e.end ? `${mdh(e.start)}~${mdh(e.end)}` : '', who = docWho(e).map(esc).join(' · ');
+  return `<div class="evi"><span class="kind">${esc(e.kind)}</span><span class="t1">${e.kind === '과' ? esc(e.title || '') : who}</span>`
+    + `<span class="tm">${esc(e.time || '') || range}</span>${e.time && range ? `<div class="ln when">${range}</div>` : ''}`
+    + `${e.kind !== '과' && e.title ? `<div class="ln pl">${esc(e.title)}</div>` : ''}${e.place ? `<div class="ln pl">${esc(e.place)}</div>` : ''}</div>`;
+};
+function renderDoc() {
+  const names = D.doc ? D.doc.names : [], day = addDays(D.today, dayOff);
+  const sel = names.filter(n => docSel.includes(n));
+  $('#dPick').innerHTML = '<b>담당 교수</b>' + (sel.length ? sel.map(n => `<span class="dtag">${esc(n)}</span>`).join('') : '<span class="dnone">설정 전 · 모든 교수 일정</span>')
+    + '<button type="button" class="dset" data-docpick="1">설정</button>';
+  const on = docEvents().filter(e => e.start <= day && day <= e.end), shown = on.filter(docVisible);
+  const others = new Set(docAll || !docSel.length ? [] : on.flatMap(e => e.who.filter(n => !docSel.includes(n))));
+  const noMonth = D.doc && !D.doc.months[day.slice(0, 7)] ? `<span class="empty">${+day.slice(5, 7)}월 교수 일정이 아직 없습니다</span>` : '';
+  $('#dDay').innerHTML = dayHead('교수 일정', day) + shown.map(docRow).join('')
+    + (shown.length ? noMonth : noMonth || '<span class="empty">없음</span>')
+    + (others.size ? `<button type="button" class="dmore" data-docall="1">담당 외 교수 ${others.size}명 일정 보기</button>`
+      : docAll ? '<button type="button" class="dmore" data-docall="1">담당 교수만 보기</button>' : '');
+  const by = {};                                                        // 다가오는 일정: 오늘부터, 여러 날 일정은 시작일(이미 시작했으면 오늘)에
+  docEvents().filter(e => e.end >= D.today && docVisible(e)).forEach(e => (by[e.start < D.today ? D.today : e.start] ||= []).push(e));
+  const days = Object.keys(by).sort();
+  $('#dList').innerHTML = !D.doc ? '<span class="empty">교수 일정이 아직 없습니다</span>' : days.length ? days.map(v => `<div class="wrow${v === D.today ? ' today' : ''}" data-dv="${v}">`
+    + `<div class="wd ${dayCls(v)}">${md(v)}${D.holidays[v] ? `<small>${esc(D.holidays[v])}</small>` : ''}</div><div class="wevs">${by[v].map(docRow).join('')}</div></div>`).join('') : '<span class="empty">없음</span>';
+}
+function renderDocsList() {
+  $('#docsList').innerHTML = (D.doc ? D.doc.names : []).map(n => `<button type="button" class="dchk${docSel.includes(n) ? ' on' : ''}" data-doc="${esc(n)}">${esc(n)}</button>`).join('');
+}
+$('#dList').addEventListener('click', e => {                           // 목록의 날을 누르면 위 카드가 그날로
+  const r = e.target.closest('[data-dv]');
+  if (r) { goDay(r.dataset.dv); scrollTo({ top: 0, behavior: 'smooth' }); }
+});
+swipe($('#dDay'), moveDay);
 let xlsxLib = null;                                                    // 엑셀 읽기 도구는 올릴 때만 받는다
 const loadXLSX = () => xlsxLib || (xlsxLib = new Promise((res, rej) => {
   const s = document.createElement('script');
@@ -1633,10 +1701,10 @@ $('#changeList').addEventListener('touchend', e => {
   changeTouch = null;
   if (Math.abs(dx) > 55 && Math.abs(dx) > 2 * Math.abs(dy)) moveChanges(dx < 0 ? 1 : -1);
 }, { passive: true });
-['changes', 'settings'].forEach(id => $('#' + id).addEventListener('click', e => { if (e.target.id === id) closePanel(id); }));
+['changes', 'settings', 'docs'].forEach(id => $('#' + id).addEventListener('click', e => { if (e.target.id === id) closePanel(id); }));
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') showScreens(false);
-  if (e.key === 'Escape') ['changes', 'settings'].forEach(id => { if (!$('#' + id).hidden) closePanel(id); });
+  if (e.key === 'Escape') ['changes', 'settings', 'docs'].forEach(id => { if (!$('#' + id).hidden) closePanel(id); });
 });
 
 document.addEventListener('click', async e => {
@@ -1768,6 +1836,18 @@ document.addEventListener('click', async e => {
     setScreen(b.dataset.screen);
   } else if (b.dataset.tw) {
     moveDay(7 * b.dataset.tw);
+  } else if (b.dataset.docpick) {
+    renderDocsList(); $('#docs').hidden = false; document.body.classList.add('modal-open');
+  } else if (b.dataset.doc) {
+    const n = b.dataset.doc;
+    docSel = docSel.includes(n) ? docSel.filter(x => x !== n) : [...docSel, n];
+    saveDocSel(); renderDocsList(); renderDoc();
+  } else if (b.id === 'docsAll') {
+    docSel = []; saveDocSel(); renderDocsList(); renderDoc();
+  } else if (b.id === 'docsClose') {
+    closePanel('docs');
+  } else if (b.dataset.docall) {
+    docAll = !docAll; renderDoc();
   } else if (b.id === 'tUp') {
     $('#tFile').click();
   } else if (b.dataset.pickcolor) {
