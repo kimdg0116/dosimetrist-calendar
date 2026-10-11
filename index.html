@@ -124,14 +124,13 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .names { display:flex; flex-wrap:wrap; gap:2px 10px; font-weight:700; }
 /* 일정 한 줄 — 맨 위 카드·다가오는 일정·주/월·이름 추가 찾기 모두 같은 틀.
    [구분 칩] 첫 줄(내용, 없으면 이름) [시간] / 아래 줄(.ln: 참석자·장소)은 첫 줄과 같은 세로선에서 시작.
-   강약: 첫 줄 진하게 > 참석자 > 장소 흐리게, '종일'은 작고 흐리게 (시간 있는 일정만 눈에 띄게) */
+   강약: 첫 줄 진하게 > 참석자 > 장소 흐리게. 시간·종일은 같은 굵은 글씨 */
 .evi { display:grid; grid-template-columns:50px minmax(0, 1fr) auto; column-gap:10px; row-gap:3px; align-items:baseline; padding:10px 0; border-top:1px solid var(--line); text-align:left; cursor:pointer; }
 .evi:first-of-type { border-top:0; padding-top:4px; }
 .evi .kind { padding:3px 0; text-align:center; white-space:nowrap; }
 .evi .t1 { min-width:0; font-size:16px; font-weight:800; line-height:1.4; word-break:keep-all; overflow-wrap:anywhere; }
 .evi .t1 .names { display:inline-flex; gap:2px 8px; font-weight:inherit; }
 .evi .tm { white-space:nowrap; font-family:Oswald, Paperlogy, var(--font-body); font-variant-numeric:tabular-nums; letter-spacing:.02em; font-size:16px; font-weight:600; color:var(--fg); }
-.evi .tm.q { font-family:var(--font-body); font-size:13px; font-weight:500; letter-spacing:0; color:var(--mute); }
 .evi .ln { grid-column:2 / -1; min-width:0; line-height:1.4; }
 .evi .ln .names { gap:2px 8px; font-size:15px; }
 .evi .ln.when { font-family:Oswald, Paperlogy, var(--font-body); font-size:14px; font-weight:500; color:var(--mute); }
@@ -151,7 +150,8 @@ nav button.on { background:var(--acc); color:#fff; box-shadow:0 2px 8px rgba(46,
 .in-l { animation:pin .18s ease-out; --dx:24px; } .in-r { animation:pin .18s ease-out; --dx:-24px; }
 #leaves { touch-action:pan-y; }
 @keyframes pin { from { opacity:.4; transform:translateX(var(--dx)); } }
-#periods #addPeriod { margin-top:14px; }
+#periods #addPeriod, #periods .padd { margin-top:14px; }
+#periods .padd #addPeriod { margin-top:0; }
 #allRot { position:fixed; inset:0; z-index:30; display:flex; align-items:flex-end; background:rgba(10,20,60,.4); }
 #allRot .sheet { width:100%; max-height:86vh; display:flex; flex-direction:column; padding:16px 0 calc(14px + env(safe-area-inset-bottom, 0px)); border-radius:20px 20px 0 0; background:var(--card); }
 #allRot .hd { display:flex; align-items:center; padding:0 16px 10px; }
@@ -525,7 +525,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-02';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-03';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -765,6 +765,7 @@ function apply_(op) {                                                  // 저장
     if (!p || ri < 0) return false;
     p.who[ri] = args[2];
   }
+  else if (fn === 'deletePeriod') { const k = D.periods.findIndex(p => p.col === args[0]); if (k < 0) return false; D.periods.splice(k, 1); }
   else if (fn === 'addLeave') { const i = L.findIndex(l => l.start > f.start); L.splice(i < 0 ? L.length : i, 0, item()); }
   else return false;
   return true;
@@ -929,7 +930,8 @@ function render() {
           <div class="two" style="margin-top:8px"><div><button class="sub" data-subclose="1">닫기</button></div>
           <div><button class="sub del-sub" data-i="${s.i}">삭제</button></div></div></div>`;
       }).join('')}</div>
-      ${last ? ADD : ''}
+      ${!last ? '' : p.who.some(Boolean) ? ADD                         // 담당이 하나도 없는 마지막 기간은 지울 수 있다
+        : `<div class="two padd"><div>${ADD}</div><div><button class="sub del-sub" id="delPeriod" data-col="${p.col}">빈 기간 삭제</button></div></div>`}
     </div>`).join('') || `<div class="card"><span class="empty">기간이 없습니다.</span>${ADD}</div>`;
   pSlide = '';
 }
@@ -970,7 +972,7 @@ const evHtml = (l, i, eds) => {
   return `<div class="evi${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="kind">${esc(l.kind)}</span>
     <span class="t1">${l.memo ? esc(l.memo) : namesHtml(who, '', eds) || '-'}</span>
-    <span class="tm${time || range ? '' : ' q'}">${time || range || '종일'}</span>
+    <span class="tm">${time || range || '종일'}</span>
     ${l.memo && who.length ? `<div class="ln">${namesHtml(who, '', eds)}</div>` : ''}
     ${time && range ? `<div class="ln when">${range}</div>` : ''}
     ${l.place ? `<div class="ln pl">${esc(l.place)}</div>` : ''}</div>`;
@@ -1497,6 +1499,11 @@ document.addEventListener('click', async e => {
     b.disabled = true;                                               // 연타해도 한 번만
     if (await run('addPeriod', [], '기간 추가됨')) { pSlide = 'l'; pPage = D.periods.length - 1; render(); }   // 새 기간으로
     b.disabled = false;
+  } else if (b.id === 'delPeriod') {
+    const p = D.periods.find(p => p.col === +b.dataset.col);
+    if (!p || !await ask(`${mdNum(p.start)} ~ ${mdNum(p.end)}`, '빈 기간<small>삭제하시겠습니까?</small>', '삭제')) return;
+    pSlide = 'r'; pPage = Math.max(0, D.periods.length - 2);         // 바로 앞 기간으로
+    run('deletePeriod', [p.col], '기간 삭제됨');
   } else if (b.dataset.pg) {
     movePeriod(+b.dataset.pg);
   } else if (b.dataset.allrot) {
