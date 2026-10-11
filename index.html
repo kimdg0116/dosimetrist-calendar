@@ -133,7 +133,7 @@ button { font-family:inherit; cursor:pointer; }
 .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
   margin:0 calc(-1 * var(--gut)) 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) var(--gut) 12px;
   background:var(--bg-top); color:var(--bar-fg); }
-.brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1; white-space:nowrap; }
+.brand { flex:1; min-width:0; font-family:Oswald, sans-serif; font-weight:700; font-size:19px; letter-spacing:.1em; line-height:1.05; }   /* 자리가 모자랄 때만(이름이 길 때 등) 두 줄로 */
 @media (max-width:390px) { .top .brand { font-size:16px; letter-spacing:.04em; white-space:normal; line-height:1.05; } }
 .icon-btn { width:36px; height:32px; padding:0; font-size:15px; line-height:1; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
 
@@ -728,7 +728,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-11';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-12';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
