@@ -96,6 +96,22 @@ try { const c = localStorage.getItem('color'); if (c && c !== 'blue') document.d
 :root[data-color="warmgray"] { --bg:#f3f2f2; --bg-top:#eae9e8; --line:#e1e0df; --acc:#504943; --deep:#504943; --soft:#ecebea; --badge:#7A7168; --toast:#504943; --bar:rgba(234,233,232,0.88); --bar-fg:#504943; --shadow:0 6px 22px rgba(80,73,67,0.1); }
 @media (prefers-color-scheme: dark) { :root[data-color="warmgray"]:not([data-theme="light"]) { --bg:#161517; --bg-top:#1e1c1d; --card:#262527; --fg:#e9e8eb; --mute:#a2a0a5; --line:#403e40; --acc:#C4BAB0; --deep:#C4BAB0; --soft:#393738; --badge:#C4BAB0; --toast:#504943; --bar:rgba(30,28,29,0.88); --bar-fg:#e9e8eb; --card-border:#302f32; } }
 :root[data-color="warmgray"][data-theme="dark"] { --bg:#161517; --bg-top:#1e1c1d; --card:#262527; --fg:#e9e8eb; --mute:#a2a0a5; --line:#403e40; --acc:#C4BAB0; --deep:#C4BAB0; --soft:#393738; --badge:#C4BAB0; --toast:#504943; --bar:rgba(30,28,29,0.88); --bar-fg:#e9e8eb; --card-border:#302f32; }
+/* 파랑·민트 계열 대안 (2026-10-11). 파랑 계열은 지금 파랑처럼 제목(진한)과 버튼·탭 색을 따로 둔다 */
+:root[data-color="sky"] { --bg:#eff6fb; --bg-top:#e4f0f8; --line:#d8e9f6; --acc:#1A7FC8; --deep:#0B5C99; --soft:#e6f1f9; --badge:#2A9BE0; --toast:#0B5C99; --bar:rgba(228,240,248,0.88); --bar-fg:#0B5C99; --shadow:0 6px 22px rgba(26,127,200,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="sky"]:not([data-theme="light"]) { --bg:#0f151b; --bg-top:#121c25; --card:#1b242e; --fg:#e0e8f0; --mute:#8f9fb1; --line:#2b3e4e; --acc:#5BB8F5; --deep:#5BB8F5; --soft:#243646; --badge:#5BB8F5; --toast:#1A7FC8; --bar:rgba(18,28,37,0.88); --bar-fg:#e0e8f0; --card-border:#242f3a; } }
+:root[data-color="sky"][data-theme="dark"] { --bg:#0f151b; --bg-top:#121c25; --card:#1b242e; --fg:#e0e8f0; --mute:#8f9fb1; --line:#2b3e4e; --acc:#5BB8F5; --deep:#5BB8F5; --soft:#243646; --badge:#5BB8F5; --toast:#1A7FC8; --bar:rgba(18,28,37,0.88); --bar-fg:#e0e8f0; --card-border:#242f3a; }
+:root[data-color="navy"] { --bg:#f0f2f7; --bg-top:#e6eaf1; --line:#dbe1eb; --acc:#2B4C8C; --deep:#1A2D5A; --soft:#e8ebf2; --badge:#3D63B0; --toast:#1A2D5A; --bar:rgba(230,234,241,0.88); --bar-fg:#1A2D5A; --shadow:0 6px 22px rgba(43,76,140,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="navy"]:not([data-theme="light"]) { --bg:#12151a; --bg-top:#181b23; --card:#20232d; --fg:#e5e7ef; --mute:#989eaf; --line:#353c4b; --acc:#8FAEE8; --deep:#8FAEE8; --soft:#2e3443; --badge:#8FAEE8; --toast:#2B4C8C; --bar:rgba(24,27,35,0.88); --bar-fg:#e5e7ef; --card-border:#2a2e39; } }
+:root[data-color="navy"][data-theme="dark"] { --bg:#12151a; --bg-top:#181b23; --card:#20232d; --fg:#e5e7ef; --mute:#989eaf; --line:#353c4b; --acc:#8FAEE8; --deep:#8FAEE8; --soft:#2e3443; --badge:#8FAEE8; --toast:#2B4C8C; --bar:rgba(24,27,35,0.88); --bar-fg:#e5e7ef; --card-border:#2a2e39; }
+:root[data-color="cobalt"] { --bg:#eff3fd; --bg-top:#e4ebfb; --line:#d9e2fa; --acc:#1F55E0; --deep:#0B3AA8; --soft:#e6ecfc; --badge:#3B6EF5; --toast:#0B3AA8; --bar:rgba(228,235,251,0.88); --bar-fg:#0B3AA8; --shadow:0 6px 22px rgba(31,85,224,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="cobalt"]:not([data-theme="light"]) { --bg:#11141c; --bg-top:#161a26; --card:#1f222f; --fg:#e3e6f1; --mute:#959cb3; --line:#323950; --acc:#7FA3FF; --deep:#7FA3FF; --soft:#2b3248; --badge:#7FA3FF; --toast:#1F55E0; --bar:rgba(22,26,38,0.88); --bar-fg:#e3e6f1; --card-border:#282c3c; } }
+:root[data-color="cobalt"][data-theme="dark"] { --bg:#11141c; --bg-top:#161a26; --card:#1f222f; --fg:#e3e6f1; --mute:#959cb3; --line:#323950; --acc:#7FA3FF; --deep:#7FA3FF; --soft:#2b3248; --badge:#7FA3FF; --toast:#1F55E0; --bar:rgba(22,26,38,0.88); --bar-fg:#e3e6f1; --card-border:#282c3c; }
+:root[data-color="sage"] { --bg:#f2f6f5; --bg-top:#e9efed; --line:#e0e8e6; --acc:#4A7A6A; --deep:#4A7A6A; --soft:#ebf0ef; --badge:#6E9C8B; --toast:#4A7A6A; --bar:rgba(233,239,237,0.88); --bar-fg:#4A7A6A; --shadow:0 6px 22px rgba(74,122,106,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="sage"]:not([data-theme="light"]) { --bg:#131617; --bg-top:#181e1d; --card:#212627; --fg:#e5e9eb; --mute:#99a2a5; --line:#364040; --acc:#94C4B2; --deep:#94C4B2; --soft:#2f3938; --badge:#94C4B2; --toast:#4A7A6A; --bar:rgba(24,30,29,0.88); --bar-fg:#e5e9eb; --card-border:#2a3032; } }
+:root[data-color="sage"][data-theme="dark"] { --bg:#131617; --bg-top:#181e1d; --card:#212627; --fg:#e5e9eb; --mute:#99a2a5; --line:#364040; --acc:#94C4B2; --deep:#94C4B2; --soft:#2f3938; --badge:#94C4B2; --toast:#4A7A6A; --bar:rgba(24,30,29,0.88); --bar-fg:#e5e9eb; --card-border:#2a3032; }
+:root[data-color="teal"] { --bg:#eef5f7; --bg-top:#e2eef2; --line:#d6e7ec; --acc:#0E7490; --deep:#0E7490; --soft:#e4f0f3; --badge:#1597B5; --toast:#0E7490; --bar:rgba(226,238,242,0.88); --bar-fg:#0E7490; --shadow:0 6px 22px rgba(14,116,144,0.1); }
+@media (prefers-color-scheme: dark) { :root[data-color="teal"]:not([data-theme="light"]) { --bg:#0e161a; --bg-top:#101d22; --card:#1a252c; --fg:#dfe9ef; --mute:#8ca1ad; --line:#284049; --acc:#4CC2DE; --deep:#4CC2DE; --soft:#213841; --badge:#4CC2DE; --toast:#0E7490; --bar:rgba(16,29,34,0.88); --bar-fg:#dfe9ef; --card-border:#223038; } }
+:root[data-color="teal"][data-theme="dark"] { --bg:#0e161a; --bg-top:#101d22; --card:#1a252c; --fg:#dfe9ef; --mute:#8ca1ad; --line:#284049; --acc:#4CC2DE; --deep:#4CC2DE; --soft:#213841; --badge:#4CC2DE; --toast:#0E7490; --bar:rgba(16,29,34,0.88); --bar-fg:#dfe9ef; --card-border:#223038; }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; touch-action:pan-x pan-y; }
 html { touch-action:pan-x pan-y; -webkit-text-size-adjust:100%; text-size-adjust:100%; background:var(--bg-top); }   /* 안드로이드 글자 자동 키움 끄기 */
 body { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }               /* 꾹 눌러도 글자 블록이 안 잡히게 (입력 칸은 그대로) */
@@ -564,7 +580,7 @@ nav button { font-weight:700; }
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.11-05';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.11-06';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1582,8 +1598,13 @@ setTheme(theme);
 
 // ── 테마 색: 각자 고른다 (기기에 기억). 새 색 = 여기 한 줄 + CSS 의 :root[data-color="…"] 블록 (라이트·다크) ──
 const COLORS = [
-  { id: 'blue', name: '파랑', dot: '#2e70ff', bar: ['#e3eeff', '#142039'] },   // 기본 (CSS 는 :root 그대로)
-  { id: 'mint', name: '민트', dot: '#00806F', bar: ['#e1f2ee', '#11211f'] },
+  { id: 'blue', name: '파랑 · 기본', dot: '#2e70ff', bar: ['#e3eeff', '#142039'] },   // 기본 (CSS 는 :root 그대로)
+  { id: 'sky', name: '스카이 · 밝게', dot: '#1A7FC8', bar: ['#e4f0f8', '#121c25'] },
+  { id: 'navy', name: '네이비 · 진하게', dot: '#2B4C8C', bar: ['#e6eaf1', '#181b23'] },
+  { id: 'cobalt', name: '코발트 · 선명하게', dot: '#1F55E0', bar: ['#e4ebfb', '#161a26'] },
+  { id: 'mint', name: '민트 · 기본', dot: '#00806F', bar: ['#e1f2ee', '#11211f'] },
+  { id: 'sage', name: '세이지 · 차분하게', dot: '#4A7A6A', bar: ['#e9efed', '#181e1d'] },
+  { id: 'teal', name: '틸 · 푸른빛', dot: '#0E7490', bar: ['#e2eef2', '#101d22'] },
   { id: 'lavender', name: '라벤더 · 기본', dot: '#6B5BB5', bar: ['#edebf6', '#1b1924'] },
   { id: 'lilac', name: '라일락 · 분홍빛', dot: '#86529F', bar: ['#f0eaf3', '#1e1923'] },
   { id: 'indigo', name: '인디고 라벤더 · 진하게', dot: '#4F45A6', bar: ['#eae9f4', '#1a1924'] },
