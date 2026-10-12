@@ -730,7 +730,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-14';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.12-15';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -847,10 +847,10 @@ function clashes(p) {
 }
 
 let toastTimer;
-function toast(msg) {
+function toast(msg, keep) {                                            // keep: 다음 안내가 뜰 때까지 (저장 중…)
   const t = $('#toast');
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  clearTimeout(toastTimer); if (!keep) toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
 }
 
 // ── 서버: Apps Script 웹 앱 (데이터만 주고받는다). 접근 코드·본인 이름은 이 폰에 기억 ──
@@ -992,16 +992,23 @@ function redraw() {
 function run(fn, args, msg, src) {                                    // src: 고치거나 지울 그 일정 (방금 저장해 줄 번호가 아직 없는 것도 내용으로 찾는다)
   const t = src || /^(update|delete|join)Leave$/.test(fn) && D.leaves.find(l => l.row === args[0] && l.sig === args[1]);
   const op = { fn, args, msg, key: t ? leafKey(t) : null, oid: DEV + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) };
-  try { op.shown = apply_(op); } catch (e) {}
+  try { apply_(op); } catch (e) {}
   queued.push(op); saveOutbox(); render();
-  toast(op.shown ? msg : busy ? '앞 저장을 마치는 중…' : '저장 중…');
+  toast(busy ? '앞 저장을 마치는 중…' : '저장 중…', true);            // '저장됨'은 서버가 받았다고 답한 뒤에만
   return enqueue(op);
 }
+// 캘린더 반영·휴대폰 알림은 저장을 다 마친 뒤 한 번만 따로 부탁한다 (서버 syncNow, 답은 안 기다림. 못 가면 5분 트리거가 맞춤)
+const SYNC = { addLeave: '근태', updateLeave: '근태', joinLeave: '근태', deleteLeave: '근태', setRotation: '순번', addPeriod: '순번', deletePeriod: '순번' };
+let syncWant = null;
 function enqueue(op) {
   busy++;
   const p = chain.then(() => send_(op));
   chain = p.catch(() => {});
-  return p.finally(() => { busy--; });
+  return p.finally(() => {
+    if (--busy || syncWant === null) return;
+    const only = syncWant; syncWant = null;
+    req('syncNow', [only]).catch(() => {});
+  });
 }
 // 저장 보내기. 연결 문제면 버리지 않고 2·4·8…초(최대 30초) 간격으로 다시 보낸다. 같은 고유 번호(oid)라 서버에서 두 번 적용되지 않는다
 async function send_(op) {
@@ -1024,8 +1031,9 @@ async function send_(op) {
       const r = await req(op.fn, op.sent, op.oid);
       drop(); setData(r.data);
       if (r.rang === false) ring();                                    // 서버가 못 눌렀으면 이 폰이 초인종을
-      if (n > 0 || op.resumed) toast('밀려 있던 저장을 보냈습니다');
-      else if (!op.shown) toast(op.msg);
+      if (SYNC[op.fn] && !r.dup) syncWant = syncWant === null || syncWant === SYNC[op.fn] ? SYNC[op.fn] : '';   // '' = 둘 다
+      if (op.resumed) { if (!r.dup) toast('지난번에 덜 끝난 저장을 마저 보냈습니다'); }   // dup = 그때 이미 서버에 닿았던 것
+      else toast((n > 0 ? '밀려 있던 저장을 보냈습니다' : op.msg) + (queued.length ? ` · 남은 저장 ${queued.length}건` : ''), queued.length > 0);
       return true;
     } catch (e) {
       if (!e.net) { drop(); toast('실패: ' + e.message); load(); return false; }   // 내용 문제(다른 사람이 먼저 고침 등)
@@ -2240,7 +2248,7 @@ async function start() {
   if (saved) { S = saved; S.today = localToday(); queued = ob; redraw(); initForm(); if (!ob.length) await pull(true); }   // 저장본으로 바로 그리고, 바뀐 게 있을 때만 받기
   else await load();
   if (ob.length && S) {                                                // 지난번에 못 보낸 저장 이어 보내기 (같은 번호라 중복 없음)
-    queued = ob; redraw(); toast(`보내지 못한 저장 ${ob.length}건을 다시 보냅니다`);
+    queued = ob; redraw();
     ob.forEach(op => { op.resumed = true; enqueue(op); });
   }
   if (D) { initForm(); if (!auth.me) showGate(2); else initPush(); }
