@@ -736,7 +736,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.20-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.21-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -834,19 +834,20 @@ const subs = () => D.leaves.map((l, i) => ({ l, i })).filter(({ l }) => isSub(l)
 const AR = '<svg class="ar" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8H3M7 4 3 8l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';   // ← (SUIT 에선 '<' 로 보여서 직접 그린다)
 const rl = n => `rl ${/[가-힣]/.test(n) ? 'ko' : 'en'}`;               // 업무명 글꼴: 온콜·당직 = 페이퍼로지, TOMO·SGRT = Oswald
 const subFor = (role, day) => subs().find(s => s.role === role && s.day === day);
+const rn = (p, ri) => (p && p.names || [])[ri] || D.roles[ri].name;   // 그 기간의 업무 이름 (SGRT 치료실 묶음은 2026-12-01 부터 5·6·9 / 8·10·11)
 
 // 기간 p 안에서 담당자가 근태로 빠지는데 백업이 아직 없는 날
 function clashes(p) {
   const out = [];
   D.roles.forEach((r, ri) => {
-    const v = p.who[ri];
+    const v = p.who[ri], role = rn(p, ri);
     if (!v) return;
     for (const [day, dow] of days(p.start > D.today ? p.start : D.today, p.end)) {
-      if (!ALL_WEEK.includes(r.name) && (dow === 0 || dow === 6 || D.holidays[day])) continue;
+      if (!ALL_WEEK.includes(role) && (dow === 0 || dow === 6 || D.holidays[day])) continue;
       const l = away(v, day);
-      if (!l || subFor(r.name, day)) continue;
-      const rec = backupFor(r.name, p, ri);
-      out.push({ day, ri, role: r.name, v, kind: l.kind + (l.time ? ' ' + l.time.replace(/\s*-\s*/, ' ~ ') : ''), rec: rec && rec !== v && !away(rec, day) ? rec : '' });
+      if (!l || subFor(role, day)) continue;
+      const rec = backupFor(role, p, ri);
+      out.push({ day, ri, role, v, kind: l.kind + (l.time ? ' ' + l.time.replace(/\s*-\s*/, ' ~ ') : ''), rec: rec && rec !== v && !away(rec, day) ? rec : '' });
     }
   });
   return out.sort((a, b) => a.day < b.day ? -1 : 1);
@@ -1093,16 +1094,16 @@ function renderDay() {
   const day = addDays(D.today, dayOff), head = what => dayHead(what, day);
   const cur = D.periods.find(p => p.start <= day && day <= p.end);
   $('#todayWork').innerHTML = head('업무') + (cur ? D.roles.map((r, i) => {
-    const s = subFor(r.name, day);
+    const n = rn(cur, i), s = subFor(n, day);
     const out = !s && cur.who[i] && away(cur.who[i], day);
     const v = s && s.who !== s.orig ? `${esc(s.who)} <small>(${AR}${esc(s.orig)})</small>`
       : esc(cur.who[i]) + (out && !s ? ` <small class="red">(${esc(out.kind)} · 백업 없음)</small>` : '');
-    if (!cur.who[i]) return s ? `<div class="line"><b class="${rl(r.name)}">${esc(r.name)}</b><span class="who">${v}</span></div>` : '';
+    if (!cur.who[i]) return s ? `<div class="line"><b class="${rl(n)}">${esc(n)}</b><span class="who">${v}</span></div>` : '';
     const orig = cur.who[i], opts = D.people.includes(orig) ? D.people : [orig, ...D.people];
     return dd(`day|${i}|${day}`, opts.map(n => {                     // 누르면 그날만 대신 설 사람 고르기
       const a = away(n, day);
       return { v: n, t: n + (n === orig ? ' (원래 담당)' : a ? ` (${a.kind})` : '') };
-    }), s ? s.who : orig, '', `<b class="${rl(r.name)}">${esc(r.name)}</b><span>${v}</span>`, ' line-dd');
+    }), s ? s.who : orig, '', `<b class="${rl(n)}">${esc(n)}</b><span>${v}</span>`, ' line-dd');
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
   const list = arrange(evOn(day));
   $('#todayLeave').innerHTML = head('일정') + (list.length
@@ -1481,7 +1482,7 @@ function render() {
         const v = p.who[ri];
         const opts = ['', ...D.people];
         if (v && !opts.includes(v)) opts.push(v);
-        return `<div class="role"><span class="${rl(r.name)}">${esc(r.name)}</span>${dd(`rot|${pi}|${ri}`,
+        return `<div class="role"><span class="${rl(rn(p, ri))}">${esc(rn(p, ri))}</span>${dd(`rot|${pi}|${ri}`,
           opts.map(o => ({ v: o, t: o ? o + (D.people.includes(o) ? '' : ' (명단 외)') : '-' })), v)}</div>`;
       }).join('')}
       ${clashes(p).map(c => `
@@ -1520,8 +1521,8 @@ function openAllRot() {
   const nSub = (p, role) => subs().some(s => s.role === role && p.start <= s.day && s.day <= p.end);
   $('#allScroll').innerHTML = `<table><thead><tr><th>업무</th>${D.periods.map((p, k) =>
     `<th class="${cls(p)}"><button type="button" data-goper="${k}">${mdNum(p.start)}<br>~${mdNum(p.end)}</button></th>`).join('')}</tr></thead>
-    <tbody>${D.roles.map((r, ri) => `<tr><th class="${rl(r.name)}">${esc(r.name)}</th>${D.periods.map(p =>
-      `<td class="${cls(p)}">${esc(p.who[ri] || '-')}${nSub(p, r.name) ? '<i class="dot"></i>' : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    <tbody>${D.roles.map((r, ri) => `<tr><th class="${rl(r.name)}">${[...new Set(D.periods.map(p => rn(p, ri)))].map(esc).join('<br>')}</th>${D.periods.map(p =>
+      `<td class="${cls(p)}">${esc(p.who[ri] || '-')}${nSub(p, rn(p, ri)) ? '<i class="dot"></i>' : ''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   $('#allRot').hidden = false;
   const now = $('#allScroll thead th.now');
   $('#allScroll').scrollLeft = now ? now.offsetLeft - 120 : $('#allScroll').scrollWidth;
@@ -1630,14 +1631,14 @@ const nm = n => n ? esc(n) : '비움';
 async function onDd(key, v) {
   const [type, ...a] = key.split('|');
   if (type === 'rot') {                                                // 기간 담당자 바꾸기
-    const p = D.periods[a[0]], r = D.roles[a[1]], cur = p.who[a[1]] || '';
+    const p = D.periods[a[0]], r = D.roles[a[1]], cur = p.who[a[1]] || '', n = rn(p, a[1]);
     if (v === cur) return;
-    if (!await ask(`${r.name} · ${mdNum(p.start)} ~ ${mdNum(p.end)}`, `${nm(cur)} ${ARR} ${nm(v)}<small>변경하시겠습니까?</small>`)) return;
-    run('setRotation', [r.row, p.col, v, p.who[a[1]]], `${r.name}: ${v || '비움'}`);
+    if (!await ask(`${n} · ${mdNum(p.start)} ~ ${mdNum(p.end)}`, `${nm(cur)} ${ARR} ${nm(v)}<small>변경하시겠습니까?</small>`)) return;
+    run('setRotation', [r.row, p.col, v, p.who[a[1]]], `${n}: ${v || '비움'}`);
   } else if (type === 'sub') {                                         // 백업자 고르기 (저장은 백업 버튼)
     subPick[a.join('|')] = v; render();
   } else if (type === 'day') {                                         // 맨 위 업무 줄: 그날만 바꾸기 (원래 담당을 고르면 되돌림)
-    const [ri, day] = a, role = D.roles[ri].name, orig = D.periods.find(p => p.start <= day && day <= p.end).who[ri];
+    const [ri, day] = a, p = D.periods.find(p => p.start <= day && day <= p.end), role = rn(p, ri), orig = p.who[ri];
     const s = subFor(role, day), l = s && D.leaves[s.i], now = s ? s.who : orig;
     if (v === now) return;
     if (!await ask(`${role} · ${md(day)}`, v === orig
