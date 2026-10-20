@@ -401,7 +401,9 @@ footer { margin-top:28px; }
 .settings-row:first-of-type { border-top:0; }
 .settings-row b { display:block; font-size:16px; }
 .settings-row p { margin:3px 0 0; font-size:13px; color:var(--mute); }
-.settings-row .icon-btn { flex:none; width:44px; height:40px; font-size:19px; }
+.settings-row .icon-btn { flex:none; width:44px; height:40px; font-size:19px; display:grid; place-items:center; }
+.settings-row .icon-btn svg { width:20px; height:20px; }
+.settings-row select { flex:none; width:auto; padding:8px 10px; }
 .settings-row.colors { flex-direction:column; align-items:stretch; }
 .settings-row .pill { flex:none; padding:7px 14px; font-size:14px; font-weight:700; border:1px solid var(--line); border-radius:999px; background:var(--card); color:var(--acc); }
 html.android .ios-only, html:not(.android) .android-only { display:none !important; }   /* 위젯 설치: 아이폰(Scriptable) · 갤럭시(파트 위젯 앱) */
@@ -697,7 +699,11 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 <div id="settings" class="panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden><div class="sheet">
   <div class="head"><h3 id="settingsTitle">개인 설정</h3><button type="button" id="settingsClose" aria-label="개인 설정 닫기">닫기</button></div>
   <div class="settings-row"><div><b>사용자</b><p id="settingName"></p></div></div>
-  <div class="settings-row" id="pushSetting" hidden><div><b>일정 알림</b><p id="pushStateLabel">이 기기의 알림 설정</p></div><button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden>🔕</button></div>
+  <div class="settings-row" id="pushSetting" hidden><div><b>일정 알림</b><p id="pushStateLabel">이 기기의 알림 설정</p></div><button type="button" id="pushBtn" class="icon-btn" aria-label="일정 알림 켜기" title="일정 알림" hidden></button></div>
+  <div class="settings-row remind" hidden><div><b>시작 전 알림</b><p>참석하는 일정이 시작되기 전</p></div><select id="remindPre" aria-label="시작 전 알림">
+    <option value="0">받지 않음</option><option value="10">10분 전</option><option value="15">15분 전</option><option value="30">30분 전</option><option value="60">1시간 전</option></select></div>
+  <div class="settings-row remind" hidden><div><b>일정 브리핑</b><p>내 일정 · 백업 근무 · 부재 현황</p></div><select id="remindBrief" aria-label="일정 브리핑 시각">
+    <option value="off">받지 않음</option><option value="-18:00">전날 18:00</option><option value="-21:00">전날 21:00</option><option value="07:00">당일 07:00</option><option value="07:30">당일 07:30</option><option value="08:00">당일 08:00</option></select></div>
   <div class="settings-row"><div><b>화면 모드</b><p id="themeMode"></p></div><button type="button" id="theme" class="icon-btn" aria-label="화면 모드 변경"></button></div>
   <div class="settings-row" id="widgetRow"><div><b>홈 화면 위젯</b><p>홈 화면에 오늘 업무·일정</p></div><button type="button" class="pill" id="widgetOpen">설치 방법</button></div>
   <div class="settings-row colors"><div><b>테마 색</b><p id="colorName"></p></div><div class="swatches" id="colorPick"></div></div>
@@ -730,7 +736,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.12-15';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.20-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -866,8 +872,25 @@ let pushReg = null, pushKey = null, pushSubscribed = false;
 const pushBtn = $('#pushBtn');
 const pushKeyBytes = key => Uint8Array.from(atob(key.replace(/-/g, '+').replace(/_/g, '/')
   + '='.repeat((4 - key.length % 4) % 4)), c => c.charCodeAt(0));
+const svgIcon = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const BELL_ON = svgIcon('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>');
+const BELL_OFF = svgIcon('<path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/>');
+// 일정 알림 설정 (시작 전 알림·일정 브리핑): 서버가 기기마다 기억. 알림을 켠 기기에서만 보인다
+let remindPref = null;
+function showRemind(p) {
+  if (p && typeof p === 'object') remindPref = p;          // 예전 서버는 true 만 돌려준다 → 칸을 숨긴 채로
+  if (remindPref) { $('#remindPre').value = String(remindPref.pre); $('#remindBrief').value = remindPref.brief; }
+  document.querySelectorAll('.settings-row.remind').forEach(el => { el.hidden = !(pushSubscribed && remindPref); });
+}
+['#remindPre', '#remindBrief'].forEach(sel => $(sel).addEventListener('change', async () => {
+  try {
+    showRemind(await call('setReminder', { pre: +$('#remindPre').value, brief: $('#remindBrief').value }));
+    toast('알림 설정을 저장했습니다');
+  } catch (e) { showRemind(); toast('알림 설정 저장 실패: ' + e.message); }   // 고르기 전 값으로 되돌린다
+}));
 function showPushState() {
-  pushBtn.textContent = pushSubscribed ? '🔔' : '🔕';
+  pushBtn.innerHTML = pushSubscribed ? BELL_ON : BELL_OFF;
+  showRemind();
   pushBtn.setAttribute('aria-label', pushSubscribed ? '일정 알림 끄기' : '일정 알림 켜기');
   $('#pushStateLabel').textContent = pushSubscribed ? '알림 켜짐 · 누르면 끄기' : '알림 꺼짐 · 누르면 켜기';
 }
@@ -883,7 +906,7 @@ async function initPush() {
     const sub = await pushReg.pushManager.getSubscription();
     pushSubscribed = !!sub;
     showPushState();
-    if (sub) await call('registerPush', sub.toJSON());       // 브라우저에 남은 구독을 서버에도 다시 등록
+    if (sub) showRemind(await call('registerPush', sub.toJSON()));   // 브라우저에 남은 구독을 서버에도 다시 등록 (답 = 이 기기 알림 설정)
   } catch (e) { console.warn('웹 푸시 설정 확인 실패', e); }
 }
 pushBtn.addEventListener('click', async () => {
@@ -909,7 +932,7 @@ pushBtn.addEventListener('click', async () => {
       // 사용자 탭에 직접 반응해 구독한다. iPhone은 홈 화면 앱에서만 허용된다.
       const pending = pushReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKey });
       const sub = await pending;
-      try { await call('registerPush', sub.toJSON()); }
+      try { showRemind(await call('registerPush', sub.toJSON())); }
       catch (e) { await sub.unsubscribe(); throw e; }
       pushSubscribed = true;
       try {
@@ -2141,15 +2164,19 @@ document.addEventListener('click', e => {
   if (!$('#screens').hidden && !e.target.closest('#screens, #brand')) showScreens(false);
 });   // 바깥 누르면 닫힘
 
-// ── 테마: 자동(◐) → 라이트(☀) → 다크(☾). 기기에 기억 ──
-const THEMES = ['system', 'light', 'dark'], THEME_ICON = { system: '◐', light: '☀', dark: '☾' };
+// ── 테마: 자동(반원) → 라이트(해) → 다크(달). 기기에 기억. 아이콘은 SVG (글자 ◐ ☀ ☾ 는 폰에서 이모지로 그려진다) ──
+const THEMES = ['system', 'light', 'dark'], THEME_ICON = {
+  system: svgIcon('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'),
+  light: svgIcon('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'),
+  dark: svgIcon('<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>'),
+};
 let theme = 'system';
 try { theme = THEMES.includes(localStorage.getItem('theme')) ? localStorage.getItem('theme') : 'system'; } catch (e) {}
 function setTheme(t) {
   theme = t;
   if (t === 'system') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
-  $('#theme').textContent = THEME_ICON[t];
+  $('#theme').innerHTML = THEME_ICON[t];
   $('#themeMode').textContent = { system: '기기 설정에 맞춤', light: '밝게', dark: '어둡게' }[t];
   try { localStorage.setItem('theme', t); } catch (e) {}
 }
