@@ -492,8 +492,11 @@ nav button { font-weight:700; }
 #askNo { width:100%; padding:13px; font-size:16px; font-weight:700; border:1px solid var(--line); border-radius:12px; background:var(--bg); color:var(--fg); }
 /* 일정 추가: 평소엔 접어 두고 제목 줄을 누르면 펼친다 (수정할 땐 자동으로 펼침) */
 .fhead { display:flex; align-items:center; justify-content:space-between; width:100%; padding:0; border:0; background:none; text-align:left; color:inherit; }
-.fhead .plus { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--soft); color:var(--acc); font-size:19px; font-weight:700; transition:transform .2s; }
+.fhead .plus, .day h3 .add { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; background:var(--soft); color:var(--acc); font-size:19px; font-weight:700; transition:transform .2s; }
 .fhead.open .plus { transform:rotate(45deg); }
+/* 일정 블록 제목 줄 오른쪽 +: 넘겨 보던 날로 일정 추가 */
+.day h3 .ttl:has(.add) { display:flex; align-items:center; }
+.day h3 .add { min-width:0; margin:-2px 0 -2px auto; padding:0; border:0; }
 #fBody { margin-top:14px; }
 .mhint { margin:2px 0 6px; font-size:13px; font-weight:600; color:var(--acc); text-align:center; }
 #fToggle { scroll-margin-top:70px; }
@@ -736,7 +739,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.21-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.10.27-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1106,7 +1109,7 @@ function renderDay() {
     }), s ? s.who : orig, '', `<b class="${rl(n)}">${esc(n)}</b><span>${v}</span>`, ' line-dd');
   }).join('') : '<span class="empty">이 날짜의 업무 일정 없음</span>');
   const list = arrange(evOn(day));
-  $('#todayLeave').innerHTML = head('일정') + (list.length
+  $('#todayLeave').innerHTML = head(`일정<button type="button" class="add" data-addon="${day}" aria-label="이 날 일정 추가">＋</button>`) + (list.length
     ? list.map(({ l, i, eds }) => evHtml(l, i, eds)).join('')
     : '<span class="empty">없음</span>');
   renderTeam();                                                        // 팀 화면도 같은 날짜
@@ -1800,9 +1803,9 @@ $('#fPlace').addEventListener('input', renderMatches);
 
 // ── 일정 수정: 누른 일정을 폼에 채우고, 저장하면 그 줄을 고친다 ──
 let editing = null;
-// 그날로 새 일정 쓰기 (월 보기에서 고른 날을 한 번 더 눌렀을 때)
+// 그날로 새 일정 쓰기 (월 보기에서 고른 날을 한 번 더 눌렀을 때, 일정 블록의 + 를 눌렀을 때)
 function addOn(day) {
-  resetForm(); setD('fStart', day); openForm(true);
+  resetForm(); setD('fStart', day); openForm(true); selectTab('leave');
   $('#fToggle').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function openForm(on) { $('#fBody').hidden = !on; $('#fToggle').classList.toggle('open', on); if (on) renderMatches(); }
@@ -2124,6 +2127,8 @@ document.addEventListener('click', async e => {
     $('#tFile').click();
   } else if (b.dataset.pickcolor) {
     setColor(b.dataset.pickcolor);
+  } else if (b.dataset.addon) {
+    addOn(b.dataset.addon);
   } else if (b.dataset.daycal) {
     $('#dayPick').dataset.v = addDays(D.today, dayOff); openPicker('dayPick');
   } else if (b.dataset.day !== undefined) {
