@@ -561,21 +561,27 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 .vnote { margin:6px 2px 0; font-size:13px; line-height:1.55; color:var(--mute); }
 .vnote b { color:var(--fg); font-weight:700; }
 #wVis button:disabled { opacity:.35; }
-/* 아이패드(폭 740 이상)·컴퓨터: 내용 폭을 960 까지 넓히고 두 단으로. 왼쪽 = 오늘 업무·오늘 일정, 오른쪽 = 업무/일정 탭.
-   한 단이 폰 한 화면 폭(약 350~470)이라 카드 모양은 폰과 같다. 근무표·교수 일정 화면은 아래에서 따로 두 단으로 */
+/* 아이패드(폭 740 이상)·컴퓨터: 왼쪽 '오늘' 레일 + 오른쪽 작업 공간. 세 화면 모두 같은 규칙
+   레일 = 오늘 업무·오늘 일정 / 오늘 근무 / 오늘 교수 일정 (왼쪽 띠가 있는 카드). 380 이 될 때까지는 두 단을 같은 폭으로, 그 뒤 남는 폭은 작업 공간에. 위 막대 아래에 붙어 따라오고,
+   화면보다 길면 끝까지 내려간 뒤 아래에 붙는다 (--rail-h 는 스크립트가 잰 높이). 작업 공간 = 업무·일정 탭 / 주간표 / 교수 일정 추가·목록.
+   교수 일정의 담당 교수 줄은 두 단 위에 길게. 내용 폭은 1080 까지 (위 막대·바닥 글도 같은 폭) */
 @media (min-width:740px) {
-  :root { --gut:max(16px, calc((100vw - 960px) / 2)); }
-  body { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); grid-template-rows:auto auto 1fr; column-gap:16px; align-items:start; min-height:100dvh; }   /* 내용이 화면보다 짧아도 아래 바탕색이 끊기지 않게 */
-  body > * { grid-column:1 / -1; }
-  #dayView { grid-column:1; grid-row:2 / 4; }
-  nav { grid-column:2; grid-row:2; margin-top:0; }
-  #rot, #leave { grid-column:2; grid-row:3; }
-  /* 근무표: 왼쪽 오늘 근무, 오른쪽 주간표. 교수 일정: 위 담당 교수 줄, 왼쪽 오늘, 오른쪽 추가·다가오는 일정 */
-  #team, #doc { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); grid-template-rows:auto auto auto auto 1fr; column-gap:16px; align-items:start; }
-  #team > *, #doc > * { grid-column:2; }
-  #tDay { grid-column:1; grid-row:1 / 6; }
-  #dPick { grid-column:1 / -1; }
-  #dDay { grid-column:1; grid-row:2 / 6; }
+  :root { --gut:max(16px, calc((100vw - 1080px) / 2)); --rail-top:calc(70px + env(safe-area-inset-top, 0px)); }
+  body { min-height:100dvh; }   /* 내용이 화면보다 짧아도 아래 바탕색이 끊기지 않게 */
+  #wrap { display:grid; grid-template-columns:min(calc(50% - 8px), 380px) minmax(0, 1fr); grid-template-rows:repeat(5, auto) 1fr; column-gap:16px; align-items:start; }
+  #team, #doc { display:contents; }
+  #wrap > *, #team > *, #doc > * { grid-column:2; }
+  #dayView, #tDay, #dDay { grid-column:1; grid-row:1 / -1; position:sticky; top:min(var(--rail-top), calc(100dvh - var(--rail-h, 0px) - 16px)); }
+  #dPick { grid-column:1 / -1; grid-row:1; }
+  #dDay { grid-row:2 / -1; }
+  nav { margin-top:0; }
+  .upd, #toast { left:50%; right:auto; width:min(480px, 100vw - 32px); transform:translateX(-50%); }
+}
+/* 작업 공간이 넓으면(가로 화면) 지금 업무의 역할 6줄을 짝지어 두 칸 3줄로: 온콜·당직 / TOMO HD·RD / SGRT 두 방 */
+@media (min-width:1000px) {
+  #periods .card { display:grid; grid-template-columns:1fr 1fr; column-gap:24px; }
+  #periods .card > :not(.role) { grid-column:1 / -1; }
+  #periods .role { margin-block:3px; }   /* 그리드에선 위아래 여백이 겹치지 않아 반으로 */
 }
 </style>
 </head>
@@ -589,6 +595,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
     <button type="button" id="meName" class="me-tag" aria-label="개인 설정 열기" hidden></button>
   </div>
 </div>
+<main id="wrap">
 <div id="team">
   <div id="tDay" class="card day"></div>
   <div id="tnav"></div>
@@ -635,15 +642,6 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
   <div id="pnav"></div>
   <div id="periods"></div>
 </div>
-<div id="ask" hidden><div class="sheet">
-  <b id="askT"></b><p id="askM"></p>
-  <div class="two"><div><button type="button" id="askNo">취소</button></div><div><button type="button" class="main" id="askOk">변경</button></div></div>
-</div></div>
-<div id="allRot" hidden><div class="sheet">
-  <div class="hd"><b>업무 전체 보기</b><button type="button" id="allClose">닫기</button></div>
-  <div class="scroll" id="allScroll"></div>
-  <div class="note">날짜를 누르면 그 기간으로 · <i class="dot"></i> 그 기간에 백업이 있는 칸</div>
-</div></div>
 <div id="leave" hidden>
   <div class="card">
     <button type="button" class="fhead" id="fToggle"><span id="fTitle">일정 추가</span><span class="plus" aria-hidden="true">＋</span></button>
@@ -682,6 +680,16 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
       <div class="vseg" id="vSeg"><button data-cv="list">목록</button><button data-cv="week">주</button><button data-cv="month">월</button></div></div>
     <div id="leaves"></div></div>
 </div>
+</main>
+<div id="ask" hidden><div class="sheet">
+  <b id="askT"></b><p id="askM"></p>
+  <div class="two"><div><button type="button" id="askNo">취소</button></div><div><button type="button" class="main" id="askOk">변경</button></div></div>
+</div></div>
+<div id="allRot" hidden><div class="sheet">
+  <div class="hd"><b>업무 전체 보기</b><button type="button" id="allClose">닫기</button></div>
+  <div class="scroll" id="allScroll"></div>
+  <div class="note">날짜를 누르면 그 기간으로 · <i class="dot"></i> 그 기간에 백업이 있는 칸</div>
+</div></div>
 <div id="changes" class="panel" role="dialog" aria-modal="true" aria-labelledby="changesTitle" hidden><div class="sheet">
   <div class="head"><h3 id="changesTitle">최근 변경</h3><button type="button" id="changesClose" aria-label="최근 변경 닫기">닫기</button></div>
   <div id="changeList"><span class="empty">불러오는 중…</span></div>
@@ -768,7 +776,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.11.10-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.11.10-02';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -1489,6 +1497,10 @@ document.addEventListener('click', e => {
   if (el) { const b = document.body; b.style.minHeight = Math.max(b.offsetHeight, parseFloat(b.style.minHeight) || 0) + 'px'; }
 }, true);
 swipe($('#dayView'), moveDay);
+{ // 아이패드 두 단의 '오늘' 레일 높이 → CSS 가 레일이 붙을 자리를 계산 (화면보다 길면 아래에 붙게)
+  const ro = new ResizeObserver(es => es.forEach(e => e.target.style.setProperty('--rail-h', e.target.offsetHeight + 'px')));
+  ['#dayView', '#tDay', '#dDay'].forEach(s => ro.observe($(s)));
+}
 
 function render() {
   renderDay();
