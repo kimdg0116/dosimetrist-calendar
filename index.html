@@ -130,6 +130,9 @@ body { overscroll-behavior-y:none; margin:0; padding:0 var(--gut) 90px; font:16p
 button { font-family:inherit; cursor:pointer; }
 
 /* 상단 바: 옅은 SMC Blue 20% 위에 흐림 효과 */
+/* iOS 26 홈 화면 앱은 맨 위 position:fixed 요소의 색으로 상태 막대를 잇고, 없으면(sticky 만 있으면) 막대 아래 제목 줄을 흐리게 덮는다.
+   위 막대와 같은 색의 고정 띠를 위 막대 윗여백 안에만 깐다 */
+.sbar { position:fixed; top:0; left:0; right:0; z-index:21; height:calc(12px + env(safe-area-inset-top, 0px)); background:var(--bg-top); }
 .top { position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px;
   margin:0 calc(-1 * var(--gut)) 14px; padding:calc(12px + env(safe-area-inset-top, 0px)) var(--gut) 12px;
   background:var(--bg-top); color:var(--bar-fg); }
@@ -561,6 +564,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </style>
 </head>
 <body>
+<div class="sbar" aria-hidden="true"></div>
 <div class="top">
   <button type="button" class="brand" id="brand" aria-haspopup="true" aria-expanded="false">DOSIMETRIST CALENDAR<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
   <div id="screens" hidden></div>
@@ -748,7 +752,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.11.09-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.11.09-02';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
