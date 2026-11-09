@@ -6,7 +6,7 @@
 <title>Dosimetrist Calendar</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- 상태 막대 태그는 넣지 않는다: iOS 26 에서 black-translucent 는 위(다이나믹 아일랜드 아래)를 흐리게 덮고 바닥 62pt 를 비운다. 막대는 맨 위 고정 띠(.sbar) 색을 따른다 -->
 <meta name="apple-mobile-web-app-title" content="Dosimetrist">
 <meta name="theme-color" content="#e3eeff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#142039" media="(prefers-color-scheme: dark)">
@@ -752,7 +752,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.11.09-02';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.11.09-03';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
