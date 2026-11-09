@@ -552,6 +552,12 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 .dchk.on { border-color:var(--acc); background:var(--soft); }
 .dchk.on::before { content:'✓'; display:grid; place-items:center; font-size:12px; font-weight:800; color:#fff; border-color:var(--acc); background:var(--acc); }
 .wlink { font-family:var(--font-body); font-size:13px; font-weight:700; letter-spacing:0; color:var(--acc); text-decoration:none; }
+/* 나만 보기: 일정 앞 자물쇠, 구분은 테두리만. 폼 아래 안내 글 */
+.lock { width:15px; height:15px; margin-right:5px; vertical-align:-2px; color:var(--acc); }
+.evi.only .kind { background:none; box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--acc) 45%, transparent); }
+.vnote { margin:6px 2px 0; font-size:13px; line-height:1.55; color:var(--mute); }
+.vnote b { color:var(--fg); font-weight:700; }
+#wVis button:disabled { opacity:.35; }
 </style>
 </head>
 <body>
@@ -640,6 +646,9 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
     </div>
     <label id="lMemo">내용 (선택)</label><input id="fMemo">
     <label for="fPlace">장소 (선택)</label><input id="fPlace" placeholder="예: 본관 지하 2층 회의실">
+    <label>공개 범위</label>
+    <div class="seg" id="wVis"><button type="button" data-only="0" class="on">모두</button><button type="button" data-only="1">나만 보기</button></div>
+    <div class="vnote" id="vNote"></div>
     <div id="matchBox" hidden></div>
     <button class="main" id="save">저장</button>
     <div class="two" id="editBtns" style="margin-top:8px" hidden>
@@ -739,7 +748,7 @@ body:not([data-screen="team"]) #team, body:not([data-screen="doc"]) #doc, body[d
 </div></div>
 
 <script>
-const APP_VERSION = '26.10.27-01';                                  // 올릴 때마다 version.json 과 같이 올린다
+const APP_VERSION = '26.11.09-01';                                  // 올릴 때마다 version.json 과 같이 올린다
 
 // 삼성 브라우저 설치 지원. 일정 데이터와 앱 화면은 캐시하지 않는다.
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(console.warn);
@@ -978,7 +987,7 @@ function apply_(op) {                                                  // 저장
   const { fn, args } = op, L = D.leaves, f = args[args.length - 1];
   const at = () => op.key ? L.findIndex(l => leafKey(l) === op.key) : L.findIndex(l => l.row === args[0]);
   const item = () => ({ row: 0, sig: '', start: f.start, end: f.end || f.start, name: f.names.join(', '),
-    kind: f.kind, time: f.time || '', memo: f.memo || '', place: f.place || '' });
+    kind: f.kind, time: f.time || '', memo: f.memo || '', place: f.place || '', ...(f.only ? { only: auth.me || '나' } : {}) });
   if (fn === 'joinLeave' && at() >= 0) {
     const l = L[at()], current = l.name.split(/,\s*/).filter(Boolean);
     for (let i = L.length - 1; i >= 0; i--) {
@@ -1538,13 +1547,15 @@ try { calView = localStorage.getItem('calView') || 'list'; } catch (e) {}
 // 일정 한 건: [구분 + 내용] / 이름 / 기간·시간·장소. 누르면 수정 (삭제는 수정 화면에서)
 // 일정 한 줄 (모든 곳 같은 틀). 첫 줄 = 내용, 내용이 없으면 이름 (연차는 한 줄로 끝난다) · 오른쪽 = 시간, 종일은 흐리게
 // 내용이 있으면 이름은 아래 줄. 여러 날이면서 시간도 있으면 날짜는 아래 줄. 이름마다 data-edit 가 붙어 있으면 그 사람 것만 수정
+// 나만 보기 일정은 앞에 자물쇠 (서버가 등록자·이름에 넣은 사람에게만 보낸다)
+const LOCK = '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-label="나만 보기"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 const evHtml = (l, i, eds) => {
   const who = l.name.split(/,\s*/).filter(Boolean);
   const range = l.start !== l.end ? `${mdh(l.start)}~${mdh(l.end)}` : '';
   const time = l.time ? fmtTime(l.time).replace(' ~ ', '~') : '';
-  return `<div class="evi${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
+  return `<div class="evi${l.only ? ' only' : ''}${i !== null && editing && editing.row === l.row ? ' editing' : ''}"${i !== null ? ` data-edit="${i}"` : ''}>
     <span class="kind">${esc(l.kind)}</span>
-    <span class="t1">${l.memo ? esc(l.memo) : namesHtml(who, '', eds) || '-'}</span>
+    <span class="t1">${l.only ? LOCK : ''}${l.memo ? esc(l.memo) : namesHtml(who, '', eds) || '-'}</span>
     <span class="tm">${time || range || '종일'}</span>
     ${l.memo && who.length ? `<div class="ln">${namesHtml(who, '', eds)}</div>` : ''}
     ${time && range ? `<div class="ln when">${range}</div>` : ''}
@@ -1672,13 +1683,29 @@ function applyKind() {
   $('#wHour').hidden = !hourly();
   $('#lMemo').textContent = kind === '기타' ? '무엇인가요? (필수)' : '내용 (선택)';
   $('#fMemo').placeholder = kind === '기타' ? '예: 건강검진' : '예: 학회';
+  applyVis();
   if (D && !$('#fBody').hidden) renderMatches();
 }
 function applyNames() {
   const n = [...names];
   $('#sNames').textContent = !n.length ? '선택' : n.length === 1 ? n[0] : `${n[0]} 외 ${n.length - 1}명`;
   $('#dNames').classList.toggle('has', n.length > 0);
+  applyVis();
   if (D && !$('#fBody').hidden) renderMatches();
+}
+// 공개 범위: 나만 보기 = 나(등록자)와 이름에 넣은 사람만 본다. 부재 구분은 업무 백업 확인 때문에 늘 모두에게
+var onlyMe = false;                                                    // var: applyKind 가 이 줄보다 먼저 불려도 되게
+function applyVis() {
+  const away = AWAY.includes(kind);
+  if (away) onlyMe = false;
+  document.querySelectorAll('#wVis button').forEach(b => {
+    b.classList.toggle('on', (b.dataset.only === '1') === !!onlyMe);
+    b.disabled = away && b.dataset.only === '1';
+  });
+  const others = [...names].filter(n => n !== auth.me);
+  $('#vNote').innerHTML = away ? `${esc(kind)} 같은 부재 일정은 업무 백업 확인 때문에 모두에게 보입니다.`
+    : onlyMe ? `보는 사람: <b>${esc([`${auth.me || '나'} (나)`, ...others].join(', '))}</b><br>공유 캘린더에 올리지 않고, 알림도 이 사람에게만 갑니다.`
+    : '파트 모두에게 보이고, 바뀌면 모두에게 알림이 갑니다.';
 }
 function plusHours(t, h) {
   const [hh, mm] = t.split(':').map(Number);
@@ -1781,7 +1808,7 @@ applyKind();
 function formLeave() {
   return { start: getD('fStart'), end: $('#wEnd').hidden ? '' : getD('fEnd'), kind,
     names: [...names], memo: $('#fMemo').value.trim(), place: $('#fPlace').value.trim(),
-    time: hourly() ? `${$('#fFrom').value}-${plusHours($('#fFrom').value, +$('#fHours').value)}` : '' };
+    time: hourly() ? `${$('#fFrom').value}-${plusHours($('#fFrom').value, +$('#fHours').value)}` : '', only: !!onlyMe };
 }
 function renderMatches() {
   const box = $('#matchBox');
@@ -1810,7 +1837,7 @@ function addOn(day) {
 }
 function openForm(on) { $('#fBody').hidden = !on; $('#fToggle').classList.toggle('open', on); if (on) renderMatches(); }
 function resetForm() {
-  editing = null; kind = ''; mode = 'day'; names.clear();
+  editing = null; kind = ''; mode = 'day'; names.clear(); onlyMe = false;
   openForm(false);
   setD('fStart', D.today); setD('fEnd', ''); $('#fMemo').value = ''; $('#fPlace').value = '';
   setTime('', 1);
@@ -1821,12 +1848,12 @@ function resetForm() {
 }
 // 저장 실패 때 폼 되살리기 (새 일정이면 '일정 추가' 상태로)
 function refill(f, ed) {
-  startEdit({ ...(ed || {}), name: f.names.join(', '), kind: f.kind, time: f.time, start: f.start, end: f.end || f.start, memo: f.memo, place: f.place });
+  startEdit({ ...(ed || {}), name: f.names.join(', '), kind: f.kind, time: f.time, start: f.start, end: f.end || f.start, memo: f.memo, place: f.place, only: f.only });
   if (!ed) { editing = null; $('#fTitle').textContent = '일정 추가'; $('#save').textContent = '저장'; $('#editBtns').hidden = true; }
   openForm(true);
 }
 function startEdit(l) {
-  editing = l; kind = l.kind;
+  editing = l; kind = l.kind; onlyMe = !!l.only;
   names = new Set(l.name.split(/,\s*/).filter(Boolean));
   const t = l.time.match(/(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/);
   mode = t ? 'hour' : 'day';
@@ -1996,6 +2023,8 @@ document.addEventListener('click', async e => {
     setTime($('#fFrom').value, b.dataset.hrs); $('#dHours').open = false;
   } else if (b.dataset.a) {
     mode = b.dataset.a; applyKind();
+  } else if (b.dataset.only) {                                         // 공개 범위: 모두 / 나만 보기
+    onlyMe = b.dataset.only === '1'; applyVis();
   } else if (b.dataset.n) {
     const n = b.dataset.n;
     if (names.has(n)) names.delete(n);
